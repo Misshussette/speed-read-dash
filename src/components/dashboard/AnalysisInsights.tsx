@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { LapRecord } from '@/types/telemetry';
 import { computeInsights } from '@/lib/metrics';
+import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, AlertTriangle } from 'lucide-react';
 
 const AnalysisInsights = ({ data }: { data: LapRecord[] }) => {
+  const { t } = useI18n();
   const insights = useMemo(() => computeInsights(data), [data]);
 
   if (!insights.mostConsistentDriver && !insights.highestVarianceSector) return null;
@@ -16,7 +18,7 @@ const AnalysisInsights = ({ data }: { data: LapRecord[] }) => {
           <CardContent className="p-4 flex items-center gap-3">
             <Trophy className="h-5 w-5 text-primary shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Most Consistent Driver</p>
+              <p className="text-xs text-muted-foreground">{t('insight_most_consistent')}</p>
               <p className="text-sm font-semibold text-foreground">{insights.mostConsistentDriver}</p>
             </div>
           </CardContent>
@@ -27,7 +29,7 @@ const AnalysisInsights = ({ data }: { data: LapRecord[] }) => {
           <CardContent className="p-4 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Highest Variance Sector</p>
+              <p className="text-xs text-muted-foreground">{t('insight_highest_variance')}</p>
               <p className="text-sm font-semibold text-foreground">{insights.highestVarianceSector}</p>
             </div>
           </CardContent>

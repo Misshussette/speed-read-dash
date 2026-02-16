@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { LapRecord } from '@/types/telemetry';
 import { computeDriverStats, formatLapTime } from '@/lib/metrics';
+import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const DriverComparisonChart = ({ data }: { data: LapRecord[] }) => {
+  const { t } = useI18n();
+
   const chartData = useMemo(() => {
     return computeDriverStats(data).map(d => ({
       driver: d.driver,
@@ -19,7 +22,7 @@ const DriverComparisonChart = ({ data }: { data: LapRecord[] }) => {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold text-foreground">Driver Comparison</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground">{t('chart_driver_comparison')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

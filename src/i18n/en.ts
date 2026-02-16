@@ -1,0 +1,98 @@
+const en = {
+  // Landing
+  tagline: 'Engineering Your Race Data.',
+  upload_drop: 'Drop your CSV here',
+  upload_browse: 'or click to browse • semicolon-delimited',
+  upload_parsing: 'Parsing...',
+  upload_error_csv: 'Please upload a .csv file',
+  continue_dashboard: 'Continue to Dashboard',
+  feat_upload_title: 'Upload',
+  feat_upload_desc: 'Drop your analysis.csv and data is parsed instantly',
+  feat_analyze_title: 'Analyze',
+  feat_analyze_desc: 'Interactive charts, KPIs, and driver comparisons',
+  feat_export_title: 'Export',
+  feat_export_desc: 'Download filtered data or charts as PNG',
+
+  // Nav / Header
+  export_csv: 'Export CSV',
+  new_upload: 'New Upload',
+
+  // Filters
+  all_tracks: 'All Tracks',
+  all_sessions: 'All Sessions',
+  pit_laps: 'Pit laps',
+  reset: 'Reset',
+
+  // KPI cards
+  kpi_best_lap: 'Best Lap',
+  kpi_avg_pace: 'Avg Pace',
+  kpi_pace_delta: 'Pace Delta',
+  kpi_consistency: 'Consistency',
+  kpi_degradation: 'Degradation',
+  kpi_total_laps: 'Total Laps',
+  kpi_pit_stops: 'Pit Stops',
+  kpi_total_pit_time: 'Total Pit Time',
+
+  // Section headers
+  section_session_overview: 'Session Overview',
+  section_performance_evolution: 'Performance Evolution',
+  section_driver_car_analysis: 'Driver & Car Analysis',
+  section_operations: 'Operations',
+
+  // Chart titles
+  chart_performance_evolution: 'Performance Evolution',
+  chart_sector_comparison: 'Sector Comparison',
+  chart_driver_comparison: 'Driver Comparison',
+  chart_stint_timeline: 'Stint Timeline',
+  chart_pit_events: 'Pit Events',
+
+  // Chart labels
+  chart_legend_raw: '— thin: raw lap time',
+  chart_legend_avg: '— bold: 5-lap rolling avg',
+  chart_legend_stint_zone: 'stint zone',
+  avg_pace_label: 'Avg Pace',
+  pit_in_stint: 'Pit event in stint',
+
+  // Pit table headers
+  pit_col_lap: 'Lap',
+  pit_col_driver: 'Driver',
+  pit_col_type: 'Type',
+  pit_col_pit_time: 'Pit Time',
+  pit_col_timestamp: 'Timestamp',
+
+  // Insights
+  insight_most_consistent: 'Most Consistent Driver',
+  insight_highest_variance: 'Highest Variance Sector',
+  insight_pace_drop: 'Pace dropped {delta}s over the run — mainly in {sector}.',
+
+  // About
+  about_subtitle: 'A modern race telemetry analysis tool. Upload your CSV, get insights in seconds.',
+  about_features: 'Features',
+  about_feat_charts_title: 'Interactive Charts',
+  about_feat_charts_desc: 'Lap times, sector breakdowns, stint timelines, and driver comparisons — all interactive.',
+  about_feat_filters_title: 'Powerful Filters',
+  about_feat_filters_desc: 'Filter by track, session, driver, stint, and pit status. Instant updates.',
+  about_feat_export_title: 'Export Anything',
+  about_feat_export_desc: 'Download filtered data as CSV or export any chart as a high-res PNG.',
+  about_feat_instant_title: 'Instant Analysis',
+  about_feat_instant_desc: 'All computation runs client-side. No server, no waiting.',
+  about_feat_privacy_title: 'Privacy First',
+  about_feat_privacy_desc: 'Your data never leaves your browser. No upload to any server.',
+  about_roadmap: 'Roadmap',
+  about_roadmap_accounts: 'User accounts & cloud storage',
+  about_roadmap_teams: 'Team workspaces & sharing',
+  about_roadmap_filters: 'Advanced filters (weather, tyre compound)',
+  about_roadmap_strategy: 'Automated stint strategy recommendations',
+  back: 'Back',
+
+  // 404
+  not_found_title: '404',
+  not_found_text: 'Oops! Page not found',
+  not_found_link: 'Return to Home',
+
+  // Empty state
+  no_data: 'No data loaded.',
+  upload_csv_btn: 'Upload a CSV',
+} as const;
+
+export default en;

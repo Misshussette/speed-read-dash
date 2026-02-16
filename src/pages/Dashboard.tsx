@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
 import { exportFilteredCSV } from '@/lib/export';
+import { useI18n } from '@/i18n/I18nContext';
+import LanguageSelector from '@/components/LanguageSelector';
 import FilterBar from '@/components/dashboard/FilterBar';
 import KPICards from '@/components/dashboard/KPICards';
 import LapTimeChart from '@/components/dashboard/LapTimeChart';
@@ -17,6 +19,7 @@ import SectionHeader from '@/components/dashboard/SectionHeader';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { rawData, hasSectorData, filters, setFilters, resetFilters, clearData } = useTelemetry();
 
   const filterOptions = useMemo(() => getFilterOptions(rawData), [rawData]);
@@ -26,15 +29,14 @@ const Dashboard = () => {
   if (rawData.length === 0) {
     return (
       <div className="min-h-screen bg-background dark flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">No data loaded.</p>
-        <Button onClick={() => navigate('/')}>Upload a CSV</Button>
+        <p className="text-muted-foreground">{t('no_data')}</p>
+        <Button onClick={() => navigate('/')}>{t('upload_csv_btn')}</Button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background dark">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -42,42 +44,38 @@ const Dashboard = () => {
             <span className="font-bold text-foreground">Stint<span className="text-primary">Lab</span></span>
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             <Button variant="ghost" size="sm" onClick={() => exportFilteredCSV(filteredData)}>
-              <Download className="h-4 w-4 mr-1" /> Export CSV
+              <Download className="h-4 w-4 mr-1" /> {t('export_csv')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => { clearData(); navigate('/'); }}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> New Upload
+              <ArrowLeft className="h-4 w-4 mr-1" /> {t('new_upload')}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Filters */}
       <div className="sticky top-[57px] z-40 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 py-3">
           <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} />
         </div>
       </div>
 
-      {/* Content */}
       <main className="max-w-[1400px] mx-auto px-4 py-6 space-y-8">
-        {/* SECTION 1: SESSION OVERVIEW */}
         <section className="space-y-4">
-          <SectionHeader number={1} title="Session Overview" />
+          <SectionHeader number={1} title={t('section_session_overview')} />
           <KPICards kpis={kpis} />
         </section>
 
-        {/* SECTION 2: PERFORMANCE EVOLUTION */}
         <section className="space-y-4">
-          <SectionHeader number={2} title="Performance Evolution" />
+          <SectionHeader number={2} title={t('section_performance_evolution')} />
           <div id="chart-lap-time">
             <LapTimeChart data={filteredData} />
           </div>
         </section>
 
-        {/* SECTION 3: DRIVER & CAR ANALYSIS */}
         <section className="space-y-4">
-          <SectionHeader number={3} title="Driver & Car Analysis" />
+          <SectionHeader number={3} title={t('section_driver_car_analysis')} />
           <AnalysisInsights data={filteredData} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div id="chart-driver">
@@ -91,9 +89,8 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* SECTION 4: OPERATIONS */}
         <section className="space-y-4">
-          <SectionHeader number={4} title="Operations" />
+          <SectionHeader number={4} title={t('section_operations')} />
           <div id="chart-stint">
             <StintTimeline data={filteredData} />
           </div>
