@@ -90,6 +90,20 @@ const en = {
   not_found_text: 'Oops! Page not found',
   not_found_link: 'Return to Home',
 
+  // Chart interaction
+  chart_drag_zoom: 'Drag on chart to zoom',
+  chart_zoom_reset: 'Reset zoom',
+
+  // KPI help texts
+  help_best_lap: 'The fastest single lap recorded in the session, excluding any laps with pit stops.',
+  help_avg_pace: 'The average lap time across all clean laps. Shows your typical race pace.',
+  help_pace_delta: 'The gap between your average pace and your best lap. A smaller delta means more consistent driving.',
+  help_consistency: 'How much your lap times vary. Lower values mean more predictable and repeatable performance.',
+  help_degradation: 'The pace difference between your first and last laps. Positive values indicate the car or driver is getting slower over the run.',
+  help_total_laps: 'Total number of laps completed in the current filtered selection.',
+  help_pit_stops: 'Number of pit stop events recorded during the session.',
+  help_total_pit_time: 'Cumulative time spent stationary in the pits across all stops.',
+
   // Empty state
   no_data: 'No data loaded.',
   upload_csv_btn: 'Upload a CSV',
