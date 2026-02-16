@@ -67,15 +67,18 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     return map;
   }, [data]);
 
-  // Full-resolution chart data with null gaps between stints
+  // Full-resolution chart data with null-gap rows between stints (rendering only)
   const fullChartData = useMemo(() => {
     const lapNums = [...new Set(data.map(r => r.lap_number))].sort((a, b) => a - b);
 
-    // For each driver, find the last lap of each stint
+    // For each driver, build a set of laps that are the LAST lap of a stint
+    // (but only when that stint is followed by another stint)
     const stintEndLaps = new Map<string, Set<number>>();
     for (const [driver, stints] of driverStints) {
       const ends = new Set<number>();
-      for (const laps of stints.values()) {
+      const stintIds = [...stints.keys()].sort((a, b) => a - b);
+      for (let si = 0; si < stintIds.length - 1; si++) {
+        const laps = stints.get(stintIds[si])!;
         ends.add(Math.max(...laps));
       }
       stintEndLaps.set(driver, ends);
@@ -84,6 +87,7 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     const result: Record<string, number | string | null>[] = [];
     for (let i = 0; i < lapNums.length; i++) {
       const lap = lapNums[i];
+      // Real data row — every lap is included
       const entry: Record<string, number | string | null> = { lap };
       drivers.forEach(d => {
         const rec = data.find(r => r.lap_number === lap && r.driver === d && r.pit_type === '');
@@ -91,13 +95,16 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
       });
       result.push(entry);
 
-      // After each lap, check if any driver ends a stint here and the next lap exists
+      // Insert a null-gap row AFTER this lap if any driver has a stint boundary here
       if (i < lapNums.length - 1) {
-        const needsGap = drivers.some(d => stintEndLaps.get(d)?.has(lap));
-        if (needsGap) {
-          // Insert a null-gap row with a fractional lap number so it doesn't collide
-          const gapEntry: Record<string, number | string | null> = { lap: lap + 0.5 };
-          drivers.forEach(d => { gapEntry[d] = null; gapEntry[`${d}_avg`] = null; });
+        const driversWithGap = drivers.filter(d => stintEndLaps.get(d)?.has(lap));
+        if (driversWithGap.length > 0) {
+          const gapEntry: Record<string, number | string | null> = { lap: lap + 0.5, _gap: true as any };
+          drivers.forEach(d => {
+            // Only null out drivers that have a stint break here
+            gapEntry[d] = driversWithGap.includes(d) ? null : undefined as any;
+            gapEntry[`${d}_avg`] = driversWithGap.includes(d) ? null : undefined as any;
+          });
           result.push(gapEntry);
         }
       }
@@ -105,21 +112,29 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     return result;
   }, [data, drivers, driverStints]);
 
-  // Rolling average that resets per stint
+  // Rolling average that resets per stint (uses only real rows, skips gap rows)
   const fullMergedData = useMemo(() => {
     const window = 5;
-    // Track per-driver running buffer that resets on null gaps
     const buffers = new Map<string, number[]>();
     drivers.forEach(d => buffers.set(d, []));
 
     return fullChartData.map(entry => {
       const row: Record<string, number | string | null> = { ...entry };
+      const isGap = (entry as any)._gap === true;
+
       drivers.forEach(d => {
         const val = entry[d];
         const buf = buffers.get(d)!;
-        if (val == null) {
-          // Null gap — reset the rolling buffer
+
+        if (isGap && val === null) {
+          // Gap row for this driver — reset buffer, keep null
           buf.length = 0;
+          row[`${d}_avg`] = null;
+        } else if (isGap) {
+          // Gap row but this driver has no break — skip (don't touch buffer)
+          // avg already undefined from gap entry, leave it
+        } else if (val == null) {
+          // Real row but driver has no data here
           row[`${d}_avg`] = null;
         } else {
           buf.push(val as number);
