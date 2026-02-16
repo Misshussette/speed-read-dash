@@ -55,29 +55,78 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     });
   }, [data]);
 
-  // Full-resolution chart data (all calculations use this)
+  // Build stint boundaries per driver for null-gap insertion
+  const driverStints = useMemo(() => {
+    const map = new Map<string, Map<number, number[]>>();
+    for (const r of data) {
+      if (!map.has(r.driver)) map.set(r.driver, new Map());
+      const stints = map.get(r.driver)!;
+      if (!stints.has(r.stint)) stints.set(r.stint, []);
+      stints.get(r.stint)!.push(r.lap_number);
+    }
+    return map;
+  }, [data]);
+
+  // Full-resolution chart data with null gaps between stints
   const fullChartData = useMemo(() => {
     const lapNums = [...new Set(data.map(r => r.lap_number))].sort((a, b) => a - b);
-    return lapNums.map(lap => {
-      const entry: Record<string, number | string> = { lap };
+
+    // For each driver, find the last lap of each stint
+    const stintEndLaps = new Map<string, Set<number>>();
+    for (const [driver, stints] of driverStints) {
+      const ends = new Set<number>();
+      for (const laps of stints.values()) {
+        ends.add(Math.max(...laps));
+      }
+      stintEndLaps.set(driver, ends);
+    }
+
+    const result: Record<string, number | string | null>[] = [];
+    for (let i = 0; i < lapNums.length; i++) {
+      const lap = lapNums[i];
+      const entry: Record<string, number | string | null> = { lap };
       drivers.forEach(d => {
         const rec = data.find(r => r.lap_number === lap && r.driver === d && r.pit_type === '');
-        if (rec) entry[d] = rec.lap_time_s;
+        entry[d] = rec ? rec.lap_time_s : null;
       });
-      return entry;
-    });
-  }, [data, drivers]);
+      result.push(entry);
 
-  // Rolling average on full data
+      // After each lap, check if any driver ends a stint here and the next lap exists
+      if (i < lapNums.length - 1) {
+        const needsGap = drivers.some(d => stintEndLaps.get(d)?.has(lap));
+        if (needsGap) {
+          // Insert a null-gap row with a fractional lap number so it doesn't collide
+          const gapEntry: Record<string, number | string | null> = { lap: lap + 0.5 };
+          drivers.forEach(d => { gapEntry[d] = null; gapEntry[`${d}_avg`] = null; });
+          result.push(gapEntry);
+        }
+      }
+    }
+    return result;
+  }, [data, drivers, driverStints]);
+
+  // Rolling average that resets per stint
   const fullMergedData = useMemo(() => {
     const window = 5;
-    return fullChartData.map((entry, idx) => {
-      const row: Record<string, number | string> = { ...entry };
+    // Track per-driver running buffer that resets on null gaps
+    const buffers = new Map<string, number[]>();
+    drivers.forEach(d => buffers.set(d, []));
+
+    return fullChartData.map(entry => {
+      const row: Record<string, number | string | null> = { ...entry };
       drivers.forEach(d => {
-        const slice = fullChartData.slice(Math.max(0, idx - window + 1), idx + 1);
-        const vals = slice.map(s => s[d]).filter((v): v is number => typeof v === 'number');
-        if (vals.length >= 2) {
-          row[`${d}_avg`] = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const val = entry[d];
+        const buf = buffers.get(d)!;
+        if (val == null) {
+          // Null gap — reset the rolling buffer
+          buf.length = 0;
+          row[`${d}_avg`] = null;
+        } else {
+          buf.push(val as number);
+          if (buf.length > window) buf.shift();
+          row[`${d}_avg`] = buf.length >= 2
+            ? buf.reduce((a, b) => a + b, 0) / buf.length
+            : null;
         }
       });
       return row;
@@ -216,11 +265,11 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
             />
             {/* Raw lines — visually secondary */}
             {drivers.map((d, i) => (
-              <Line key={d} dataKey={d} stroke={COLORS[i % COLORS.length]} strokeWidth={1} dot={false} connectNulls name={d} strokeOpacity={0.3} isAnimationActive={false} />
+              <Line key={d} dataKey={d} stroke={COLORS[i % COLORS.length]} strokeWidth={1} dot={false} name={d} strokeOpacity={0.3} isAnimationActive={false} />
             ))}
             {/* Rolling average — primary trace */}
             {drivers.map((d, i) => (
-              <Line key={`${d}_avg`} dataKey={`${d}_avg`} stroke={COLORS[i % COLORS.length]} strokeWidth={2.5} dot={false} connectNulls name={`${d}_avg`} isAnimationActive={false} />
+              <Line key={`${d}_avg`} dataKey={`${d}_avg`} stroke={COLORS[i % COLORS.length]} strokeWidth={2.5} dot={false} name={`${d}_avg`} isAnimationActive={false} />
             ))}
             {bestLap && !isZoomed && (
               <ReferenceDot x={bestLap.lap_number} y={bestLap.lap_time_s} r={6} fill="hsl(185, 70%, 50%)" stroke="hsl(185, 70%, 70%)" strokeWidth={2} />
