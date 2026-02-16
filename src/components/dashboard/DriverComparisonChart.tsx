@@ -5,17 +5,17 @@ import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const DriverComparisonChart = ({ data }: { data: LapRecord[] }) => {
+const DriverComparisonChart = ({ data, includePitLaps = false }: { data: LapRecord[]; includePitLaps?: boolean }) => {
   const { t } = useI18n();
 
   const chartData = useMemo(() => {
-    return computeDriverStats(data).map(d => ({
+    return computeDriverStats(data, includePitLaps).map(d => ({
       driver: d.driver,
       Best: +d.bestLap.toFixed(3),
       Average: +d.averagePace.toFixed(3),
       'Std Dev': +d.consistency.toFixed(3),
     }));
-  }, [data]);
+  }, [data, includePitLaps]);
 
   if (chartData.length === 0) return null;
 

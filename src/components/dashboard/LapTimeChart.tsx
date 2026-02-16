@@ -5,7 +5,7 @@ import { lttbDownsample, getTargetPoints } from '@/lib/downsample';
 import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceDot, ReferenceArea, Brush
@@ -26,6 +26,11 @@ interface ZoomState {
   endIndex: number;
 }
 
+/** Build a unique key for a driver-stint series */
+const seriesKey = (driver: string, stint: number) => `${driver}__s${stint}`;
+const avgKey = (driver: string, stint: number) => `${driver}__s${stint}_avg`;
+const pitKey = (driver: string, stint: number) => `${driver}__s${stint}_pit`;
+
 const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,7 +40,6 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
   const [refAreaRight, setRefAreaRight] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Measure container width
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver(entries => {
@@ -47,6 +51,18 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
 
   const drivers = useMemo(() => [...new Set(data.map(r => r.driver))], [data]);
 
+  // Map: driver -> sorted stint ids present in the data
+  const driverStintMap = useMemo(() => {
+    const map = new Map<string, number[]>();
+    for (const r of data) {
+      if (!map.has(r.driver)) map.set(r.driver, []);
+      const arr = map.get(r.driver)!;
+      if (!arr.includes(r.stint)) arr.push(r.stint);
+    }
+    map.forEach(v => v.sort((a, b) => a - b));
+    return map;
+  }, [data]);
+
   const stintRanges = useMemo(() => {
     const stints = [...new Set(data.map(r => r.stint))].sort((a, b) => a - b);
     return stints.map(stint => {
@@ -55,146 +71,123 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     });
   }, [data]);
 
-  // Build stint boundaries per driver for null-gap insertion
-  const driverStints = useMemo(() => {
-    const map = new Map<string, Map<number, number[]>>();
-    for (const r of data) {
-      if (!map.has(r.driver)) map.set(r.driver, new Map());
-      const stints = map.get(r.driver)!;
-      if (!stints.has(r.stint)) stints.set(r.stint, []);
-      stints.get(r.stint)!.push(r.lap_number);
-    }
-    return map;
-  }, [data]);
-
-  // Full-resolution chart data with null-gap rows between stints (rendering only)
+  // Build chart data: one entry per real lap number, keys per driver-stint
   const fullChartData = useMemo(() => {
     const lapNums = [...new Set(data.map(r => r.lap_number))].sort((a, b) => a - b);
-
-    // For each driver, build a set of laps that are the LAST lap of a stint
-    // (but only when that stint is followed by another stint)
-    const stintEndLaps = new Map<string, Set<number>>();
-    for (const [driver, stints] of driverStints) {
-      const ends = new Set<number>();
-      const stintIds = [...stints.keys()].sort((a, b) => a - b);
-      for (let si = 0; si < stintIds.length - 1; si++) {
-        const laps = stints.get(stintIds[si])!;
-        ends.add(Math.max(...laps));
-      }
-      stintEndLaps.set(driver, ends);
-    }
-
-    const result: Record<string, number | string | null>[] = [];
-    for (let i = 0; i < lapNums.length; i++) {
-      const lap = lapNums[i];
-      // ALL laps are included — pit laps are shown but flagged
-      const entry: Record<string, number | string | null> = { lap };
-      drivers.forEach(d => {
-        const rec = data.find(r => r.lap_number === lap && r.driver === d);
-        entry[d] = rec ? rec.lap_time_s : null;
-        // Mark pit laps for visual differentiation (not used in avg)
-        if (rec && rec.pit_type !== '') {
-          entry[`${d}_pit`] = true as any;
-        }
-      });
-      result.push(entry);
-
-      // Insert a null-gap row AFTER this lap if any driver has a stint boundary here
-      if (i < lapNums.length - 1) {
-        const driversWithGap = drivers.filter(d => stintEndLaps.get(d)?.has(lap));
-        if (driversWithGap.length > 0) {
-          const gapEntry: Record<string, number | string | null> = { lap: lap + 0.5, _gap: true as any };
-          drivers.forEach(d => {
-            // Only null out drivers that have a stint break here
-            gapEntry[d] = driversWithGap.includes(d) ? null : undefined as any;
-            gapEntry[`${d}_avg`] = driversWithGap.includes(d) ? null : undefined as any;
-          });
-          result.push(gapEntry);
+    return lapNums.map(lap => {
+      const entry: Record<string, any> = { lap };
+      for (const [driver, stints] of driverStintMap) {
+        for (const stint of stints) {
+          const rec = data.find(r => r.lap_number === lap && r.driver === driver && r.stint === stint);
+          const sk = seriesKey(driver, stint);
+          entry[sk] = rec ? rec.lap_time_s : null;
+          if (rec && rec.pit_type !== '') {
+            entry[pitKey(driver, stint)] = true;
+          }
         }
       }
-    }
-    return result;
-  }, [data, drivers, driverStints]);
+      return entry;
+    });
+  }, [data, driverStintMap]);
 
-  // Rolling average — resets per stint, excludes pit laps from calculation
+  // Rolling average per driver-stint (resets naturally since each stint is separate)
   const fullMergedData = useMemo(() => {
     const window = 5;
+    // One buffer per driver-stint series
     const buffers = new Map<string, number[]>();
-    drivers.forEach(d => buffers.set(d, []));
+    for (const [driver, stints] of driverStintMap) {
+      for (const stint of stints) {
+        buffers.set(seriesKey(driver, stint), []);
+      }
+    }
 
     return fullChartData.map(entry => {
-      const row: Record<string, number | string | null> = { ...entry };
-      const isGap = (entry as any)._gap === true;
+      const row: Record<string, any> = { ...entry };
+      for (const [driver, stints] of driverStintMap) {
+        for (const stint of stints) {
+          const sk = seriesKey(driver, stint);
+          const ak = avgKey(driver, stint);
+          const val = entry[sk];
+          const isPit = entry[pitKey(driver, stint)] === true;
+          const buf = buffers.get(sk)!;
 
-      drivers.forEach(d => {
-        const val = entry[d];
-        const isPit = (entry as any)[`${d}_pit`] === true;
-        const buf = buffers.get(d)!;
-
-        if (isGap && val === null) {
-          buf.length = 0;
-          row[`${d}_avg`] = null;
-        } else if (isGap) {
-          // Gap row but this driver has no break
-        } else if (val == null) {
-          row[`${d}_avg`] = null;
-        } else if (isPit) {
-          // Pit lap: show the value on chart but do NOT feed into rolling avg
-          row[`${d}_avg`] = null;
-        } else {
-          buf.push(val as number);
-          if (buf.length > window) buf.shift();
-          row[`${d}_avg`] = buf.length >= 2
-            ? buf.reduce((a, b) => a + b, 0) / buf.length
-            : null;
+          if (val == null) {
+            row[ak] = null;
+          } else if (isPit) {
+            // Pit lap: show raw value but exclude from rolling avg
+            row[ak] = null;
+          } else {
+            buf.push(val as number);
+            if (buf.length > window) buf.shift();
+            row[ak] = buf.length >= 2
+              ? buf.reduce((a: number, b: number) => a + b, 0) / buf.length
+              : null;
+          }
         }
-      });
+      }
       return row;
     });
-  }, [fullChartData, drivers]);
+  }, [fullChartData, driverStintMap]);
 
-  // Collect pit lap markers for visual display
+  // Collect pit lap markers
   const pitMarkers = useMemo(() => {
     const markers: { lap: number; time: number; driver: string; colorIdx: number }[] = [];
     for (const entry of fullChartData) {
-      if ((entry as any)._gap) continue;
-      drivers.forEach((d, i) => {
-        if ((entry as any)[`${d}_pit`] && entry[d] != null) {
-          markers.push({ lap: entry.lap as number, time: entry[d] as number, driver: d, colorIdx: i });
+      let di = 0;
+      for (const [driver, stints] of driverStintMap) {
+        for (const stint of stints) {
+          if (entry[pitKey(driver, stint)] && entry[seriesKey(driver, stint)] != null) {
+            markers.push({ lap: entry.lap as number, time: entry[seriesKey(driver, stint)] as number, driver, colorIdx: di });
+          }
         }
-      });
+        di++;
+      }
     }
     return markers;
-  }, [fullChartData, drivers]);
+  }, [fullChartData, driverStintMap]);
 
-  // Apply zoom window
+  // Zoom windowing
   const windowedData = useMemo(() => {
     if (!zoom) return fullMergedData;
     return fullMergedData.slice(zoom.startIndex, zoom.endIndex + 1);
   }, [fullMergedData, zoom]);
 
-  // Dynamic downsampling based on container width and zoom level
+  // Downsampling
   const displayData = useMemo(() => {
     const target = getTargetPoints(containerWidth);
     if (windowedData.length <= target) return windowedData;
-
-    // Find the primary Y key for LTTB
-    const primaryDriver = drivers[0];
-    const avgKey = `${primaryDriver}_avg`;
-
+    // Use first driver's first stint avg for LTTB reference
+    const firstDriver = drivers[0];
+    const firstStint = driverStintMap.get(firstDriver)?.[0];
+    if (firstStint == null) return windowedData;
+    const refKey = avgKey(firstDriver, firstStint);
+    const rawKey = seriesKey(firstDriver, firstStint);
     return lttbDownsample(
       windowedData,
       target,
       d => d.lap as number,
-      d => (d[avgKey] as number) ?? (d[primaryDriver] as number) ?? 0
+      d => (d[refKey] as number) ?? (d[rawKey] as number) ?? 0
     );
-  }, [windowedData, containerWidth, drivers]);
+  }, [windowedData, containerWidth, drivers, driverStintMap]);
 
   const bestLap = useMemo(() => {
     const clean = data.filter(r => r.pit_type === '');
     if (clean.length === 0) return null;
     return clean.reduce((best, r) => r.lap_time_s < best.lap_time_s ? r : best, clean[0]);
   }, [data]);
+
+  // All driver-stint line descriptors for rendering
+  const lineDescriptors = useMemo(() => {
+    const lines: { driver: string; stint: number; colorIdx: number; sk: string; ak: string }[] = [];
+    let di = 0;
+    for (const [driver, stints] of driverStintMap) {
+      for (const stint of stints) {
+        lines.push({ driver, stint, colorIdx: di, sk: seriesKey(driver, stint), ak: avgKey(driver, stint) });
+      }
+      di++;
+    }
+    return lines;
+  }, [driverStintMap]);
 
   // Drag-to-zoom handlers
   const handleMouseDown = useCallback((e: any) => {
@@ -214,10 +207,8 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     if (refAreaLeft != null && refAreaRight != null && refAreaLeft !== refAreaRight) {
       const left = Math.min(refAreaLeft, refAreaRight);
       const right = Math.max(refAreaLeft, refAreaRight);
-
       const startIdx = fullMergedData.findIndex(d => (d.lap as number) >= left);
       const endIdx = fullMergedData.length - 1 - [...fullMergedData].reverse().findIndex(d => (d.lap as number) <= right);
-
       if (startIdx >= 0 && endIdx >= startIdx) {
         setZoom({ startIndex: startIdx, endIndex: endIdx });
       }
@@ -278,7 +269,6 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
                 label={{ value: `S${s.stint}`, position: 'insideTopLeft', fill: 'hsl(215, 15%, 45%)', fontSize: 10 }}
               />
             ))}
-            {/* Drag-to-zoom selection area */}
             {refAreaLeft != null && refAreaRight != null && (
               <ReferenceArea
                 x1={refAreaLeft}
@@ -289,23 +279,36 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
                 strokeOpacity={0.4}
               />
             )}
-            <XAxis dataKey="lap" tick={{ fill: 'hsl(215, 15%, 55%)', fontSize: 11 }} />
+            <XAxis
+              dataKey="lap"
+              tick={{ fill: 'hsl(215, 15%, 55%)', fontSize: 11 }}
+              allowDecimals={false}
+              type="number"
+              domain={['dataMin', 'dataMax']}
+            />
             <YAxis tick={{ fill: 'hsl(215, 15%, 55%)', fontSize: 11 }} tickFormatter={(v: number) => formatLapTime(v)} domain={['auto', 'auto']} />
             <Tooltip
               contentStyle={{ background: 'hsl(222, 25%, 11%)', border: '1px solid hsl(222, 20%, 18%)', borderRadius: 8, fontSize: 12 }}
               labelStyle={{ color: 'hsl(210, 20%, 92%)' }}
-              formatter={(value: number, name: string) => [formatLapTime(value), name.endsWith('_avg') ? `${name.replace('_avg', '')} (5-lap avg)` : name]}
+              formatter={(value: number, name: string) => {
+                // Strip internal keys for display: "Driver__s1_avg" -> "Driver (5-lap avg)"
+                const isAvg = name.endsWith('_avg');
+                const displayName = name.replace(/__s\d+(_avg)?$/, '');
+                return [formatLapTime(value), isAvg ? `${displayName} (5-lap avg)` : displayName];
+              }}
               labelFormatter={(l) => `Lap ${l}`}
             />
-            {/* Raw lines — visually secondary */}
-            {drivers.map((d, i) => (
-              <Line key={d} dataKey={d} stroke={COLORS[i % COLORS.length]} strokeWidth={1} dot={false} name={d} strokeOpacity={0.3} isAnimationActive={false} />
+            {/* Raw lines — one per driver-stint, visually secondary */}
+            {lineDescriptors.map(({ sk, colorIdx }) => (
+              <Line key={sk} dataKey={sk} stroke={COLORS[colorIdx % COLORS.length]} strokeWidth={1} dot={false}
+                strokeOpacity={0.3} isAnimationActive={false} connectNulls={false} />
             ))}
-            {/* Rolling average — primary trace */}
-            {drivers.map((d, i) => (
-              <Line key={`${d}_avg`} dataKey={`${d}_avg`} stroke={COLORS[i % COLORS.length]} strokeWidth={2.5} dot={false} name={`${d}_avg`} isAnimationActive={false} />
+            {/* Rolling average — one per driver-stint, primary trace */}
+            {lineDescriptors.map(({ ak, colorIdx }) => (
+              <Line key={ak} dataKey={ak} stroke={COLORS[colorIdx % COLORS.length]} strokeWidth={2.5} dot={false}
+                isAnimationActive={false} connectNulls={false} />
             ))}
-            {/* Pit lap markers — diamond shapes */}
+            {/* Pit lap markers */}
             {pitMarkers.map((m, idx) => (
               <ReferenceDot key={`pit-${idx}`} x={m.lap} y={m.time} r={4}
                 fill="hsl(45, 85%, 60%)" stroke="hsl(45, 85%, 40%)" strokeWidth={1.5}
@@ -320,13 +323,12 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
             )}
           </LineChart>
         </ResponsiveContainer>
-        {/* Mini-brush for pan navigation */}
         {totalPoints > 100 && (
           <div className="mt-2">
             <ResponsiveContainer width="100%" height={40}>
               <LineChart data={fullMergedData} margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
-                {drivers.length > 0 && (
-                  <Line dataKey={`${drivers[0]}_avg`} stroke="hsl(215, 15%, 35%)" strokeWidth={1} dot={false} isAnimationActive={false} />
+                {lineDescriptors.length > 0 && (
+                  <Line dataKey={lineDescriptors[0].ak} stroke="hsl(215, 15%, 35%)" strokeWidth={1} dot={false} isAnimationActive={false} />
                 )}
                 <Brush
                   dataKey="lap"

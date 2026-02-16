@@ -5,9 +5,9 @@ import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 
-const StintTimeline = ({ data }: { data: LapRecord[] }) => {
+const StintTimeline = ({ data, includePitLaps = false }: { data: LapRecord[]; includePitLaps?: boolean }) => {
   const { t } = useI18n();
-  const stintData = useMemo(() => computeStintStats(data), [data]);
+  const stintData = useMemo(() => computeStintStats(data, includePitLaps), [data, includePitLaps]);
   const pitStints = useMemo(() => stintData.filter(s => s.hasPit), [stintData]);
 
   if (stintData.length === 0) return null;
