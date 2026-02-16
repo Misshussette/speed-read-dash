@@ -48,7 +48,7 @@ const Dashboard = () => {
             <Button variant="ghost" size="sm" className="text-foreground" onClick={() => exportFilteredCSV(filteredData)}>
               <Download className="h-4 w-4 mr-1" /> {t('export_csv')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { clearData(); navigate('/'); }}>
+            <Button variant="ghost" size="sm" className="text-foreground" onClick={() => { clearData(); navigate('/'); }}>
               <ArrowLeft className="h-4 w-4 mr-1" /> {t('new_upload')}
             </Button>
           </div>
