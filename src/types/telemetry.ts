@@ -28,6 +28,8 @@ export interface KPIData {
   bestLap: number | null;
   averagePace: number | null;
   consistency: number | null;
+  paceDelta: number | null;
+  degradation: number | null;
   totalLaps: number;
   pitStops: number;
   totalPitTime: number;

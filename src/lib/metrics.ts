@@ -26,15 +26,66 @@ export function computeKPIs(data: LapRecord[]): KPIData {
   const clean = cleanLaps(data);
   const times = clean.map(r => r.lap_time_s);
   const pitLaps = data.filter(r => r.pit_type !== '');
-  
+
+  const bestLap = times.length > 0 ? Math.min(...times) : null;
+  const averagePace = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : null;
+  const paceDelta = bestLap !== null && averagePace !== null ? averagePace - bestLap : null;
+
+  // Degradation: last 10 clean laps avg vs first 10 clean laps avg
+  let degradation: number | null = null;
+  if (times.length >= 10) {
+    const first10 = times.slice(0, 10);
+    const last10 = times.slice(-10);
+    const avgFirst = first10.reduce((a, b) => a + b, 0) / first10.length;
+    const avgLast = last10.reduce((a, b) => a + b, 0) / last10.length;
+    degradation = avgLast - avgFirst;
+  }
+
   return {
-    bestLap: times.length > 0 ? Math.min(...times) : null,
-    averagePace: times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : null,
+    bestLap,
+    averagePace,
     consistency: times.length > 1 ? stdDev(times) : null,
+    paceDelta,
+    degradation,
     totalLaps: data.length,
     pitStops: pitLaps.length,
     totalPitTime: pitLaps.reduce((sum, r) => sum + (r.pit_time_s || 0), 0),
   };
+}
+
+export function computeInsights(data: LapRecord[]): { mostConsistentDriver: string | null; highestVarianceSector: string | null } {
+  const drivers = [...new Set(data.map(r => r.driver))];
+  let mostConsistentDriver: string | null = null;
+  let bestConsistency = Infinity;
+  
+  for (const driver of drivers) {
+    const laps = cleanLaps(data.filter(r => r.driver === driver));
+    const times = laps.map(r => r.lap_time_s);
+    if (times.length >= 3) {
+      const sd = stdDev(times);
+      if (sd < bestConsistency) {
+        bestConsistency = sd;
+        mostConsistentDriver = driver;
+      }
+    }
+  }
+
+  // Highest variance sector
+  let highestVarianceSector: string | null = null;
+  const sectorKeys = ['S1_s', 'S2_s', 'S3_s'] as const;
+  let maxVariance = -1;
+  for (const key of sectorKeys) {
+    const vals = data.filter(r => r.pit_type === '' && r[key] !== null).map(r => r[key] as number);
+    if (vals.length >= 3) {
+      const sd = stdDev(vals);
+      if (sd > maxVariance) {
+        maxVariance = sd;
+        highestVarianceSector = key.replace('_s', '').toUpperCase();
+      }
+    }
+  }
+
+  return { mostConsistentDriver, highestVarianceSector };
 }
 
 export function computeDriverStats(data: LapRecord[]): DriverStats[] {
