@@ -87,11 +87,15 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     const result: Record<string, number | string | null>[] = [];
     for (let i = 0; i < lapNums.length; i++) {
       const lap = lapNums[i];
-      // Real data row — every lap is included
+      // ALL laps are included — pit laps are shown but flagged
       const entry: Record<string, number | string | null> = { lap };
       drivers.forEach(d => {
-        const rec = data.find(r => r.lap_number === lap && r.driver === d && r.pit_type === '');
+        const rec = data.find(r => r.lap_number === lap && r.driver === d);
         entry[d] = rec ? rec.lap_time_s : null;
+        // Mark pit laps for visual differentiation (not used in avg)
+        if (rec && rec.pit_type !== '') {
+          entry[`${d}_pit`] = true as any;
+        }
       });
       result.push(entry);
 
@@ -112,7 +116,7 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
     return result;
   }, [data, drivers, driverStints]);
 
-  // Rolling average that resets per stint (uses only real rows, skips gap rows)
+  // Rolling average — resets per stint, excludes pit laps from calculation
   const fullMergedData = useMemo(() => {
     const window = 5;
     const buffers = new Map<string, number[]>();
@@ -124,17 +128,18 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
 
       drivers.forEach(d => {
         const val = entry[d];
+        const isPit = (entry as any)[`${d}_pit`] === true;
         const buf = buffers.get(d)!;
 
         if (isGap && val === null) {
-          // Gap row for this driver — reset buffer, keep null
           buf.length = 0;
           row[`${d}_avg`] = null;
         } else if (isGap) {
-          // Gap row but this driver has no break — skip (don't touch buffer)
-          // avg already undefined from gap entry, leave it
+          // Gap row but this driver has no break
         } else if (val == null) {
-          // Real row but driver has no data here
+          row[`${d}_avg`] = null;
+        } else if (isPit) {
+          // Pit lap: show the value on chart but do NOT feed into rolling avg
           row[`${d}_avg`] = null;
         } else {
           buf.push(val as number);
@@ -146,6 +151,20 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
       });
       return row;
     });
+  }, [fullChartData, drivers]);
+
+  // Collect pit lap markers for visual display
+  const pitMarkers = useMemo(() => {
+    const markers: { lap: number; time: number; driver: string; colorIdx: number }[] = [];
+    for (const entry of fullChartData) {
+      if ((entry as any)._gap) continue;
+      drivers.forEach((d, i) => {
+        if ((entry as any)[`${d}_pit`] && entry[d] != null) {
+          markers.push({ lap: entry.lap as number, time: entry[d] as number, driver: d, colorIdx: i });
+        }
+      });
+    }
+    return markers;
   }, [fullChartData, drivers]);
 
   // Apply zoom window
@@ -286,6 +305,16 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
             {drivers.map((d, i) => (
               <Line key={`${d}_avg`} dataKey={`${d}_avg`} stroke={COLORS[i % COLORS.length]} strokeWidth={2.5} dot={false} name={`${d}_avg`} isAnimationActive={false} />
             ))}
+            {/* Pit lap markers — diamond shapes */}
+            {pitMarkers.map((m, idx) => (
+              <ReferenceDot key={`pit-${idx}`} x={m.lap} y={m.time} r={4}
+                fill="hsl(45, 85%, 60%)" stroke="hsl(45, 85%, 40%)" strokeWidth={1.5}
+                shape={(props: any) => {
+                  const { cx, cy } = props;
+                  return <polygon points={`${cx},${cy-5} ${cx+4},${cy} ${cx},${cy+5} ${cx-4},${cy}`} fill="hsl(45, 85%, 60%)" stroke="hsl(45, 85%, 40%)" strokeWidth={1.5} />;
+                }}
+              />
+            ))}
             {bestLap && !isZoomed && (
               <ReferenceDot x={bestLap.lap_number} y={bestLap.lap_time_s} r={6} fill="hsl(185, 70%, 50%)" stroke="hsl(185, 70%, 70%)" strokeWidth={2} />
             )}
@@ -317,6 +346,7 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
           <span>{t('chart_legend_raw')}</span>
           <span>{t('chart_legend_avg')}</span>
           <span className="inline-block w-3 h-3 rounded bg-muted/20 border border-border" /> {t('chart_legend_stint_zone')}
+          <span><svg width="10" height="10" viewBox="0 0 10 10" className="inline-block mr-1"><polygon points="5,0 10,5 5,10 0,5" fill="hsl(45, 85%, 60%)" /></svg>pit lap</span>
           {totalPoints > 100 && <span className="ml-auto">{t('chart_drag_zoom')}</span>}
         </div>
       </CardContent>
