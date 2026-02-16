@@ -19,6 +19,7 @@ export interface LapRecord {
 export interface Filters {
   track: string | null;
   session_id: string | null;
+  car: string | null;
   drivers: string[];
   stints: number[];
   includePitLaps: boolean;
