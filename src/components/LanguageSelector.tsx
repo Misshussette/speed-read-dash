@@ -7,12 +7,12 @@ const LanguageSelector = () => {
 
   return (
     <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
-      <SelectTrigger className="w-[60px] h-8 text-xs bg-secondary/50 border-border font-mono">
+      <SelectTrigger className="w-[130px] h-8 text-xs bg-secondary/50 border-border">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {supportedLocales.map(l => (
-          <SelectItem key={l} value={l} className="text-xs font-mono">{localeLabels[l]}</SelectItem>
+          <SelectItem key={l} value={l} className="text-xs">{localeLabels[l]}</SelectItem>
         ))}
       </SelectContent>
     </Select>
