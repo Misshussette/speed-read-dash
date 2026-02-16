@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { LapRecord, Filters } from '@/types/telemetry';
-import { parseCSV, ParseResult } from '@/lib/csv-parser';
+import type { LapRecord, Filters } from '@/types/telemetry';
+import type { ParseResult } from '@/lib/csv-parser';
+import { parseCSV } from '@/lib/csv-parser';
 
 interface TelemetryState {
   rawData: LapRecord[];
