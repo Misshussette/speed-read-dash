@@ -7,7 +7,8 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
     if (filters.car && r.car_model !== filters.car) return false;
     if (filters.drivers.length > 0 && !filters.drivers.includes(r.driver)) return false;
     if (filters.stints.length > 0 && !filters.stints.includes(r.stint)) return false;
-    if (!filters.includePitLaps && r.pit_type !== '') return false;
+    // Never remove pit laps from the dataset — they are classified, not filtered.
+    // The includePitLaps flag is used downstream by statistics only.
     return true;
   });
 }
