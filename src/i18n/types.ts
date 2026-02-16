@@ -9,4 +9,4 @@ export const localeLabels: Record<Locale, string> = {
   es: 'ES',
 };
 
-export type TranslationKey = keyof typeof import('./en').default;
+export type TranslationKey = string;

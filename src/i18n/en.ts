@@ -1,4 +1,4 @@
-const en = {
+const en: Record<string, string> = {
   // Landing
   tagline: 'Engineering Your Race Data.',
   upload_drop: 'Drop your CSV here',
@@ -107,6 +107,6 @@ const en = {
   // Empty state
   no_data: 'No data loaded.',
   upload_csv_btn: 'Upload a CSV',
-} as const;
+};
 
 export default en;
