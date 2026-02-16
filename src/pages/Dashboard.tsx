@@ -45,7 +45,7 @@ const Dashboard = () => {
           </Link>
           <div className="flex items-center gap-2">
             <LanguageSelector />
-            <Button variant="ghost" size="sm" onClick={() => exportFilteredCSV(filteredData)}>
+            <Button variant="ghost" size="sm" className="text-foreground" onClick={() => exportFilteredCSV(filteredData)}>
               <Download className="h-4 w-4 mr-1" /> {t('export_csv')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => { clearData(); navigate('/'); }}>
