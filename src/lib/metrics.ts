@@ -13,7 +13,13 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
   });
 }
 
-function cleanLaps(data: LapRecord[]): LapRecord[] {
+/**
+ * Return laps suitable for performance calculations.
+ * When includePitLaps is true, all laps are used.
+ * When false (default), pit-related laps are excluded from calculations only.
+ */
+function cleanLaps(data: LapRecord[], includePitLaps = false): LapRecord[] {
+  if (includePitLaps) return data;
   return data.filter(r => r.pit_type === '');
 }
 
@@ -24,8 +30,8 @@ function stdDev(values: number[]): number {
   return Math.sqrt(sqDiffs.reduce((a, b) => a + b, 0) / (values.length - 1));
 }
 
-export function computeKPIs(data: LapRecord[]): KPIData {
-  const clean = cleanLaps(data);
+export function computeKPIs(data: LapRecord[], includePitLaps = false): KPIData {
+  const clean = cleanLaps(data, includePitLaps);
   const times = clean.map(r => r.lap_time_s);
   const pitLaps = data.filter(r => r.pit_type !== '');
 
@@ -55,13 +61,13 @@ export function computeKPIs(data: LapRecord[]): KPIData {
   };
 }
 
-export function computeInsights(data: LapRecord[]): { mostConsistentDriver: string | null; highestVarianceSector: string | null } {
+export function computeInsights(data: LapRecord[], includePitLaps = false): { mostConsistentDriver: string | null; highestVarianceSector: string | null } {
   const drivers = [...new Set(data.map(r => r.driver))];
   let mostConsistentDriver: string | null = null;
   let bestConsistency = Infinity;
   
   for (const driver of drivers) {
-    const laps = cleanLaps(data.filter(r => r.driver === driver));
+    const laps = cleanLaps(data.filter(r => r.driver === driver), includePitLaps);
     const times = laps.map(r => r.lap_time_s);
     if (times.length >= 3) {
       const sd = stdDev(times);
@@ -76,8 +82,9 @@ export function computeInsights(data: LapRecord[]): { mostConsistentDriver: stri
   let highestVarianceSector: string | null = null;
   const sectorKeys = ['S1_s', 'S2_s', 'S3_s'] as const;
   let maxVariance = -1;
+  const cleanData = cleanLaps(data, includePitLaps);
   for (const key of sectorKeys) {
-    const vals = data.filter(r => r.pit_type === '' && r[key] !== null).map(r => r[key] as number);
+    const vals = cleanData.filter(r => r[key] !== null).map(r => r[key] as number);
     if (vals.length >= 3) {
       const sd = stdDev(vals);
       if (sd > maxVariance) {
@@ -90,10 +97,10 @@ export function computeInsights(data: LapRecord[]): { mostConsistentDriver: stri
   return { mostConsistentDriver, highestVarianceSector };
 }
 
-export function computeDriverStats(data: LapRecord[]): DriverStats[] {
+export function computeDriverStats(data: LapRecord[], includePitLaps = false): DriverStats[] {
   const drivers = [...new Set(data.map(r => r.driver))];
   return drivers.map(driver => {
-    const laps = cleanLaps(data.filter(r => r.driver === driver));
+    const laps = cleanLaps(data.filter(r => r.driver === driver), includePitLaps);
     const times = laps.map(r => r.lap_time_s);
     return {
       driver,
@@ -104,11 +111,11 @@ export function computeDriverStats(data: LapRecord[]): DriverStats[] {
   });
 }
 
-export function computeStintStats(data: LapRecord[]): StintStats[] {
+export function computeStintStats(data: LapRecord[], includePitLaps = false): StintStats[] {
   const stints = [...new Set(data.map(r => r.stint))].sort((a, b) => a - b);
   return stints.map(stint => {
     const laps = data.filter(r => r.stint === stint);
-    const clean = cleanLaps(laps);
+    const clean = cleanLaps(laps, includePitLaps);
     const times = clean.map(r => r.lap_time_s);
     return {
       stint,

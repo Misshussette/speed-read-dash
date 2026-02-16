@@ -5,9 +5,9 @@ import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, AlertTriangle } from 'lucide-react';
 
-const AnalysisInsights = ({ data }: { data: LapRecord[] }) => {
+const AnalysisInsights = ({ data, includePitLaps = false }: { data: LapRecord[]; includePitLaps?: boolean }) => {
   const { t } = useI18n();
-  const insights = useMemo(() => computeInsights(data), [data]);
+  const insights = useMemo(() => computeInsights(data, includePitLaps), [data, includePitLaps]);
 
   if (!insights.mostConsistentDriver && !insights.highestVarianceSector) return null;
 

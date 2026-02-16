@@ -24,7 +24,7 @@ const Dashboard = () => {
 
   const filterOptions = useMemo(() => getFilterOptions(rawData), [rawData]);
   const filteredData = useMemo(() => applyFilters(rawData, filters), [rawData, filters]);
-  const kpis = useMemo(() => computeKPIs(filteredData), [filteredData]);
+  const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
 
   if (rawData.length === 0) {
     return (
@@ -76,10 +76,10 @@ const Dashboard = () => {
 
         <section className="space-y-4">
           <SectionHeader number={3} title={t('section_driver_car_analysis')} />
-          <AnalysisInsights data={filteredData} />
+          <AnalysisInsights data={filteredData} includePitLaps={filters.includePitLaps} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div id="chart-driver">
-              <DriverComparisonChart data={filteredData} />
+              <DriverComparisonChart data={filteredData} includePitLaps={filters.includePitLaps} />
             </div>
             {hasSectorData && (
               <div id="chart-sector">
@@ -92,7 +92,7 @@ const Dashboard = () => {
         <section className="space-y-4">
           <SectionHeader number={4} title={t('section_operations')} />
           <div id="chart-stint">
-            <StintTimeline data={filteredData} />
+            <StintTimeline data={filteredData} includePitLaps={filters.includePitLaps} />
           </div>
           <PitAnalysis data={filteredData} />
         </section>
