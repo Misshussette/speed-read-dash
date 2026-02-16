@@ -4,6 +4,7 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
   return data.filter(r => {
     if (filters.track && r.track !== filters.track) return false;
     if (filters.session_id && r.session_id !== filters.session_id) return false;
+    if (filters.car && r.car_model !== filters.car) return false;
     if (filters.drivers.length > 0 && !filters.drivers.includes(r.driver)) return false;
     if (filters.stints.length > 0 && !filters.stints.includes(r.stint)) return false;
     if (!filters.includePitLaps && r.pit_type !== '') return false;
@@ -133,6 +134,7 @@ export function getFilterOptions(data: LapRecord[]) {
   return {
     tracks: [...new Set(data.map(r => r.track))].filter(Boolean).sort(),
     sessions: [...new Set(data.map(r => r.session_id))].filter(Boolean).sort(),
+    cars: [...new Set(data.map(r => r.car_model))].filter(Boolean).sort(),
     drivers: [...new Set(data.map(r => r.driver))].filter(Boolean).sort(),
     stints: [...new Set(data.map(r => r.stint))].sort((a, b) => a - b),
   };

@@ -17,6 +17,7 @@ interface TelemetryState {
 const defaultFilters: Filters = {
   track: null,
   session_id: null,
+  car: null,
   drivers: [],
   stints: [],
   includePitLaps: true,

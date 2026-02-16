@@ -20,7 +20,16 @@ const en: Record<string, string> = {
   // Filters
   all_tracks: 'All Tracks',
   all_sessions: 'All Sessions',
-  pit_laps: 'Pit laps',
+  all_cars: 'All Cars',
+  all: 'All',
+  pit_laps: 'Pit Laps',
+  filter_on: 'Included',
+  filter_off: 'Excluded',
+  filter_label_track: 'Track',
+  filter_label_session: 'Session',
+  filter_label_car: 'Car',
+  filter_label_driver: 'Driver',
+  filter_label_stint: 'Stint',
   reset: 'Reset',
 
   // KPI cards
