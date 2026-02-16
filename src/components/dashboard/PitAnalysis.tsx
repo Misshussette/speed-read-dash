@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { LapRecord } from '@/types/telemetry';
 import { extractPitEvents, formatLapTime } from '@/lib/metrics';
+import { useI18n } from '@/i18n/I18nContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const PitAnalysis = ({ data }: { data: LapRecord[] }) => {
+  const { t } = useI18n();
   const pitEvents = useMemo(() => extractPitEvents(data), [data]);
 
   const summary = useMemo(() => {
@@ -24,7 +26,6 @@ const PitAnalysis = ({ data }: { data: LapRecord[] }) => {
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {summary.map(s => (
           <Card key={s.type} className="bg-card border-border">
@@ -37,20 +38,19 @@ const PitAnalysis = ({ data }: { data: LapRecord[] }) => {
         ))}
       </div>
 
-      {/* Table */}
       <Card className="bg-card border-border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-foreground">Pit Events</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">{t('chart_pit_events')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">Lap</TableHead>
-                <TableHead className="text-xs">Driver</TableHead>
-                <TableHead className="text-xs">Type</TableHead>
-                <TableHead className="text-xs">Pit Time</TableHead>
-                <TableHead className="text-xs">Timestamp</TableHead>
+                <TableHead className="text-xs">{t('pit_col_lap')}</TableHead>
+                <TableHead className="text-xs">{t('pit_col_driver')}</TableHead>
+                <TableHead className="text-xs">{t('pit_col_type')}</TableHead>
+                <TableHead className="text-xs">{t('pit_col_pit_time')}</TableHead>
+                <TableHead className="text-xs">{t('pit_col_timestamp')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

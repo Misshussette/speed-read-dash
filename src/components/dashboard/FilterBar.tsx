@@ -1,4 +1,5 @@
 import { Filters } from '@/types/telemetry';
+import { useI18n } from '@/i18n/I18nContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -12,37 +13,30 @@ interface FilterBarProps {
 }
 
 const FilterBar = ({ options, filters, onChange, onReset }: FilterBarProps) => {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {/* Track */}
-      <Select
-        value={filters.track || '__all__'}
-        onValueChange={(v) => onChange({ ...filters, track: v === '__all__' ? null : v })}
-      >
+      <Select value={filters.track || '__all__'} onValueChange={(v) => onChange({ ...filters, track: v === '__all__' ? null : v })}>
         <SelectTrigger className="w-[160px] h-8 text-xs bg-secondary/50 border-border">
-          <SelectValue placeholder="All Tracks" />
+          <SelectValue placeholder={t('all_tracks')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Tracks</SelectItem>
-          {options.tracks.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          <SelectItem value="__all__">{t('all_tracks')}</SelectItem>
+          {options.tracks.map(tr => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
         </SelectContent>
       </Select>
 
-      {/* Session */}
-      <Select
-        value={filters.session_id || '__all__'}
-        onValueChange={(v) => onChange({ ...filters, session_id: v === '__all__' ? null : v })}
-      >
+      <Select value={filters.session_id || '__all__'} onValueChange={(v) => onChange({ ...filters, session_id: v === '__all__' ? null : v })}>
         <SelectTrigger className="w-[160px] h-8 text-xs bg-secondary/50 border-border">
-          <SelectValue placeholder="All Sessions" />
+          <SelectValue placeholder={t('all_sessions')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All Sessions</SelectItem>
+          <SelectItem value="__all__">{t('all_sessions')}</SelectItem>
           {options.sessions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
         </SelectContent>
       </Select>
 
-      {/* Drivers as multi-toggle pills */}
       <div className="flex flex-wrap gap-1">
         {options.drivers.map(d => {
           const active = filters.drivers.length === 0 || filters.drivers.includes(d);
@@ -51,11 +45,9 @@ const FilterBar = ({ options, filters, onChange, onReset }: FilterBarProps) => {
               key={d}
               onClick={() => {
                 if (filters.drivers.length === 0) {
-                  // Select only this one
                   onChange({ ...filters, drivers: [d] });
                 } else if (filters.drivers.includes(d)) {
-                  const next = filters.drivers.filter(x => x !== d);
-                  onChange({ ...filters, drivers: next });
+                  onChange({ ...filters, drivers: filters.drivers.filter(x => x !== d) });
                 } else {
                   onChange({ ...filters, drivers: [...filters.drivers, d] });
                 }
@@ -72,18 +64,13 @@ const FilterBar = ({ options, filters, onChange, onReset }: FilterBarProps) => {
         })}
       </div>
 
-      {/* Pit toggle */}
       <div className="flex items-center gap-1.5 ml-auto">
-        <span className="text-xs text-muted-foreground">Pit laps</span>
-        <Switch
-          checked={filters.includePitLaps}
-          onCheckedChange={(v) => onChange({ ...filters, includePitLaps: v })}
-        />
+        <span className="text-xs text-muted-foreground">{t('pit_laps')}</span>
+        <Switch checked={filters.includePitLaps} onCheckedChange={(v) => onChange({ ...filters, includePitLaps: v })} />
       </div>
 
-      {/* Reset */}
       <Button variant="ghost" size="sm" onClick={onReset} className="h-8 text-xs text-muted-foreground">
-        <RotateCcw className="h-3 w-3 mr-1" /> Reset
+        <RotateCcw className="h-3 w-3 mr-1" /> {t('reset')}
       </Button>
     </div>
   );
