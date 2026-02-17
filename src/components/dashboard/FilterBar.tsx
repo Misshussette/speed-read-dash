@@ -3,13 +3,15 @@ import { useI18n } from '@/i18n/I18nContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Focus } from 'lucide-react';
 
 interface FilterBarProps {
   options: { tracks: string[]; sessions: string[]; cars: string[]; drivers: string[]; stints: number[] };
   filters: Filters;
   onChange: (f: Filters) => void;
   onReset: () => void;
+  scopeOptions?: { entities: string[]; drivers: string[]; lanes: number[] };
+  hasScope?: boolean;
 }
 
 interface LabeledSelectProps {
@@ -35,7 +37,7 @@ const LabeledSelect = ({ label, value, allLabel, options, onValueChange }: Label
   </div>
 );
 
-const FilterBar = ({ options, filters, onChange, onReset }: FilterBarProps) => {
+const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope }: FilterBarProps) => {
   const { t } = useI18n();
 
   return (
@@ -157,6 +159,13 @@ const FilterBar = ({ options, filters, onChange, onReset }: FilterBarProps) => {
       <Button variant="ghost" size="sm" onClick={onReset} className="h-8 text-xs text-muted-foreground">
         <RotateCcw className="h-3 w-3 mr-1" /> {t('reset')}
       </Button>
+
+      {hasScope && (
+        <div className="flex items-center gap-1.5 ml-1">
+          <Focus className="h-3.5 w-3.5 text-primary" />
+          <span className="text-[10px] font-medium uppercase tracking-wider text-primary">{t('scope_active')}</span>
+        </div>
+      )}
     </div>
   );
 };

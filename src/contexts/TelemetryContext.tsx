@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { LapRecord, Filters, SessionMeta, StoredSession } from '@/types/telemetry';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import type { LapRecord, Filters, SessionMeta, StoredSession, AnalysisScope } from '@/types/telemetry';
 import type { ParseResult } from '@/lib/csv-parser';
 import { parseCSV } from '@/lib/csv-parser';
 import { getAllSessions, saveSession, deleteSession as deleteSessionFromDB } from '@/lib/session-store';
+import { DEFAULT_SCOPE, applyScopeFilter, getScopeOptions, computeDualContextKPIs, type DualContextKPIs } from '@/lib/analysis-scope';
 
 interface TelemetryState {
   // Multi-session
@@ -20,6 +21,14 @@ interface TelemetryState {
   filters: Filters;
   setFilters: (f: Filters) => void;
   resetFilters: () => void;
+
+  // Analysis scope
+  scope: AnalysisScope;
+  setScope: (s: AnalysisScope) => void;
+  resetScope: () => void;
+  scopeOptions: ReturnType<typeof getScopeOptions>;
+  scopedData: LapRecord[];
+  dualKPIs: DualContextKPIs | null;
 }
 
 const defaultFilters: Filters = {
@@ -39,13 +48,13 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [scope, setScope] = useState<AnalysisScope>(DEFAULT_SCOPE);
   const [initialized, setInitialized] = useState(false);
 
   // Load all sessions from IndexedDB on mount
   useEffect(() => {
     getAllSessions().then(sessions => {
       setStoredSessions(sessions);
-      // Auto-select the most recent session
       if (sessions.length > 0) {
         const sorted = [...sessions].sort((a, b) => b.meta.importedAt - a.meta.importedAt);
         setActiveSessionId(sorted[0].meta.id);
@@ -96,6 +105,18 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const hasSectorData = activeSession?.hasSectorData || false;
   const sessions = storedSessions.map(s => s.meta).sort((a, b) => b.importedAt - a.importedAt);
 
+  // Scope options derived from raw (canonical) data
+  const scopeOptions = useMemo(() => getScopeOptions(rawData), [rawData]);
+
+  // Scoped dataset: canonical data filtered by analysis scope (virtual, no duplication)
+  const scopedData = useMemo(() => applyScopeFilter(rawData, scope), [rawData, scope]);
+
+  // Dual-context KPIs
+  const dualKPIs = useMemo(() => {
+    if (!scope.enabled || rawData.length === 0) return null;
+    return computeDualContextKPIs(scopedData, rawData, filters.includePitLaps);
+  }, [scopedData, rawData, scope.enabled, filters.includePitLaps]);
+
   const addCSV = useCallback(async (file: File) => {
     setIsLoading(true);
     setErrors([]);
@@ -132,6 +153,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setStoredSessions(prev => [session, ...prev]);
     setActiveSessionId(id);
     setFilters(defaultFilters);
+    setScope(DEFAULT_SCOPE);
     setIsLoading(false);
   }, []);
 
@@ -142,6 +164,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       if (activeSessionId === id) {
         setActiveSessionId(next.length > 0 ? next[0].meta.id : null);
         setFilters(defaultFilters);
+        setScope(DEFAULT_SCOPE);
       }
       return next;
     });
@@ -150,9 +173,11 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const handleSetActiveSessionId = useCallback((id: string | null) => {
     setActiveSessionId(id);
     setFilters(defaultFilters);
+    setScope(DEFAULT_SCOPE);
   }, []);
 
   const resetFilters = useCallback(() => setFilters(defaultFilters), []);
+  const resetScope = useCallback(() => setScope(DEFAULT_SCOPE), []);
 
   return (
     <TelemetryContext.Provider value={{
@@ -160,6 +185,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       addCSV, removeSession,
       rawData, hasSectorData, isLoading, errors, filters,
       setFilters, resetFilters,
+      scope, setScope, resetScope, scopeOptions, scopedData, dualKPIs,
     }}>
       {children}
     </TelemetryContext.Provider>

@@ -17,6 +17,8 @@ import PitAnalysis from '@/components/dashboard/PitAnalysis';
 import AnalysisInsights from '@/components/dashboard/AnalysisInsights';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import SessionManager from '@/components/dashboard/SessionManager';
+import ScopePanel from '@/components/dashboard/ScopePanel';
+import ScopeKPICards from '@/components/dashboard/ScopeKPICards';
 
 type AnalysisMode = 'overview' | 'stints' | 'drivers' | 'car' | 'compare';
 
@@ -25,27 +27,19 @@ const MODES: AnalysisMode[] = ['overview', 'stints', 'drivers', 'car', 'compare'
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { rawData, hasSectorData, filters, setFilters, resetFilters, sessions } = useTelemetry();
+  const { rawData, hasSectorData, filters, setFilters, resetFilters, sessions, scope, scopedData, scopeOptions, dualKPIs } = useTelemetry();
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('overview');
 
-  const filterOptions = useMemo(() => getFilterOptions(rawData), [rawData]);
-  const filteredData = useMemo(() => applyFilters(rawData, filters), [rawData, filters]);
+  // Use scoped data as the canonical source for analysis when scope is active
+  const analysisBase = scope.enabled ? scopedData : rawData;
+
+  const filterOptions = useMemo(() => getFilterOptions(analysisBase), [analysisBase]);
+  const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
 
   // Mode-specific derived datasets (no duplication, just views)
-  const stintData = useMemo(() => {
-    if (analysisMode !== 'stints') return filteredData;
-    return filteredData;
-  }, [filteredData, analysisMode]);
-
-  const driverData = useMemo(() => {
-    if (analysisMode !== 'drivers') return filteredData;
-    return filteredData;
-  }, [filteredData, analysisMode]);
-
-  const carData = useMemo(() => {
-    if (analysisMode !== 'car') return filteredData;
-    return filteredData;
-  }, [filteredData, analysisMode]);
+  const stintData = useMemo(() => filteredData, [filteredData]);
+  const driverData = useMemo(() => filteredData, [filteredData]);
+  const carData = useMemo(() => filteredData, [filteredData]);
 
   // KPIs recompute based on the active mode's dataset
   const modeData = useMemo(() => {
@@ -90,7 +84,7 @@ const Dashboard = () => {
 
       <div className="sticky top-[57px] z-40 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 py-3">
-          <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} />
+          <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopeOptions={scopeOptions} hasScope={scope.enabled} />
         </div>
       </div>
 
@@ -98,6 +92,7 @@ const Dashboard = () => {
         <section className="space-y-4">
           <SectionHeader number={0} title={t('session_manager')} />
           <SessionManager />
+          <ScopePanel />
         </section>
 
         {rawData.length > 0 && (
@@ -123,6 +118,7 @@ const Dashboard = () => {
             <section className="space-y-4">
               <SectionHeader number={1} title={t('section_session_overview')} />
               <KPICards kpis={kpis} />
+              <ScopeKPICards />
             </section>
 
             {/* Mode-specific content */}

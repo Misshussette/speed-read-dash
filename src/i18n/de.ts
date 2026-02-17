@@ -104,6 +104,24 @@ const de: Record<string, string> = {
   mode_car: 'Fahrzeug',
   mode_compare: 'Vergleich',
   compare_placeholder: 'Multi-Sitzungs-Vergleich wird hier verfügbar sein. Importieren Sie mehrere Sitzungen und überlagern Sie deren Daten.',
+
+  scope_active: 'Scope aktiv',
+  scope_title: 'Analysebereich',
+  scope_entity: 'Entität',
+  scope_driver: 'Fahrer',
+  scope_lane: 'Spur',
+  scope_enable: 'Aktivieren',
+  scope_disable: 'Deaktivieren',
+  scope_all_entities: 'Alle Entitäten',
+  scope_all_drivers: 'Alle Fahrer',
+  scope_all_lanes: 'Alle Spuren',
+  scope_reset: 'Zurücksetzen',
+  scope_vs_global: 'vs Rennen',
+  scope_relative_pace: 'Relatives Tempo',
+  scope_relative_consistency: 'Relative Konstanz',
+  scope_lap_ratio: 'Rundenverhältnis',
+  help_relative_pace: 'Unterschied zwischen Ihrem Durchschnittstempo und dem Rennschnitt. Negativ = schneller als das Feld.',
+  help_relative_consistency: 'Unterschied zwischen Ihrer Konstanz und der des Rennens. Negativ = konstanter als das Feld.',
 };
 
 export default de;

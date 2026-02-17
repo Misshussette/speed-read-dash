@@ -104,6 +104,24 @@ const nl: Record<string, string> = {
   mode_car: 'Auto',
   mode_compare: 'Vergelijking',
   compare_placeholder: 'Multi-sessie vergelijking wordt hier beschikbaar. Importeer meerdere sessies en combineer hun data.',
+
+  scope_active: 'Scope actief',
+  scope_title: 'Analysebereik',
+  scope_entity: 'Entiteit',
+  scope_driver: 'Rijder',
+  scope_lane: 'Baan',
+  scope_enable: 'Inschakelen',
+  scope_disable: 'Uitschakelen',
+  scope_all_entities: 'Alle entiteiten',
+  scope_all_drivers: 'Alle rijders',
+  scope_all_lanes: 'Alle banen',
+  scope_reset: 'Wissen',
+  scope_vs_global: 'vs Race',
+  scope_relative_pace: 'Relatief tempo',
+  scope_relative_consistency: 'Relatieve consistentie',
+  scope_lap_ratio: 'Rondeverhouding',
+  help_relative_pace: 'Verschil tussen jouw gemiddeld tempo en het racegemiddelde. Negatief = sneller dan het veld.',
+  help_relative_consistency: 'Verschil tussen jouw consistentie en die van de race. Negatief = consistenter dan het veld.',
 };
 
 export default nl;

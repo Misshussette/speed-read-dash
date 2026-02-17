@@ -133,6 +133,25 @@ const en: Record<string, string> = {
   mode_car: 'Car',
   mode_compare: 'Comparison',
   compare_placeholder: 'Multi-session comparison will be available here. Import multiple sessions and overlay their data.',
+
+  // Analysis scope
+  scope_active: 'Scope Active',
+  scope_title: 'Analysis Scope',
+  scope_entity: 'Entity',
+  scope_driver: 'Driver',
+  scope_lane: 'Lane',
+  scope_enable: 'Enable Scope',
+  scope_disable: 'Disable Scope',
+  scope_all_entities: 'All Entities',
+  scope_all_drivers: 'All Drivers',
+  scope_all_lanes: 'All Lanes',
+  scope_reset: 'Clear Scope',
+  scope_vs_global: 'vs Race',
+  scope_relative_pace: 'Relative Pace',
+  scope_relative_consistency: 'Relative Consistency',
+  scope_lap_ratio: 'Lap Ratio',
+  help_relative_pace: 'Difference between your scoped average pace and the full race average. Negative means faster than the field.',
+  help_relative_consistency: 'Difference between your scoped consistency and the full race. Negative means more consistent than the field.',
 };
 
 export default en;
