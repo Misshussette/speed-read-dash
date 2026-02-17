@@ -14,6 +14,12 @@ export interface LapRecord {
   pit_type: string;
   pit_time_s: number | null;
   timestamp: string;
+  // Extended fields for analog/digital racing
+  lane: number | null;
+  driving_station: number | null;
+  team_number: string | null;
+  stint_elapsed_s: number | null;
+  session_elapsed_s: number | null;
 }
 
 export interface SessionMeta {
@@ -85,7 +91,7 @@ export const REQUIRED_COLUMNS = [
 // At least one of these must be present for lap time
 export const LAP_TIME_ALIASES = ['lap_time_s', 'lap_time_sec', 'laptime', 'lap_time'];
 
-export const OPTIONAL_COLUMNS = ['S1_s', 'S2_s', 'S3_s', 'date', 'brand', 'pit_type', 'pit_time_s', 'timestamp'];
+export const OPTIONAL_COLUMNS = ['S1_s', 'S2_s', 'S3_s', 'date', 'brand', 'pit_type', 'pit_time_s', 'timestamp', 'lane', 'driving_station', 'team_number', 'stint_elapsed_s', 'session_elapsed_s'];
 
 // Column alias mapping: alias -> canonical name
 export const COLUMN_ALIASES: Record<string, string> = {
@@ -97,4 +103,7 @@ export const COLUMN_ALIASES: Record<string, string> = {
   pilote: 'driver',
   tour: 'lap_number',
   relais: 'stint',
+  stint_id: 'stint',
+  stint_elapsed_sec: 'stint_elapsed_s',
+  session_elapsed_sec: 'session_elapsed_s',
 };
