@@ -38,6 +38,7 @@ export interface StoredSession {
   meta: SessionMeta;
   data: LapRecord[];
   hasSectorData: boolean;
+  dataMode: DataMode;
 }
 
 export interface Filters {
@@ -106,4 +107,18 @@ export const COLUMN_ALIASES: Record<string, string> = {
   stint_id: 'stint',
   stint_elapsed_sec: 'stint_elapsed_s',
   session_elapsed_sec: 'session_elapsed_s',
+  // PCLapCounter aliases
+  RaceID: 'session_id',
+  SegmentID: 'stint',
+  RaceTime: 'session_elapsed_s',
+  LapTime: 'lap_time_s',
+  LaneID: 'lane',
+  DriverID: 'driver',
+  TeamID: 'team_number',
+  CarID: 'car_model',
 };
+
+// PCLap signature columns — if all present, treat as structured PCLap data
+export const PCLAP_SIGNATURE = ['RaceID', 'SegmentID', 'RaceTime', 'LapTime'];
+
+export type DataMode = 'generic' | 'pclap';
