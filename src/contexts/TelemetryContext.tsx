@@ -10,14 +10,14 @@ interface TelemetryState {
   sessions: SessionMeta[];
   activeSessionId: string | null;
   setActiveSessionId: (id: string | null) => void;
-  uploadFile: (file: File) => Promise<void>;
+  uploadFile: (file: File, eventIdOverride?: string) => Promise<void>;
   removeSession: (id: string) => void;
 
   // Events
   events: { id: string; name: string }[];
   activeEventId: string | null;
   setActiveEventId: (id: string | null) => void;
-  createEvent: (name: string) => Promise<void>;
+  createEvent: (name: string) => Promise<string | null>;
 
   // Current session data
   rawData: LapRecord[];
@@ -169,22 +169,25 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     loadLaps();
   }, [activeSessionId, sessions]);
 
-  const createEvent = useCallback(async (name: string) => {
-    if (!user) return;
+  const createEvent = useCallback(async (name: string): Promise<string | null> => {
+    if (!user) return null;
     const { data, error } = await supabase
       .from('events')
       .insert({ name, created_by: user.id })
       .select('id, name')
       .single();
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); return null; }
     if (data) {
       setEvents(prev => [data, ...prev]);
       setActiveEventId(data.id);
+      return data.id;
     }
+    return null;
   }, [user]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    if (!user || !activeEventId) {
+  const uploadFile = useCallback(async (file: File, eventIdOverride?: string) => {
+    const targetEventId = eventIdOverride || activeEventId;
+    if (!user || !targetEventId) {
       toast.error('Select an event first.');
       return;
     }
@@ -201,7 +204,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .insert({
-          event_id: activeEventId,
+          event_id: targetEventId,
           name: file.name.replace(/\.csv$/i, ''),
           filename: file.name,
           status: 'processing',
@@ -215,7 +218,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
         body: {
           session_id: sessionData.id,
           file_path: filePath,
-          event_id: activeEventId,
+          event_id: targetEventId,
         },
       });
       if (fnError) throw fnError;
@@ -224,7 +227,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       const { data: refreshed } = await supabase
         .from('sessions')
         .select('*')
-        .eq('event_id', activeEventId)
+        .eq('event_id', targetEventId)
         .order('created_at', { ascending: false });
 
       if (refreshed) {

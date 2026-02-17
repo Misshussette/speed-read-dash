@@ -19,11 +19,12 @@ const Index = () => {
       toast.error(t('upload_error_csv'));
       return;
     }
-    // Auto-create a default event if user has none
-    if (!activeEventId) {
-      await createEvent('My Sessions');
+    let eventId = activeEventId;
+    if (!eventId) {
+      eventId = await createEvent('My Sessions');
+      if (!eventId) return;
     }
-    await uploadFile(file);
+    await uploadFile(file, eventId);
     navigate('/app');
   }, [uploadFile, navigate, t, activeEventId, createEvent]);
 
