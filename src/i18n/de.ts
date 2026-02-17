@@ -89,6 +89,14 @@ const de: Record<string, string> = {
   help_total_pit_time: 'Kumulierte Standzeit in der Box über alle Stopps.',
   no_data: 'Keine Daten geladen.',
   upload_csv_btn: 'CSV hochladen',
+
+  session_manager: 'Sitzungsverwaltung',
+  session_add: 'Sitzung hinzufügen',
+  session_added: 'Sitzung erfolgreich hinzugefügt',
+  session_empty: 'Noch keine Sitzungen importiert. Laden Sie eine CSV hoch.',
+  session_col_date: 'Datum',
+  session_col_file: 'Datei',
+  session_count: 'Sitzungen',
 };
 
 export default de;

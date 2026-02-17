@@ -89,6 +89,14 @@ const nl: Record<string, string> = {
   help_total_pit_time: 'Cumulatieve stilstandtijd in de pits over alle stops.',
   no_data: 'Geen data geladen.',
   upload_csv_btn: 'CSV uploaden',
+
+  session_manager: 'Sessiebeheer',
+  session_add: 'Sessie toevoegen',
+  session_added: 'Sessie succesvol toegevoegd',
+  session_empty: 'Nog geen sessies geïmporteerd. Upload een CSV om te beginnen.',
+  session_col_date: 'Datum',
+  session_col_file: 'Bestand',
+  session_count: 'sessies',
 };
 
 export default nl;

@@ -16,6 +16,24 @@ export interface LapRecord {
   timestamp: string;
 }
 
+export interface SessionMeta {
+  id: string;
+  session_id: string;
+  date: string;
+  track: string;
+  car_model: string;
+  brand: string;
+  filename: string;
+  laps: number;
+  importedAt: number;
+}
+
+export interface StoredSession {
+  meta: SessionMeta;
+  data: LapRecord[];
+  hasSectorData: boolean;
+}
+
 export interface Filters {
   track: string | null;
   session_id: string | null;

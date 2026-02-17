@@ -89,6 +89,14 @@ const es: Record<string, string> = {
   help_total_pit_time: 'Tiempo acumulado detenido en boxes en todas las paradas.',
   no_data: 'No hay datos cargados.',
   upload_csv_btn: 'Subir un CSV',
+
+  session_manager: 'Gestor de sesiones',
+  session_add: 'Añadir sesión',
+  session_added: 'Sesión añadida correctamente',
+  session_empty: 'No hay sesiones importadas. Sube un CSV para empezar.',
+  session_col_date: 'Fecha',
+  session_col_file: 'Archivo',
+  session_count: 'sesiones',
 };
 
 export default es;

@@ -89,6 +89,14 @@ const fr: Record<string, string> = {
   help_total_pit_time: 'Temps cumulé passé à l\'arrêt dans les stands sur tous les arrêts.',
   no_data: 'Aucune donnée chargée.',
   upload_csv_btn: 'Télécharger un CSV',
+
+  session_manager: 'Gestionnaire de sessions',
+  session_add: 'Ajouter une session',
+  session_added: 'Session ajoutée avec succès',
+  session_empty: 'Aucune session importée. Téléchargez un CSV pour commencer.',
+  session_col_date: 'Date',
+  session_col_file: 'Fichier',
+  session_count: 'sessions',
 };
 
 export default fr;
