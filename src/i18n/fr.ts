@@ -97,6 +97,13 @@ const fr: Record<string, string> = {
   session_col_date: 'Date',
   session_col_file: 'Fichier',
   session_count: 'sessions',
+
+  mode_overview: 'Vue d\'ensemble',
+  mode_stints: 'Relais',
+  mode_drivers: 'Pilotes',
+  mode_car: 'Voiture',
+  mode_compare: 'Comparaison',
+  compare_placeholder: 'La comparaison multi-session sera disponible ici. Importez plusieurs sessions et superposez leurs données.',
 };
 
 export default fr;

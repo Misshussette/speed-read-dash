@@ -125,6 +125,14 @@ const en: Record<string, string> = {
   session_col_date: 'Date',
   session_col_file: 'File',
   session_count: 'sessions',
+
+  // Analysis modes
+  mode_overview: 'Overview',
+  mode_stints: 'Stints',
+  mode_drivers: 'Drivers',
+  mode_car: 'Car',
+  mode_compare: 'Comparison',
+  compare_placeholder: 'Multi-session comparison will be available here. Import multiple sessions and overlay their data.',
 };
 
 export default en;
