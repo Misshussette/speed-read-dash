@@ -22,7 +22,12 @@ function getDB() {
 
 export async function getAllSessions(): Promise<StoredSession[]> {
   const db = await getDB();
-  return db.getAll(STORE_NAME);
+  const sessions: StoredSession[] = await db.getAll(STORE_NAME);
+  // Backfill dataMode for sessions stored before PCLap support
+  return sessions.map(s => ({
+    ...s,
+    dataMode: s.dataMode ?? 'generic',
+  }));
 }
 
 export async function getSession(id: string): Promise<StoredSession | undefined> {
