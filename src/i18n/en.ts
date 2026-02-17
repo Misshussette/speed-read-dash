@@ -152,6 +152,35 @@ const en: Record<string, string> = {
   scope_lap_ratio: 'Lap Ratio',
   help_relative_pace: 'Difference between your scoped average pace and the full race average. Negative means faster than the field.',
   help_relative_consistency: 'Difference between your scoped consistency and the full race. Negative means more consistent than the field.',
+
+  // Display mode
+  mode_expert: 'Expert',
+  mode_guided: 'Guided',
+  display_mode_toggle: 'Toggle display mode',
+
+  // Interpretation labels
+  interp_no_data: '',
+  interp_best_lap_ref: 'Reference lap for the session.',
+  interp_avg_pace_ref: 'Your typical race rhythm.',
+  interp_pace_delta_ok: 'Excellent consistency — close to your best.',
+  interp_pace_delta_warn: 'Room to improve — average pace drifts from best.',
+  interp_pace_delta_crit: 'Large gap to best lap — focus on reducing errors.',
+  interp_consistency_ok: 'Very stable driving — lap times are tight.',
+  interp_consistency_warn: 'Some variation — look for inconsistent sectors.',
+  interp_consistency_crit: 'High variation — driving is unpredictable.',
+  interp_degradation_improving: 'Pace is improving over the run.',
+  interp_degradation_ok: 'Minimal degradation — car and driver hold up well.',
+  interp_degradation_warn: 'Noticeable pace loss — check tyre wear or fatigue.',
+  interp_degradation_crit: 'Severe degradation — investigate setup or strategy.',
+  interp_pit_none: 'No pit stops recorded.',
+  interp_pit_ok: 'Normal pit frequency.',
+  interp_pit_warn: 'Elevated pit frequency — review reliability.',
+  interp_pit_crit: 'Very high pit frequency — possible issue.',
+  interp_pit_time_none: 'No time lost in pits.',
+  interp_pit_time_ok: 'Pit times are efficient.',
+  interp_pit_time_warn: 'Pit times are above average — room to optimize.',
+  interp_pit_time_crit: 'Excessive pit time — significant time lost.',
+  interp_total_laps_ref: 'Total laps in your selection.',
 };
 
 export default en;
