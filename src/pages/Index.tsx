@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { uploadFile, isLoading, sessions } = useTelemetry();
+  const { uploadFile, isLoading, sessions, activeEventId, createEvent } = useTelemetry();
   const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -19,9 +19,13 @@ const Index = () => {
       toast.error(t('upload_error_csv'));
       return;
     }
+    // Auto-create a default event if user has none
+    if (!activeEventId) {
+      await createEvent('My Sessions');
+    }
     await uploadFile(file);
     navigate('/app');
-  }, [uploadFile, navigate, t]);
+  }, [uploadFile, navigate, t, activeEventId, createEvent]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
