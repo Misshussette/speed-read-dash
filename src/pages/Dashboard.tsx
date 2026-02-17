@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Gauge, Upload, Download } from 'lucide-react';
+import { Gauge, Upload } from 'lucide-react';
 import DisplayModeToggle from '@/components/dashboard/DisplayModeToggle';
 import { Button } from '@/components/ui/button';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
-import { exportFilteredCSV } from '@/lib/export';
 import { useI18n } from '@/i18n/I18nContext';
 import LanguageSelector from '@/components/LanguageSelector';
 import FilterBar from '@/components/dashboard/FilterBar';
@@ -74,9 +73,6 @@ const Dashboard = () => {
           <div className="flex items-center gap-2">
             <DisplayModeToggle />
             <LanguageSelector />
-            <Button variant="ghost" size="sm" className="text-foreground" onClick={() => exportFilteredCSV(filteredData)}>
-              <Download className="h-4 w-4 mr-1" /> {t('export_csv')}
-            </Button>
             <Button variant="ghost" size="sm" className="text-foreground" onClick={() => navigate('/')}>
               <Upload className="h-4 w-4 mr-1" /> {t('session_add')}
             </Button>
