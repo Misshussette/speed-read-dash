@@ -303,6 +303,6 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
 
 export function useTelemetry() {
   const ctx = useContext(TelemetryContext);
-  if (!ctx) throw new Error('useTelemetry must be used within TelemetryProvider');
+  if (!ctx) throw new Error('useTelemetry must be used within TelemetryProvider. Check that your component is rendered inside <TelemetryProvider>.');
   return ctx;
 }
