@@ -95,6 +95,11 @@ function processResults(results: Papa.ParseResult<Record<string, string>>): Pars
     pit_type: getVal(row, 'pit_type', aliasMap).trim() || '',
     pit_time_s: getVal(row, 'pit_time_s', aliasMap) ? parseFloat(getVal(row, 'pit_time_s', aliasMap)) || null : null,
     timestamp: getVal(row, 'timestamp', aliasMap).trim() || '',
+    lane: getVal(row, 'lane', aliasMap) ? parseInt(getVal(row, 'lane', aliasMap)) || null : null,
+    driving_station: getVal(row, 'driving_station', aliasMap) ? parseInt(getVal(row, 'driving_station', aliasMap)) || null : null,
+    team_number: getVal(row, 'team_number', aliasMap).trim() || null,
+    stint_elapsed_s: getVal(row, 'stint_elapsed_s', aliasMap) ? parseFloat(getVal(row, 'stint_elapsed_s', aliasMap)) || null : null,
+    session_elapsed_s: getVal(row, 'session_elapsed_s', aliasMap) ? parseFloat(getVal(row, 'session_elapsed_s', aliasMap)) || null : null,
   })).filter(r => r.lap_time_s > 0);
 
   if (data.length === 0) {
