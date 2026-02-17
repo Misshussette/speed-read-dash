@@ -148,6 +148,12 @@ const nl: Record<string, string> = {
   interp_pit_time_warn: 'Pittijden boven gemiddeld.',
   interp_pit_time_crit: 'Buitensporige pittijd — aanzienlijk tijdverlies.',
   interp_total_laps_ref: 'Totaal ronden in uw selectie.',
+
+  mobile_pace_trend: 'Recente tempotrend',
+  mobile_current_stint: 'Huidige stint',
+  mobile_laps: 'ronden',
+  mobile_stint_degrading: 'Tempo verslechtert — overweeg een stop.',
+  mobile_active_setup: 'Actieve setup',
 };
 
 export default nl;

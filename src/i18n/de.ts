@@ -148,6 +148,12 @@ const de: Record<string, string> = {
   interp_pit_time_warn: 'Boxenzeiten über dem Durchschnitt.',
   interp_pit_time_crit: 'Übermäßige Boxenzeit — erheblicher Zeitverlust.',
   interp_total_laps_ref: 'Gesamtanzahl Runden in Ihrer Auswahl.',
+
+  mobile_pace_trend: 'Aktuelle Tempoentwicklung',
+  mobile_current_stint: 'Aktueller Stint',
+  mobile_laps: 'Runden',
+  mobile_stint_degrading: 'Tempo lässt nach — Stopp in Betracht ziehen.',
+  mobile_active_setup: 'Aktives Setup',
 };
 
 export default de;

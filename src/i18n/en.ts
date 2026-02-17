@@ -181,6 +181,13 @@ const en: Record<string, string> = {
   interp_pit_time_warn: 'Pit times are above average — room to optimize.',
   interp_pit_time_crit: 'Excessive pit time — significant time lost.',
   interp_total_laps_ref: 'Total laps in your selection.',
+
+  // Mobile field mode
+  mobile_pace_trend: 'Recent Pace Trend',
+  mobile_current_stint: 'Current Stint',
+  mobile_laps: 'laps',
+  mobile_stint_degrading: 'Pace is degrading — consider a stop.',
+  mobile_active_setup: 'Active Setup',
 };
 
 export default en;

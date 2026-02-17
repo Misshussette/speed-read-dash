@@ -148,6 +148,12 @@ const es: Record<string, string> = {
   interp_pit_time_warn: 'Tiempos de pit por encima del promedio.',
   interp_pit_time_crit: 'Tiempo excesivo en boxes — pérdida significativa.',
   interp_total_laps_ref: 'Total de vueltas en tu selección.',
+
+  mobile_pace_trend: 'Tendencia de ritmo reciente',
+  mobile_current_stint: 'Stint actual',
+  mobile_laps: 'vueltas',
+  mobile_stint_degrading: 'El ritmo se degrada — considera una parada.',
+  mobile_active_setup: 'Setup activo',
 };
 
 export default es;
