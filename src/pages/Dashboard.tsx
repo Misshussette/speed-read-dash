@@ -73,9 +73,6 @@ const Dashboard = () => {
           <div className="flex items-center gap-2">
             <DisplayModeToggle />
             <LanguageSelector />
-            <Button variant="ghost" size="sm" className="text-foreground" onClick={() => navigate('/')}>
-              <Upload className="h-4 w-4 mr-1" /> {t('session_add')}
-            </Button>
           </div>
         </div>
       </header>
