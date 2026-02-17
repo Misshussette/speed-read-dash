@@ -1,10 +1,11 @@
 import Papa from 'papaparse';
-import { LapRecord, REQUIRED_COLUMNS, LAP_TIME_ALIASES, COLUMN_ALIASES } from '@/types/telemetry';
+import { LapRecord, REQUIRED_COLUMNS, LAP_TIME_ALIASES, COLUMN_ALIASES, PCLAP_SIGNATURE, DataMode } from '@/types/telemetry';
 
 export interface ParseResult {
   data: LapRecord[];
   errors: string[];
   hasSectorData: boolean;
+  dataMode: DataMode;
 }
 
 /** Normalize headers using alias mapping */
@@ -47,7 +48,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
           if (fallback) {
             tryParse(fallback);
           } else {
-            resolve({ data: [], errors: [err.message], hasSectorData: false });
+            resolve({ data: [], errors: [err.message], hasSectorData: false, dataMode: 'generic' });
           }
         }
       });
@@ -63,18 +64,22 @@ function processResults(results: Papa.ParseResult<Record<string, string>>): Pars
   const aliasMap = normalizeHeaders(fields);
   const canonicalFields = new Set(aliasMap.values());
 
-  // Check required columns
+  // Detect PCLap mode: all signature columns present in raw fields
+  const isPclap = PCLAP_SIGNATURE.every(col => fields.includes(col));
+  const dataMode: DataMode = isPclap ? 'pclap' : 'generic';
+
+  // Check required columns (after alias resolution)
   const missingCols = REQUIRED_COLUMNS.filter(c => !canonicalFields.has(c));
   if (missingCols.length > 0) {
     errors.push(`Missing columns: ${missingCols.join(', ')}`);
-    return { data: [], errors, hasSectorData: false };
+    return { data: [], errors, hasSectorData: false, dataMode };
   }
 
   // Check lap time column
   const hasLapTime = LAP_TIME_ALIASES.some(a => canonicalFields.has('lap_time_s') || fields.includes(a));
   if (!hasLapTime) {
     errors.push(`Missing lap time column. Expected one of: ${LAP_TIME_ALIASES.join(', ')}`);
-    return { data: [], errors, hasSectorData: false };
+    return { data: [], errors, hasSectorData: false, dataMode };
   }
 
   const hasSectorData = canonicalFields.has('S1_s') && canonicalFields.has('S2_s') && canonicalFields.has('S3_s');
@@ -106,5 +111,5 @@ function processResults(results: Papa.ParseResult<Record<string, string>>): Pars
     errors.push('No valid lap records found in file.');
   }
 
-  return { data, errors, hasSectorData };
+  return { data, errors, hasSectorData, dataMode };
 }

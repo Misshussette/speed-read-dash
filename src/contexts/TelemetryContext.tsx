@@ -79,6 +79,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
             },
             data,
             hasSectorData: parsed.hasSectorData || false,
+            dataMode: 'generic',
           };
           saveSession(session).then(() => {
             setStoredSessions(prev => [session, ...prev]);
@@ -125,6 +126,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       },
       data: result.data,
       hasSectorData: result.hasSectorData,
+      dataMode: result.dataMode,
     };
     await saveSession(session);
     setStoredSessions(prev => [session, ...prev]);
