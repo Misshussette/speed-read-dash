@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TelemetryProvider } from "@/contexts/TelemetryContext";
+import { GarageProvider } from "@/contexts/GarageContext";
 import { I18nProvider } from "@/i18n/I18nContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +19,7 @@ const App = () => {
       <TooltipProvider>
         <I18nProvider>
           <TelemetryProvider>
+          <GarageProvider>
             <div className="dark">
               <Toaster />
               <Sonner />
@@ -30,6 +32,7 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
             </div>
+          </GarageProvider>
           </TelemetryProvider>
         </I18nProvider>
       </TooltipProvider>
