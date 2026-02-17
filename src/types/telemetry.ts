@@ -76,9 +76,25 @@ export interface PitEvent {
   driver: string;
 }
 
+// Minimum columns needed to parse a valid session
 export const REQUIRED_COLUMNS = [
-  'session_id', 'date', 'track', 'car_model', 'brand', 'driver',
-  'stint', 'lap_number', 'lap_time_s', 'pit_type', 'pit_time_s', 'timestamp'
+  'session_id', 'track', 'car_model', 'driver',
+  'stint', 'lap_number'
 ];
 
-export const OPTIONAL_COLUMNS = ['S1_s', 'S2_s', 'S3_s'];
+// At least one of these must be present for lap time
+export const LAP_TIME_ALIASES = ['lap_time_s', 'lap_time_sec', 'laptime', 'lap_time'];
+
+export const OPTIONAL_COLUMNS = ['S1_s', 'S2_s', 'S3_s', 'date', 'brand', 'pit_type', 'pit_time_s', 'timestamp'];
+
+// Column alias mapping: alias -> canonical name
+export const COLUMN_ALIASES: Record<string, string> = {
+  lap_time_sec: 'lap_time_s',
+  laptime: 'lap_time_s',
+  lap_time: 'lap_time_s',
+  circuit: 'track',
+  car: 'car_model',
+  pilote: 'driver',
+  tour: 'lap_number',
+  relais: 'stint',
+};
