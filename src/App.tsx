@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TelemetryProvider } from "@/contexts/TelemetryContext";
 import { GarageProvider } from "@/contexts/GarageContext";
+import { DisplayModeProvider } from "@/contexts/DisplayModeContext";
 import { I18nProvider } from "@/i18n/I18nContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +19,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <I18nProvider>
+          <DisplayModeProvider>
           <TelemetryProvider>
           <GarageProvider>
             <div className="dark">
@@ -34,6 +36,7 @@ const App = () => {
             </div>
           </GarageProvider>
           </TelemetryProvider>
+          </DisplayModeProvider>
         </I18nProvider>
       </TooltipProvider>
     </QueryClientProvider>
