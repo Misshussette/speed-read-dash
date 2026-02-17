@@ -1,3 +1,5 @@
+export type LapStatus = 'valid' | 'suspect' | 'invalid';
+
 export interface LapRecord {
   session_id: string;
   date: string;
@@ -20,6 +22,11 @@ export interface LapRecord {
   team_number: string | null;
   stint_elapsed_s: number | null;
   session_elapsed_s: number | null;
+  // Validation
+  lap_status: LapStatus;
+  validation_flags: string[];
+  // Sort key (derived, not stored in CSV)
+  _sort_key: number;
 }
 
 export interface SessionMeta {

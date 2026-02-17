@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
 import { LapRecord, REQUIRED_COLUMNS, LAP_TIME_ALIASES, COLUMN_ALIASES, PCLAP_SIGNATURE, DataMode } from '@/types/telemetry';
+import { validateLaps, assignSortKeys } from '@/lib/lap-validator';
 
 export interface ParseResult {
   data: LapRecord[];
@@ -84,7 +85,7 @@ function processResults(results: Papa.ParseResult<Record<string, string>>): Pars
 
   const hasSectorData = canonicalFields.has('S1_s') && canonicalFields.has('S2_s') && canonicalFields.has('S3_s');
 
-  const data: LapRecord[] = results.data.map((row: Record<string, string>) => ({
+  const data: LapRecord[] = results.data.map((row: Record<string, string>, idx: number) => ({
     session_id: getVal(row, 'session_id', aliasMap).trim() || '',
     date: getVal(row, 'date', aliasMap).trim() || '',
     track: getVal(row, 'track', aliasMap).trim() || '',
@@ -105,11 +106,23 @@ function processResults(results: Papa.ParseResult<Record<string, string>>): Pars
     team_number: getVal(row, 'team_number', aliasMap).trim() || null,
     stint_elapsed_s: getVal(row, 'stint_elapsed_s', aliasMap) ? parseFloat(getVal(row, 'stint_elapsed_s', aliasMap)) || null : null,
     session_elapsed_s: getVal(row, 'session_elapsed_s', aliasMap) ? parseFloat(getVal(row, 'session_elapsed_s', aliasMap)) || null : null,
-  })).filter(r => r.lap_time_s > 0);
+    // Validation fields — populated by validateLaps()
+    lap_status: 'valid',
+    validation_flags: [],
+    _sort_key: idx,
+  }));
 
-  if (data.length === 0) {
+  // Never discard rows — filter only truly empty records (no time data at all)
+  const nonEmpty = data.filter(r => r.lap_time_s !== 0 || r.session_elapsed_s !== null);
+
+  if (nonEmpty.length === 0) {
     errors.push('No valid lap records found in file.');
+    return { data: [], errors, hasSectorData: false, dataMode };
   }
 
-  return { data, errors, hasSectorData, dataMode };
+  // Sort by time reference, then validate
+  const sorted = assignSortKeys(nonEmpty);
+  const validated = validateLaps(sorted);
+
+  return { data: validated, errors, hasSectorData, dataMode };
 }
