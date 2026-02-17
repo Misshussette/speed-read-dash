@@ -24,7 +24,7 @@ interface LabeledSelectProps {
 
 const LabeledSelect = ({ label, value, allLabel, options, onValueChange }: LabeledSelectProps) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-1">{label}</span>
+    <span className="text-[10px] font-medium uppercase tracking-wider text-foreground px-1">{label}</span>
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-[160px] h-8 text-xs bg-secondary/50 border-border hover:bg-secondary/80 transition-colors">
         <SelectValue />
