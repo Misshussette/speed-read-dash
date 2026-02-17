@@ -149,7 +149,7 @@ const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope
       </div>
 
       <div className="flex flex-col gap-0.5 ml-auto">
-        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-1">{t('pit_laps')}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-foreground px-1">{t('pit_laps')}</span>
         <div className="flex items-center gap-1.5 h-8">
           <Switch checked={filters.includePitLaps} onCheckedChange={(v) => onChange({ ...filters, includePitLaps: v })} />
           <span className="text-xs text-muted-foreground">{filters.includePitLaps ? t('filter_on') : t('filter_off')}</span>
