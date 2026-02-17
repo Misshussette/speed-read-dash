@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Upload, Trash2, Check, Download, Plus, FolderOpen } from 'lucide-react';
+import { Upload, Trash2, Check, Download, Plus, FolderOpen, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,7 @@ const SessionManager = () => {
     sessions, activeSessionId, setActiveSessionId,
     uploadFile, removeSession, isLoading,
     rawData, filters, scope, scopedData,
+    clubs, activeClubId, setActiveClubId,
     events, activeEventId, setActiveEventId, createEvent,
   } = useTelemetry();
 
@@ -39,7 +40,7 @@ const SessionManager = () => {
 
   const handleCreateEvent = async () => {
     if (!newEventName.trim()) return;
-    await createEvent(newEventName.trim());
+    await createEvent(newEventName.trim(), activeClubId);
     setNewEventName('');
     setShowNewEvent(false);
     toast.success('Event created!');
@@ -47,9 +48,27 @@ const SessionManager = () => {
 
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between flex-wrap gap-2">
         <CardTitle className="text-base font-semibold text-foreground">{t('session_manager')}</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Club selector */}
+          {clubs.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <Select value={activeClubId || 'personal'} onValueChange={(v) => setActiveClubId(v === 'personal' ? null : v)}>
+                <SelectTrigger className="h-8 text-xs w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personal" className="text-xs">Personal</SelectItem>
+                  {clubs.map(c => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Event selector */}
           <div className="flex items-center gap-1">
             <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
