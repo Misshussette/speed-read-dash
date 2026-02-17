@@ -97,6 +97,13 @@ const nl: Record<string, string> = {
   session_col_date: 'Datum',
   session_col_file: 'Bestand',
   session_count: 'sessies',
+
+  mode_overview: 'Overzicht',
+  mode_stints: 'Stints',
+  mode_drivers: 'Rijders',
+  mode_car: 'Auto',
+  mode_compare: 'Vergelijking',
+  compare_placeholder: 'Multi-sessie vergelijking wordt hier beschikbaar. Importeer meerdere sessies en combineer hun data.',
 };
 
 export default nl;

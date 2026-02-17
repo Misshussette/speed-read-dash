@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Gauge, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,14 +18,46 @@ import AnalysisInsights from '@/components/dashboard/AnalysisInsights';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import SessionManager from '@/components/dashboard/SessionManager';
 
+type AnalysisMode = 'overview' | 'stints' | 'drivers' | 'car' | 'compare';
+
+const MODES: AnalysisMode[] = ['overview', 'stints', 'drivers', 'car', 'compare'];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
   const { rawData, hasSectorData, filters, setFilters, resetFilters, sessions } = useTelemetry();
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('overview');
 
   const filterOptions = useMemo(() => getFilterOptions(rawData), [rawData]);
   const filteredData = useMemo(() => applyFilters(rawData, filters), [rawData, filters]);
-  const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
+
+  // Mode-specific derived datasets (no duplication, just views)
+  const stintData = useMemo(() => {
+    if (analysisMode !== 'stints') return filteredData;
+    return filteredData;
+  }, [filteredData, analysisMode]);
+
+  const driverData = useMemo(() => {
+    if (analysisMode !== 'drivers') return filteredData;
+    return filteredData;
+  }, [filteredData, analysisMode]);
+
+  const carData = useMemo(() => {
+    if (analysisMode !== 'car') return filteredData;
+    return filteredData;
+  }, [filteredData, analysisMode]);
+
+  // KPIs recompute based on the active mode's dataset
+  const modeData = useMemo(() => {
+    switch (analysisMode) {
+      case 'stints': return stintData;
+      case 'drivers': return driverData;
+      case 'car': return carData;
+      default: return filteredData;
+    }
+  }, [analysisMode, filteredData, stintData, driverData, carData]);
+
+  const kpis = useMemo(() => computeKPIs(modeData, filters.includePitLaps), [modeData, filters.includePitLaps]);
 
   if (sessions.length === 0) {
     return (
@@ -70,40 +102,132 @@ const Dashboard = () => {
 
         {rawData.length > 0 && (
           <>
+            {/* Analysis Mode Tabs */}
+            <div className="flex items-center gap-1 border-b border-border">
+              {MODES.map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setAnalysisMode(mode)}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 -mb-px ${
+                    analysisMode === mode
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {t(`mode_${mode}`)}
+                </button>
+              ))}
+            </div>
+
+            {/* KPIs always visible */}
             <section className="space-y-4">
               <SectionHeader number={1} title={t('section_session_overview')} />
               <KPICards kpis={kpis} />
             </section>
 
-            <section className="space-y-4">
-              <SectionHeader number={2} title={t('section_performance_evolution')} />
-              <div id="chart-lap-time">
-                <LapTimeChart data={filteredData} />
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <SectionHeader number={3} title={t('section_driver_car_analysis')} />
-              <AnalysisInsights data={filteredData} includePitLaps={filters.includePitLaps} />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div id="chart-driver">
-                  <DriverComparisonChart data={filteredData} includePitLaps={filters.includePitLaps} />
-                </div>
-                {hasSectorData && (
-                  <div id="chart-sector">
-                    <SectorChart data={filteredData} />
+            {/* Mode-specific content */}
+            {analysisMode === 'overview' && (
+              <>
+                <section className="space-y-4">
+                  <SectionHeader number={2} title={t('section_performance_evolution')} />
+                  <div id="chart-lap-time">
+                    <LapTimeChart data={filteredData} />
                   </div>
-                )}
-              </div>
-            </section>
+                </section>
+                <section className="space-y-4">
+                  <SectionHeader number={3} title={t('section_driver_car_analysis')} />
+                  <AnalysisInsights data={filteredData} includePitLaps={filters.includePitLaps} />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="chart-driver">
+                      <DriverComparisonChart data={filteredData} includePitLaps={filters.includePitLaps} />
+                    </div>
+                    {hasSectorData && (
+                      <div id="chart-sector">
+                        <SectorChart data={filteredData} />
+                      </div>
+                    )}
+                  </div>
+                </section>
+                <section className="space-y-4">
+                  <SectionHeader number={4} title={t('section_operations')} />
+                  <div id="chart-stint">
+                    <StintTimeline data={filteredData} includePitLaps={filters.includePitLaps} />
+                  </div>
+                  <PitAnalysis data={filteredData} />
+                </section>
+              </>
+            )}
 
-            <section className="space-y-4">
-              <SectionHeader number={4} title={t('section_operations')} />
-              <div id="chart-stint">
-                <StintTimeline data={filteredData} includePitLaps={filters.includePitLaps} />
-              </div>
-              <PitAnalysis data={filteredData} />
-            </section>
+            {analysisMode === 'stints' && (
+              <>
+                <section className="space-y-4">
+                  <SectionHeader number={2} title={t('section_performance_evolution')} />
+                  <div id="chart-lap-time">
+                    <LapTimeChart data={stintData} />
+                  </div>
+                </section>
+                <section className="space-y-4">
+                  <SectionHeader number={3} title={t('section_operations')} />
+                  <div id="chart-stint">
+                    <StintTimeline data={stintData} includePitLaps={filters.includePitLaps} />
+                  </div>
+                  <PitAnalysis data={stintData} />
+                </section>
+              </>
+            )}
+
+            {analysisMode === 'drivers' && (
+              <>
+                <section className="space-y-4">
+                  <SectionHeader number={2} title={t('section_driver_car_analysis')} />
+                  <AnalysisInsights data={driverData} includePitLaps={filters.includePitLaps} />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="chart-driver">
+                      <DriverComparisonChart data={driverData} includePitLaps={filters.includePitLaps} />
+                    </div>
+                    {hasSectorData && (
+                      <div id="chart-sector">
+                        <SectorChart data={driverData} />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+
+            {analysisMode === 'car' && (
+              <>
+                <section className="space-y-4">
+                  <SectionHeader number={2} title={t('section_performance_evolution')} />
+                  <div id="chart-lap-time">
+                    <LapTimeChart data={carData} />
+                  </div>
+                </section>
+                <section className="space-y-4">
+                  <SectionHeader number={3} title={t('section_driver_car_analysis')} />
+                  <AnalysisInsights data={carData} includePitLaps={filters.includePitLaps} />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="chart-driver">
+                      <DriverComparisonChart data={carData} includePitLaps={filters.includePitLaps} />
+                    </div>
+                    {hasSectorData && (
+                      <div id="chart-sector">
+                        <SectorChart data={carData} />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+
+            {analysisMode === 'compare' && (
+              <section className="space-y-4">
+                <SectionHeader number={2} title={t('mode_compare')} />
+                <div className="rounded-lg border border-border bg-card p-8 text-center">
+                  <p className="text-muted-foreground text-sm">{t('compare_placeholder')}</p>
+                </div>
+              </section>
+            )}
           </>
         )}
       </main>
