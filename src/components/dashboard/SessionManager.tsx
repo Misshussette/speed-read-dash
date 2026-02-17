@@ -1,15 +1,20 @@
-import { useCallback } from 'react';
-import { Upload, Trash2, Check } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Upload, Trash2, Check, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useI18n } from '@/i18n/I18nContext';
+import { applyFilters } from '@/lib/metrics';
+import { exportFilteredCSV } from '@/lib/export';
 import { toast } from 'sonner';
 
 const SessionManager = () => {
   const { t } = useI18n();
-  const { sessions, activeSessionId, setActiveSessionId, addCSV, removeSession, isLoading } = useTelemetry();
+  const { sessions, activeSessionId, setActiveSessionId, addCSV, removeSession, isLoading, rawData, filters, scope, scopedData } = useTelemetry();
+
+  const analysisBase = scope.enabled ? scopedData : rawData;
+  const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
 
   const onFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,7 +32,17 @@ const SessionManager = () => {
     <Card className="bg-card border-border">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-base font-semibold text-foreground">{t('session_manager')}</CardTitle>
-        <div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => exportFilteredCSV(filteredData)}
+            disabled={filteredData.length === 0}
+          >
+            <Download className="h-3.5 w-3.5 mr-1" />
+            {t('export_csv')}
+          </Button>
           <input id="session-csv-input" type="file" accept=".csv" className="hidden" onChange={onFileSelect} />
           <Button
             variant="outline"
