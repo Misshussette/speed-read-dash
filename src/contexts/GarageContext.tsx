@@ -59,7 +59,16 @@ export function GarageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addSetup = useCallback(async (data: Omit<Setup, 'id' | 'createdAt'>) => {
-    const setup: Setup = { ...data, id: crypto.randomUUID(), createdAt: Date.now() };
+    const setup: Setup = {
+      ...data,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      tags: data.tags || [],
+      parameters: data.parameters || {},
+      custom_fields: data.custom_fields || {},
+      label: data.label || null,
+      notes: data.notes || null,
+    };
     await saveSetupDB(setup);
     setSetups(prev => [...prev, setup]);
     return setup;

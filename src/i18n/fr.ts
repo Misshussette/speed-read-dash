@@ -148,6 +148,12 @@ const fr: Record<string, string> = {
   interp_pit_time_warn: 'Temps aux stands au-dessus de la moyenne.',
   interp_pit_time_crit: 'Temps aux stands excessifs — temps perdu significatif.',
   interp_total_laps_ref: 'Total de tours dans votre sélection.',
+
+  mobile_pace_trend: 'Tendance rythme récent',
+  mobile_current_stint: 'Relais en cours',
+  mobile_laps: 'tours',
+  mobile_stint_degrading: 'Le rythme se dégrade — envisagez un arrêt.',
+  mobile_active_setup: 'Setup actif',
 };
 
 export default fr;
