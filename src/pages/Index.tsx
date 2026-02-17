@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { uploadCSV, isLoading, rawData } = useTelemetry();
+  const { addCSV, isLoading, sessions } = useTelemetry();
   const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -19,9 +19,9 @@ const Index = () => {
       toast.error(t('upload_error_csv'));
       return;
     }
-    await uploadCSV(file);
+    await addCSV(file);
     navigate('/app');
-  }, [uploadCSV, navigate, t]);
+  }, [addCSV, navigate, t]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ const Index = () => {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  const hasExistingData = rawData.length > 0;
+  const hasExistingData = sessions.length > 0;
 
   const features = [
     { icon: Upload, title: t('feat_upload_title'), desc: t('feat_upload_desc') },
@@ -45,12 +45,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background dark">
-      {/* Language selector */}
       <div className="absolute top-4 right-4 z-50">
         <LanguageSelector />
       </div>
 
-      {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -93,13 +91,12 @@ const Index = () => {
 
           {hasExistingData && (
             <Button variant="ghost" className="mt-6 text-primary hover:text-primary" onClick={() => navigate('/app')}>
-              {t('continue_dashboard')} <ArrowRight className="ml-2 h-4 w-4" />
+              {t('continue_dashboard')} ({sessions.length} {t('session_count')}) <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Features */}
       <div className="max-w-4xl mx-auto px-6 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map(({ icon: Icon, title, desc }) => (

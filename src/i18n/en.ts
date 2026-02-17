@@ -116,6 +116,15 @@ const en: Record<string, string> = {
   // Empty state
   no_data: 'No data loaded.',
   upload_csv_btn: 'Upload a CSV',
+
+  // Session manager
+  session_manager: 'Session Manager',
+  session_add: 'Add Session',
+  session_added: 'Session added successfully',
+  session_empty: 'No sessions imported yet. Upload a CSV to get started.',
+  session_col_date: 'Date',
+  session_col_file: 'File',
+  session_count: 'sessions',
 };
 
 export default en;
