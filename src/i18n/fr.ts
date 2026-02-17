@@ -104,6 +104,24 @@ const fr: Record<string, string> = {
   mode_car: 'Voiture',
   mode_compare: 'Comparaison',
   compare_placeholder: 'La comparaison multi-session sera disponible ici. Importez plusieurs sessions et superposez leurs données.',
+
+  scope_active: 'Scope actif',
+  scope_title: 'Périmètre d\'analyse',
+  scope_entity: 'Entité',
+  scope_driver: 'Pilote',
+  scope_lane: 'Voie',
+  scope_enable: 'Activer',
+  scope_disable: 'Désactiver',
+  scope_all_entities: 'Toutes les entités',
+  scope_all_drivers: 'Tous les pilotes',
+  scope_all_lanes: 'Toutes les voies',
+  scope_reset: 'Effacer',
+  scope_vs_global: 'vs Course',
+  scope_relative_pace: 'Pace relatif',
+  scope_relative_consistency: 'Régularité relative',
+  scope_lap_ratio: 'Ratio tours',
+  help_relative_pace: 'Différence entre votre pace moyen et le pace moyen de la course. Négatif = plus rapide que le peloton.',
+  help_relative_consistency: 'Différence entre votre régularité et celle de la course. Négatif = plus régulier que le peloton.',
 };
 
 export default fr;

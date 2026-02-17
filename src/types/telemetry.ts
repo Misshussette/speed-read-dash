@@ -57,6 +57,13 @@ export interface Filters {
   includePitLaps: boolean;
 }
 
+export interface AnalysisScope {
+  entity_ids: string[];     // car_model / team_number identifiers
+  drivers: string[];        // drivers the user wants to focus on
+  track_positions: number[]; // lane numbers (PCLap)
+  enabled: boolean;         // false = no scope, analyse full dataset
+}
+
 export interface KPIData {
   bestLap: number | null;
   averagePace: number | null;
