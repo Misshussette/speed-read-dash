@@ -23,10 +23,16 @@ function getDB() {
 export async function getAllSessions(): Promise<StoredSession[]> {
   const db = await getDB();
   const sessions: StoredSession[] = await db.getAll(STORE_NAME);
-  // Backfill dataMode for sessions stored before PCLap support
+  // Backfill fields for sessions stored before current schema
   return sessions.map(s => ({
     ...s,
     dataMode: s.dataMode ?? 'generic',
+    data: s.data.map((lap, i) => ({
+      ...lap,
+      lap_status: lap.lap_status ?? 'valid',
+      validation_flags: lap.validation_flags ?? [],
+      _sort_key: lap._sort_key ?? (lap.session_elapsed_s ?? i),
+    })),
   }));
 }
 

@@ -15,12 +15,16 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
 
 /**
  * Return laps suitable for performance calculations.
- * When includePitLaps is true, all laps are used.
- * When false (default), pit-related laps are excluded from calculations only.
+ * Always excludes invalid/suspect laps.
+ * When includePitLaps is false (default), pit-related laps are also excluded.
  */
 function cleanLaps(data: LapRecord[], includePitLaps = false): LapRecord[] {
-  if (includePitLaps) return data;
-  return data.filter(r => r.pit_type === '');
+  return data.filter(r => {
+    // Always exclude non-valid laps from calculations
+    if (r.lap_status && r.lap_status !== 'valid') return false;
+    if (!includePitLaps && r.pit_type !== '') return false;
+    return true;
+  });
 }
 
 function stdDev(values: number[]): number {
