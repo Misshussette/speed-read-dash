@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,14 @@ const App = () => {
                           }
                         />
                         <Route path="/about" element={<About />} />
+                        <Route
+                          path="/admin"
+                          element={
+                            <ProtectedRoute>
+                              <Admin />
+                            </ProtectedRoute>
+                          }
+                        />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>

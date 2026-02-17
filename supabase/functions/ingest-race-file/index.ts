@@ -54,25 +54,18 @@ interface LapRow {
 }
 
 function parseCSVContent(content: string): { headers: string[]; rows: Record<string, string>[] } {
-  // Detect delimiter
   const firstLine = content.split("\n")[0];
   const delimiter = firstLine.includes(";") ? ";" : ",";
-
   const lines = content.split("\n").filter((l) => l.trim());
   if (lines.length < 2) return { headers: [], rows: [] };
-
   const headers = lines[0].split(delimiter).map((h) => h.trim().replace(/^"|"$/g, ""));
   const rows: Record<string, string>[] = [];
-
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(delimiter).map((v) => v.trim().replace(/^"|"$/g, ""));
     const row: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      row[h] = values[idx] || "";
-    });
+    headers.forEach((h, idx) => { row[h] = values[idx] || ""; });
     rows.push(row);
   }
-
   return { headers, rows };
 }
 
@@ -99,13 +92,10 @@ function processRows(headers: string[], rows: Record<string, string>[]): {
   meta: { track: string; car_model: string; brand: string; date: string; hasSectors: boolean; dataMode: string };
 } {
   const aliasMap = new Map<string, string>();
-  for (const h of headers) {
-    aliasMap.set(h, COLUMN_ALIASES[h] || h);
-  }
+  for (const h of headers) { aliasMap.set(h, COLUMN_ALIASES[h] || h); }
   const canonicals = new Set(aliasMap.values());
   const isPclap = PCLAP_SIGNATURE.every((col) => headers.includes(col));
   const hasSectors = canonicals.has("S1_s") && canonicals.has("S2_s") && canonicals.has("S3_s");
-
   const laps: LapRow[] = [];
 
   for (let i = 0; i < rows.length; i++) {
@@ -114,11 +104,10 @@ function processRows(headers: string[], rows: Record<string, string>[]): {
     const sessionElapsed = getVal(row, "session_elapsed_s", aliasMap)
       ? parseFloat(getVal(row, "session_elapsed_s", aliasMap)) || null
       : null;
-
     if (lapTime === 0 && sessionElapsed === null) continue;
 
     laps.push({
-      session_id: "", // will be set later
+      session_id: "",
       lap_number: parseInt(getVal(row, "lap_number", aliasMap)) || i,
       lap_time_s: lapTime,
       s1_s: hasSectors ? parseFloat(getVal(row, "S1_s", aliasMap)) || null : null,
@@ -130,13 +119,9 @@ function processRows(headers: string[], rows: Record<string, string>[]): {
       pit_time_s: getVal(row, "pit_time_s", aliasMap) ? parseFloat(getVal(row, "pit_time_s", aliasMap)) || null : null,
       timestamp: getVal(row, "timestamp", aliasMap).trim() || null,
       lane: getVal(row, "lane", aliasMap) ? parseInt(getVal(row, "lane", aliasMap)) || null : null,
-      driving_station: getVal(row, "driving_station", aliasMap)
-        ? parseInt(getVal(row, "driving_station", aliasMap)) || null
-        : null,
+      driving_station: getVal(row, "driving_station", aliasMap) ? parseInt(getVal(row, "driving_station", aliasMap)) || null : null,
       team_number: getVal(row, "team_number", aliasMap).trim() || null,
-      stint_elapsed_s: getVal(row, "stint_elapsed_s", aliasMap)
-        ? parseFloat(getVal(row, "stint_elapsed_s", aliasMap)) || null
-        : null,
+      stint_elapsed_s: getVal(row, "stint_elapsed_s", aliasMap) ? parseFloat(getVal(row, "stint_elapsed_s", aliasMap)) || null : null,
       session_elapsed_s: sessionElapsed,
       lap_status: "valid",
       validation_flags: [],
@@ -144,10 +129,8 @@ function processRows(headers: string[], rows: Record<string, string>[]): {
     });
   }
 
-  // Sort by sort_key
   laps.sort((a, b) => a.sort_key - b.sort_key);
 
-  // Validate
   const positiveTimes = laps.filter((l) => l.lap_time_s > 0).map((l) => l.lap_time_s);
   const bounds = computeBounds(positiveTimes);
   let prevElapsed: number | null = null;
@@ -159,13 +142,11 @@ function processRows(headers: string[], rows: Record<string, string>[]): {
       flags.push("statistical_outlier");
     if (prevElapsed !== null && lap.session_elapsed_s !== null && lap.session_elapsed_s < prevElapsed)
       flags.push("negative_time_delta");
-
     lap.validation_flags = flags;
     lap.lap_status = flags.includes("non_positive_time") ? "invalid" : flags.length > 0 ? "suspect" : "valid";
     if (lap.session_elapsed_s !== null) prevElapsed = lap.session_elapsed_s;
   }
 
-  // Extract meta from first row
   const first = rows[0];
   return {
     laps,
@@ -185,6 +166,13 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  let importId: string | null = null;
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -193,11 +181,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -213,7 +196,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub;
+    const userId = claimsData.claims.sub as string;
 
     const { session_id, file_path, event_id } = await req.json();
 
@@ -224,14 +207,41 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Create import tracking record
+    const { data: importData, error: importCreateError } = await supabaseAdmin
+      .from("imports")
+      .insert({
+        session_id,
+        event_id,
+        file_path,
+        filename: file_path.split("/").pop() || file_path,
+        status: "processing",
+        created_by: userId,
+        started_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (importCreateError) {
+      console.error("Import record creation failed:", importCreateError);
+    } else {
+      importId = importData.id;
+    }
+
     // Download file from storage using admin client
     const { data: fileData, error: dlError } = await supabaseAdmin.storage
       .from("race-files")
       .download(file_path);
 
     if (dlError || !fileData) {
-      // Update session status to error
       await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", session_id);
+      if (importId) {
+        await supabaseAdmin.from("imports").update({
+          status: "error",
+          error_message: dlError?.message || "Failed to download file",
+          completed_at: new Date().toISOString(),
+        }).eq("id", importId);
+      }
       return new Response(JSON.stringify({ error: "Failed to download file", details: dlError?.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -243,6 +253,13 @@ Deno.serve(async (req) => {
 
     if (rows.length === 0) {
       await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", session_id);
+      if (importId) {
+        await supabaseAdmin.from("imports").update({
+          status: "error",
+          error_message: "No data rows found in file",
+          completed_at: new Date().toISOString(),
+        }).eq("id", importId);
+      }
       return new Response(JSON.stringify({ error: "No data rows found in file" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -253,6 +270,13 @@ Deno.serve(async (req) => {
 
     if (laps.length === 0) {
       await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", session_id);
+      if (importId) {
+        await supabaseAdmin.from("imports").update({
+          status: "error",
+          error_message: "No valid lap records found",
+          completed_at: new Date().toISOString(),
+        }).eq("id", importId);
+      }
       return new Response(JSON.stringify({ error: "No valid lap records found" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -276,6 +300,7 @@ Deno.serve(async (req) => {
 
     // Insert laps in batches of 500
     const BATCH_SIZE = 500;
+    let rowsProcessed = 0;
     for (let i = 0; i < laps.length; i += BATCH_SIZE) {
       const batch = laps.slice(i, i + BATCH_SIZE).map((l) => ({
         ...l,
@@ -285,19 +310,44 @@ Deno.serve(async (req) => {
       if (insertError) {
         console.error("Lap insert error:", insertError);
         await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", session_id);
+        if (importId) {
+          await supabaseAdmin.from("imports").update({
+            status: "error",
+            error_message: `Failed to insert laps at batch ${i}: ${insertError.message}`,
+            rows_processed: rowsProcessed,
+            completed_at: new Date().toISOString(),
+          }).eq("id", importId);
+        }
         return new Response(JSON.stringify({ error: "Failed to insert laps", details: insertError.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      rowsProcessed += batch.length;
+    }
+
+    // Mark import as complete
+    if (importId) {
+      await supabaseAdmin.from("imports").update({
+        status: "complete",
+        rows_processed: rowsProcessed,
+        completed_at: new Date().toISOString(),
+      }).eq("id", importId);
     }
 
     return new Response(
-      JSON.stringify({ success: true, session_id, laps_processed: laps.length }),
+      JSON.stringify({ success: true, session_id, import_id: importId, laps_processed: laps.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Ingestion error:", err);
+    if (importId) {
+      await supabaseAdmin.from("imports").update({
+        status: "error",
+        error_message: String(err),
+        completed_at: new Date().toISOString(),
+      }).eq("id", importId).catch(() => {});
+    }
     return new Response(JSON.stringify({ error: "Internal error", details: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

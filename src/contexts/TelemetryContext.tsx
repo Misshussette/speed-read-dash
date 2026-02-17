@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface ClubMeta { id: string; name: string; role: string; }
+
 interface TelemetryState {
   // Multi-session
   sessions: SessionMeta[];
@@ -13,11 +15,17 @@ interface TelemetryState {
   uploadFile: (file: File, eventIdOverride?: string) => Promise<void>;
   removeSession: (id: string) => void;
 
+  // Clubs
+  clubs: ClubMeta[];
+  activeClubId: string | null;
+  setActiveClubId: (id: string | null) => void;
+  createClub: (name: string) => Promise<string | null>;
+
   // Events
-  events: { id: string; name: string }[];
+  events: { id: string; name: string; club_id: string | null }[];
   activeEventId: string | null;
   setActiveEventId: (id: string | null) => void;
-  createEvent: (name: string) => Promise<string | null>;
+  createEvent: (name: string, clubId?: string | null) => Promise<string | null>;
 
   // Current session data
   rawData: LapRecord[];
@@ -50,10 +58,20 @@ const TelemetryContext = createContext<TelemetryState | null>(null);
 
 export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [events, setEvents] = useState<{ id: string; name: string }[]>([]);
+
+  // Clubs
+  const [clubs, setClubs] = useState<ClubMeta[]>([]);
+  const [activeClubId, setActiveClubId] = useState<string | null>(null);
+
+  // Events
+  const [events, setEvents] = useState<{ id: string; name: string; club_id: string | null }[]>([]);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+
+  // Sessions
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [activeSessionId, setActiveSessionIdInternal] = useState<string | null>(null);
+
+  // Data
   const [rawData, setRawData] = useState<LapRecord[]>([]);
   const [hasSectorData, setHasSectorData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,20 +79,45 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [scope, setScope] = useState<AnalysisScope>(DEFAULT_SCOPE);
 
-  // Load events when user is authenticated
+  // Load clubs when user is authenticated
   useEffect(() => {
-    if (!user) { setEvents([]); setActiveEventId(null); return; }
+    if (!user) { setClubs([]); setActiveClubId(null); return; }
     supabase
-      .from('events')
-      .select('id, name')
-      .order('created_at', { ascending: false })
+      .from('club_members')
+      .select('club_id, role, clubs(id, name)')
+      .eq('user_id', user.id)
       .then(({ data }) => {
         if (data) {
-          setEvents(data);
-          if (data.length > 0 && !activeEventId) setActiveEventId(data[0].id);
+          const mapped: ClubMeta[] = data
+            .filter((d: any) => d.clubs)
+            .map((d: any) => ({ id: d.clubs.id, name: d.clubs.name, role: d.role }));
+          setClubs(mapped);
         }
       });
   }, [user]);
+
+  // Load events when user or club changes
+  useEffect(() => {
+    if (!user) { setEvents([]); setActiveEventId(null); return; }
+
+    const loadEvents = async () => {
+      // Load all events the user can see (RLS handles access)
+      const { data } = await supabase
+        .from('events')
+        .select('id, name, club_id')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        // If a club is selected, filter to that club's events + personal events
+        const filtered = activeClubId
+          ? data.filter(e => e.club_id === activeClubId || (!e.club_id))
+          : data;
+        setEvents(filtered);
+        if (filtered.length > 0 && !activeEventId) setActiveEventId(filtered[0].id);
+      }
+    };
+    loadEvents();
+  }, [user, activeClubId]);
 
   // Load sessions when event changes
   useEffect(() => {
@@ -112,7 +155,6 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     const loadLaps = async () => {
-      // Fetch all laps in batches to overcome 1000 row limit
       let allLaps: any[] = [];
       let offset = 0;
       const PAGE_SIZE = 1000;
@@ -132,7 +174,6 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
         offset += PAGE_SIZE;
       }
 
-      // Get session meta for track/car info
       const sessionMeta = sessions.find(s => s.id === activeSessionId);
 
       const mapped: LapRecord[] = allLaps.map((row: any) => ({
@@ -169,12 +210,32 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     loadLaps();
   }, [activeSessionId, sessions]);
 
-  const createEvent = useCallback(async (name: string): Promise<string | null> => {
+  // Club actions
+  const createClub = useCallback(async (name: string): Promise<string | null> => {
     if (!user) return null;
     const { data, error } = await supabase
-      .from('events')
+      .from('clubs')
       .insert({ name, created_by: user.id })
       .select('id, name')
+      .single();
+    if (error) { toast.error(error.message); return null; }
+    if (data) {
+      setClubs(prev => [...prev, { id: data.id, name: data.name, role: 'owner' }]);
+      setActiveClubId(data.id);
+      return data.id;
+    }
+    return null;
+  }, [user]);
+
+  // Event actions
+  const createEvent = useCallback(async (name: string, clubId?: string | null): Promise<string | null> => {
+    if (!user) return null;
+    const insertData: any = { name, created_by: user.id };
+    if (clubId) insertData.club_id = clubId;
+    const { data, error } = await supabase
+      .from('events')
+      .insert(insertData)
+      .select('id, name, club_id')
       .single();
     if (error) { toast.error(error.message); return null; }
     if (data) {
@@ -291,6 +352,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
       uploadFile, removeSession,
+      clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent,
       rawData, hasSectorData, isLoading, errors, filters,
       setFilters, resetFilters,
