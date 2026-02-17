@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { addCSV, isLoading, sessions } = useTelemetry();
+  const { uploadFile, isLoading, sessions } = useTelemetry();
   const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -19,9 +19,9 @@ const Index = () => {
       toast.error(t('upload_error_csv'));
       return;
     }
-    await addCSV(file);
+    await uploadFile(file);
     navigate('/app');
-  }, [addCSV, navigate, t]);
+  }, [uploadFile, navigate, t]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

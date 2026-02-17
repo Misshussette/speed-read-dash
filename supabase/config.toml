@@ -1,0 +1,4 @@
+project_id = "cthqiuqddvrhpsirdsro"
+
+[functions.ingest-race-file]
+verify_jwt = false

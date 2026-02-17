@@ -1,17 +1,23 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import type { LapRecord, Filters, SessionMeta, StoredSession, AnalysisScope } from '@/types/telemetry';
-import type { ParseResult } from '@/lib/csv-parser';
-import { parseCSV } from '@/lib/csv-parser';
-import { getAllSessions, saveSession, deleteSession as deleteSessionFromDB } from '@/lib/session-store';
+import type { LapRecord, Filters, SessionMeta, AnalysisScope } from '@/types/telemetry';
 import { DEFAULT_SCOPE, applyScopeFilter, getScopeOptions, computeDualContextKPIs, type DualContextKPIs } from '@/lib/analysis-scope';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface TelemetryState {
   // Multi-session
   sessions: SessionMeta[];
   activeSessionId: string | null;
   setActiveSessionId: (id: string | null) => void;
-  addCSV: (file: File) => Promise<void>;
+  uploadFile: (file: File) => Promise<void>;
   removeSession: (id: string) => void;
+
+  // Events
+  events: { id: string; name: string }[];
+  activeEventId: string | null;
+  setActiveEventId: (id: string | null) => void;
+  createEvent: (name: string) => Promise<void>;
 
   // Current session data
   rawData: LapRecord[];
@@ -43,126 +49,217 @@ const defaultFilters: Filters = {
 const TelemetryContext = createContext<TelemetryState | null>(null);
 
 export function TelemetryProvider({ children }: { children: React.ReactNode }) {
-  const [storedSessions, setStoredSessions] = useState<StoredSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [events, setEvents] = useState<{ id: string; name: string }[]>([]);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<SessionMeta[]>([]);
+  const [activeSessionId, setActiveSessionIdInternal] = useState<string | null>(null);
+  const [rawData, setRawData] = useState<LapRecord[]>([]);
+  const [hasSectorData, setHasSectorData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [scope, setScope] = useState<AnalysisScope>(DEFAULT_SCOPE);
-  const [initialized, setInitialized] = useState(false);
 
-  // Load all sessions from IndexedDB on mount
+  // Load events when user is authenticated
   useEffect(() => {
-    getAllSessions().then(sessions => {
-      setStoredSessions(sessions);
-      if (sessions.length > 0) {
-        const sorted = [...sessions].sort((a, b) => b.meta.importedAt - a.meta.importedAt);
-        setActiveSessionId(sorted[0].meta.id);
-      }
-      setInitialized(true);
-    });
-  }, []);
-
-  // Migrate from old localStorage format
-  useEffect(() => {
-    if (!initialized) return;
-    try {
-      const stored = localStorage.getItem('stintlab_data');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.data && parsed.data.length > 0) {
-          const data = parsed.data as LapRecord[];
-          const first = data[0];
-          const id = crypto.randomUUID();
-          const session: StoredSession = {
-            meta: {
-              id,
-              session_id: first.session_id,
-              date: first.date,
-              track: first.track,
-              car_model: first.car_model,
-              brand: first.brand,
-              filename: 'migrated.csv',
-              laps: data.length,
-              importedAt: Date.now(),
-            },
-            data,
-            hasSectorData: parsed.hasSectorData || false,
-            dataMode: 'generic',
-          };
-          saveSession(session).then(() => {
-            setStoredSessions(prev => [session, ...prev]);
-            setActiveSessionId(id);
-            localStorage.removeItem('stintlab_data');
-          });
+    if (!user) { setEvents([]); setActiveEventId(null); return; }
+    supabase
+      .from('events')
+      .select('id, name')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setEvents(data);
+          if (data.length > 0 && !activeEventId) setActiveEventId(data[0].id);
         }
+      });
+  }, [user]);
+
+  // Load sessions when event changes
+  useEffect(() => {
+    if (!activeEventId) { setSessions([]); return; }
+    setIsLoading(true);
+    supabase
+      .from('sessions')
+      .select('*')
+      .eq('event_id', activeEventId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          const metas: SessionMeta[] = data.map((s: any) => ({
+            id: s.id,
+            session_id: s.id,
+            date: s.date || '',
+            track: s.track || '',
+            car_model: s.car_model || '',
+            brand: s.brand || '',
+            filename: s.filename || '',
+            laps: s.total_laps,
+            importedAt: new Date(s.created_at).getTime(),
+          }));
+          setSessions(metas);
+          if (metas.length > 0) setActiveSessionIdInternal(metas[0].id);
+          else setActiveSessionIdInternal(null);
+        }
+        setIsLoading(false);
+      });
+  }, [activeEventId]);
+
+  // Load laps when session changes
+  useEffect(() => {
+    if (!activeSessionId) { setRawData([]); setHasSectorData(false); return; }
+    setIsLoading(true);
+
+    const loadLaps = async () => {
+      // Fetch all laps in batches to overcome 1000 row limit
+      let allLaps: any[] = [];
+      let offset = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('laps')
+          .select('*')
+          .eq('session_id', activeSessionId)
+          .order('sort_key', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (error || !data) { hasMore = false; break; }
+        allLaps = allLaps.concat(data);
+        hasMore = data.length === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
-    } catch {}
-  }, [initialized]);
 
-  const activeSession = storedSessions.find(s => s.meta.id === activeSessionId);
-  const rawData = activeSession?.data || [];
-  const hasSectorData = activeSession?.hasSectorData || false;
-  const sessions = storedSessions.map(s => s.meta).sort((a, b) => b.importedAt - a.importedAt);
+      // Get session meta for track/car info
+      const sessionMeta = sessions.find(s => s.id === activeSessionId);
 
-  // Scope options derived from raw (canonical) data
-  const scopeOptions = useMemo(() => getScopeOptions(rawData), [rawData]);
+      const mapped: LapRecord[] = allLaps.map((row: any) => ({
+        session_id: activeSessionId,
+        date: sessionMeta?.date || '',
+        track: sessionMeta?.track || '',
+        car_model: sessionMeta?.car_model || '',
+        brand: sessionMeta?.brand || '',
+        driver: row.driver || '',
+        stint: row.stint,
+        lap_number: row.lap_number,
+        lap_time_s: row.lap_time_s,
+        S1_s: row.s1_s,
+        S2_s: row.s2_s,
+        S3_s: row.s3_s,
+        pit_type: row.pit_type || '',
+        pit_time_s: row.pit_time_s,
+        timestamp: row.timestamp || '',
+        lane: row.lane,
+        driving_station: row.driving_station,
+        team_number: row.team_number,
+        stint_elapsed_s: row.stint_elapsed_s,
+        session_elapsed_s: row.session_elapsed_s,
+        lap_status: row.lap_status as any,
+        validation_flags: row.validation_flags || [],
+        _sort_key: row.sort_key,
+      }));
 
-  // Scoped dataset: canonical data filtered by analysis scope (virtual, no duplication)
-  const scopedData = useMemo(() => applyScopeFilter(rawData, scope), [rawData, scope]);
+      setRawData(mapped);
+      setHasSectorData(mapped.some(l => l.S1_s !== null));
+      setIsLoading(false);
+    };
 
-  // Dual-context KPIs
-  const dualKPIs = useMemo(() => {
-    if (!scope.enabled || rawData.length === 0) return null;
-    return computeDualContextKPIs(scopedData, rawData, filters.includePitLaps);
-  }, [scopedData, rawData, scope.enabled, filters.includePitLaps]);
+    loadLaps();
+  }, [activeSessionId, sessions]);
 
-  const addCSV = useCallback(async (file: File) => {
+  const createEvent = useCallback(async (name: string) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('events')
+      .insert({ name, created_by: user.id })
+      .select('id, name')
+      .single();
+    if (error) { toast.error(error.message); return; }
+    if (data) {
+      setEvents(prev => [data, ...prev]);
+      setActiveEventId(data.id);
+    }
+  }, [user]);
+
+  const uploadFile = useCallback(async (file: File) => {
+    if (!user || !activeEventId) {
+      toast.error('Select an event first.');
+      return;
+    }
     setIsLoading(true);
     setErrors([]);
-    const result: ParseResult = await parseCSV(file);
-    if (result.errors.length > 0) {
-      setErrors(result.errors);
-      setIsLoading(false);
-      return;
-    }
-    if (result.data.length === 0) {
-      setErrors(['No valid lap records found.']);
-      setIsLoading(false);
-      return;
-    }
-    const first = result.data[0];
-    const id = crypto.randomUUID();
-    const session: StoredSession = {
-      meta: {
-        id,
-        session_id: first.session_id,
-        date: first.date,
-        track: first.track,
-        car_model: first.car_model,
-        brand: first.brand,
-        filename: file.name,
-        laps: result.data.length,
-        importedAt: Date.now(),
-      },
-      data: result.data,
-      hasSectorData: result.hasSectorData,
-      dataMode: result.dataMode,
-    };
-    await saveSession(session);
-    setStoredSessions(prev => [session, ...prev]);
-    setActiveSessionId(id);
-    setFilters(defaultFilters);
-    setScope(DEFAULT_SCOPE);
-    setIsLoading(false);
-  }, []);
 
-  const removeSession = useCallback((id: string) => {
-    deleteSessionFromDB(id);
-    setStoredSessions(prev => {
-      const next = prev.filter(s => s.meta.id !== id);
+    try {
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('race-files')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          event_id: activeEventId,
+          name: file.name.replace(/\.csv$/i, ''),
+          filename: file.name,
+          status: 'processing',
+          created_by: user.id,
+        })
+        .select('id')
+        .single();
+      if (sessionError) throw sessionError;
+
+      const { error: fnError } = await supabase.functions.invoke('ingest-race-file', {
+        body: {
+          session_id: sessionData.id,
+          file_path: filePath,
+          event_id: activeEventId,
+        },
+      });
+      if (fnError) throw fnError;
+
+      // Refresh sessions list
+      const { data: refreshed } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('event_id', activeEventId)
+        .order('created_at', { ascending: false });
+
+      if (refreshed) {
+        const metas: SessionMeta[] = refreshed.map((s: any) => ({
+          id: s.id,
+          session_id: s.id,
+          date: s.date || '',
+          track: s.track || '',
+          car_model: s.car_model || '',
+          brand: s.brand || '',
+          filename: s.filename || '',
+          laps: s.total_laps,
+          importedAt: new Date(s.created_at).getTime(),
+        }));
+        setSessions(metas);
+        setActiveSessionIdInternal(sessionData.id);
+      }
+
+      setFilters(defaultFilters);
+      setScope(DEFAULT_SCOPE);
+      toast.success('File processed successfully!');
+    } catch (err: any) {
+      setErrors([err.message || 'Upload failed']);
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, activeEventId]);
+
+  const removeSession = useCallback(async (id: string) => {
+    await supabase.from('sessions').delete().eq('id', id);
+    setSessions(prev => {
+      const next = prev.filter(s => s.id !== id);
       if (activeSessionId === id) {
-        setActiveSessionId(next.length > 0 ? next[0].meta.id : null);
+        setActiveSessionIdInternal(next.length > 0 ? next[0].id : null);
         setFilters(defaultFilters);
         setScope(DEFAULT_SCOPE);
       }
@@ -170,19 +267,28 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     });
   }, [activeSessionId]);
 
-  const handleSetActiveSessionId = useCallback((id: string | null) => {
-    setActiveSessionId(id);
+  const setActiveSessionId = useCallback((id: string | null) => {
+    setActiveSessionIdInternal(id);
     setFilters(defaultFilters);
     setScope(DEFAULT_SCOPE);
   }, []);
+
+  // Scope
+  const scopeOptions = useMemo(() => getScopeOptions(rawData), [rawData]);
+  const scopedData = useMemo(() => applyScopeFilter(rawData, scope), [rawData, scope]);
+  const dualKPIs = useMemo(() => {
+    if (!scope.enabled || rawData.length === 0) return null;
+    return computeDualContextKPIs(scopedData, rawData, filters.includePitLaps);
+  }, [scopedData, rawData, scope.enabled, filters.includePitLaps]);
 
   const resetFilters = useCallback(() => setFilters(defaultFilters), []);
   const resetScope = useCallback(() => setScope(DEFAULT_SCOPE), []);
 
   return (
     <TelemetryContext.Provider value={{
-      sessions, activeSessionId, setActiveSessionId: handleSetActiveSessionId,
-      addCSV, removeSession,
+      sessions, activeSessionId, setActiveSessionId,
+      uploadFile, removeSession,
+      events, activeEventId, setActiveEventId, createEvent,
       rawData, hasSectorData, isLoading, errors, filters,
       setFilters, resetFilters,
       scope, setScope, resetScope, scopeOptions, scopedData, dualKPIs,
