@@ -103,7 +103,12 @@ const de: Record<string, string> = {
   mode_drivers: 'Fahrer',
   mode_car: 'Fahrzeug',
   mode_compare: 'Vergleich',
-  compare_placeholder: 'Multi-Sitzungs-Vergleich wird hier verfügbar sein. Importieren Sie mehrere Sitzungen und überlagern Sie deren Daten.',
+  compare_placeholder: 'Wählen Sie mindestens 2 Sitzungen über den Vergleichsschalter in der Sitzungsverwaltung oben.',
+  compare_add: 'Vergleichen',
+  compare_remove: 'Entfernen',
+  compare_clear: 'Vergleich leeren',
+  compare_selected: '{count} Sitzungen ausgewählt',
+  compare_loading: 'Vergleichsdaten werden geladen...',
 
   scope_active: 'Scope aktiv',
   scope_title: 'Analysebereich',

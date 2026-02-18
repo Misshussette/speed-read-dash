@@ -103,7 +103,12 @@ const fr: Record<string, string> = {
   mode_drivers: 'Pilotes',
   mode_car: 'Voiture',
   mode_compare: 'Comparaison',
-  compare_placeholder: 'La comparaison multi-session sera disponible ici. Importez plusieurs sessions et superposez leurs données.',
+  compare_placeholder: 'Sélectionnez au moins 2 sessions via le bouton comparer dans le gestionnaire de sessions ci-dessus.',
+  compare_add: 'Comparer',
+  compare_remove: 'Retirer',
+  compare_clear: 'Vider la comparaison',
+  compare_selected: '{count} sessions sélectionnées',
+  compare_loading: 'Chargement des données de comparaison...',
 
   scope_active: 'Scope actif',
   scope_title: 'Périmètre d\'analyse',

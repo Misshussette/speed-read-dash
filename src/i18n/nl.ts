@@ -103,7 +103,12 @@ const nl: Record<string, string> = {
   mode_drivers: 'Rijders',
   mode_car: 'Auto',
   mode_compare: 'Vergelijking',
-  compare_placeholder: 'Multi-sessie vergelijking wordt hier beschikbaar. Importeer meerdere sessies en combineer hun data.',
+  compare_placeholder: 'Selecteer minimaal 2 sessies via de vergelijkknop in het sessiebeheer hierboven.',
+  compare_add: 'Vergelijken',
+  compare_remove: 'Verwijderen',
+  compare_clear: 'Vergelijking wissen',
+  compare_selected: '{count} sessies geselecteerd',
+  compare_loading: 'Vergelijkingsdata laden...',
 
   scope_active: 'Scope actief',
   scope_title: 'Analysebereik',

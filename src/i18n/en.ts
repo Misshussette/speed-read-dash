@@ -132,7 +132,12 @@ const en: Record<string, string> = {
   mode_drivers: 'Drivers',
   mode_car: 'Car',
   mode_compare: 'Comparison',
-  compare_placeholder: 'Multi-session comparison will be available here. Import multiple sessions and overlay their data.',
+  compare_placeholder: 'Select at least 2 sessions using the compare toggle in the Session Manager above.',
+  compare_add: 'Compare',
+  compare_remove: 'Remove',
+  compare_clear: 'Clear comparison',
+  compare_selected: '{count} sessions selected',
+  compare_loading: 'Loading comparison data...',
 
   // Analysis scope
   scope_active: 'Scope Active',
