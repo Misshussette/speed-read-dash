@@ -103,7 +103,12 @@ const es: Record<string, string> = {
   mode_drivers: 'Pilotos',
   mode_car: 'Coche',
   mode_compare: 'Comparación',
-  compare_placeholder: 'La comparación multi-sesión estará disponible aquí. Importa varias sesiones y superpón sus datos.',
+  compare_placeholder: 'Selecciona al menos 2 sesiones usando el botón comparar en el gestor de sesiones arriba.',
+  compare_add: 'Comparar',
+  compare_remove: 'Quitar',
+  compare_clear: 'Vaciar comparación',
+  compare_selected: '{count} sesiones seleccionadas',
+  compare_loading: 'Cargando datos de comparación...',
 
   scope_active: 'Scope activo',
   scope_title: 'Ámbito de análisis',

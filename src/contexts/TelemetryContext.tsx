@@ -27,6 +27,13 @@ interface TelemetryState {
   setActiveEventId: (id: string | null) => void;
   createEvent: (name: string, clubId?: string | null) => Promise<string | null>;
 
+  // Comparison
+  comparisonSessions: string[];
+  toggleComparisonSession: (id: string) => void;
+  clearComparisonSessions: () => void;
+  comparisonData: LapRecord[];
+  isLoadingComparison: boolean;
+
   // Current session data
   rawData: LapRecord[];
   hasSectorData: boolean;
@@ -78,6 +85,9 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const [errors, setErrors] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [scope, setScope] = useState<AnalysisScope>(DEFAULT_SCOPE);
+  const [comparisonSessions, setComparisonSessions] = useState<string[]>([]);
+  const [comparisonData, setComparisonData] = useState<LapRecord[]>([]);
+  const [isLoadingComparison, setIsLoadingComparison] = useState(false);
 
   // Load clubs when user is authenticated
   useEffect(() => {
@@ -348,12 +358,96 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const resetFilters = useCallback(() => setFilters(defaultFilters), []);
   const resetScope = useCallback(() => setScope(DEFAULT_SCOPE), []);
 
+  // Comparison
+  const toggleComparisonSession = useCallback((id: string) => {
+    setComparisonSessions(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  }, []);
+
+  const clearComparisonSessions = useCallback(() => {
+    setComparisonSessions([]);
+    setComparisonData([]);
+  }, []);
+
+  // Load comparison data when comparisonSessions changes
+  useEffect(() => {
+    if (comparisonSessions.length < 2) {
+      setComparisonData([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadComparisonData = async () => {
+      setIsLoadingComparison(true);
+      const allLaps: LapRecord[] = [];
+
+      for (const sessionId of comparisonSessions) {
+        let offset = 0;
+        const PAGE_SIZE = 1000;
+        let hasMore = true;
+        const sessionMeta = sessions.find(s => s.id === sessionId);
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('laps')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('sort_key', { ascending: true })
+            .range(offset, offset + PAGE_SIZE - 1);
+
+          if (error || !data || cancelled) { hasMore = false; break; }
+
+          const mapped: LapRecord[] = data.map((row: any) => ({
+            session_id: sessionId,
+            date: sessionMeta?.date || '',
+            track: sessionMeta?.track || '',
+            car_model: sessionMeta?.car_model || '',
+            brand: sessionMeta?.brand || '',
+            driver: row.driver || '',
+            stint: row.stint,
+            lap_number: row.lap_number,
+            lap_time_s: row.lap_time_s,
+            S1_s: row.s1_s,
+            S2_s: row.s2_s,
+            S3_s: row.s3_s,
+            pit_type: row.pit_type || '',
+            pit_time_s: row.pit_time_s,
+            timestamp: row.timestamp || '',
+            lane: row.lane,
+            driving_station: row.driving_station,
+            team_number: row.team_number,
+            stint_elapsed_s: row.stint_elapsed_s,
+            session_elapsed_s: row.session_elapsed_s,
+            lap_status: row.lap_status as any,
+            validation_flags: row.validation_flags || [],
+            _sort_key: row.sort_key,
+          }));
+
+          allLaps.push(...mapped);
+          hasMore = data.length === PAGE_SIZE;
+          offset += PAGE_SIZE;
+        }
+      }
+
+      if (!cancelled) {
+        setComparisonData(allLaps);
+        setIsLoadingComparison(false);
+      }
+    };
+
+    loadComparisonData();
+    return () => { cancelled = true; };
+  }, [comparisonSessions, sessions]);
+
   return (
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
       uploadFile, removeSession,
       clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent,
+      comparisonSessions, toggleComparisonSession, clearComparisonSessions,
+      comparisonData, isLoadingComparison,
       rawData, hasSectorData, isLoading, errors, filters,
       setFilters, resetFilters,
       scope, setScope, resetScope, scopeOptions, scopedData, dualKPIs,

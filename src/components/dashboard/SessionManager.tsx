@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Upload, Trash2, Check, Download, Plus, FolderOpen, Building2 } from 'lucide-react';
+import { Upload, Trash2, Check, Download, Plus, FolderOpen, Building2, GitCompareArrows } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,7 @@ const SessionManager = () => {
     rawData, filters, scope, scopedData,
     clubs, activeClubId, setActiveClubId,
     events, activeEventId, setActiveEventId, createEvent,
+    comparisonSessions, toggleComparisonSession,
   } = useTelemetry();
 
   const [newEventName, setNewEventName] = useState('');
@@ -145,6 +146,7 @@ const SessionManager = () => {
                   <TableHead className="text-xs text-right">{t('kpi_total_laps')}</TableHead>
                   <TableHead className="text-xs">{t('session_col_file')}</TableHead>
                   <TableHead className="w-8"></TableHead>
+                  <TableHead className="w-8"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -162,6 +164,17 @@ const SessionManager = () => {
                     <TableCell className="text-xs text-muted-foreground">{s.date || '—'}</TableCell>
                     <TableCell className="text-xs text-right font-mono">{s.laps}</TableCell>
                     <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">{s.filename}</TableCell>
+                    <TableCell className="px-2">
+                      <Button
+                        variant={comparisonSessions.includes(s.id) ? 'default' : 'ghost'}
+                        size="icon"
+                        className={`h-6 w-6 ${comparisonSessions.includes(s.id) ? 'text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}
+                        onClick={(e) => { e.stopPropagation(); toggleComparisonSession(s.id); }}
+                        title={comparisonSessions.includes(s.id) ? t('compare_remove') : t('compare_add')}
+                      >
+                        <GitCompareArrows className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
                     <TableCell className="px-2">
                       <Button
                         variant="ghost"

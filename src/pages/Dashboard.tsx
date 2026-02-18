@@ -32,7 +32,7 @@ const Dashboard = () => {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const { setDisplayMode } = useDisplayMode();
-  const { rawData, hasSectorData, filters, setFilters, resetFilters, sessions, scope, scopedData, scopeOptions, dualKPIs } = useTelemetry();
+  const { rawData, hasSectorData, filters, setFilters, resetFilters, sessions, scope, scopedData, scopeOptions, dualKPIs, comparisonSessions, comparisonData, isLoadingComparison, clearComparisonSessions } = useTelemetry();
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('overview');
 
   // Default mobile to guided mode
@@ -234,9 +234,45 @@ const Dashboard = () => {
                 {analysisMode === 'compare' && (
                   <section className="space-y-4">
                     <SectionHeader number={2} title={t('mode_compare')} />
-                    <div className="rounded-lg border border-border bg-card p-8 text-center">
-                      <p className="text-muted-foreground text-sm">{t('compare_placeholder')}</p>
-                    </div>
+                    {comparisonSessions.length >= 2 && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground">
+                          {t('compare_selected').replace('{count}', String(comparisonSessions.length))}
+                        </span>
+                        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={clearComparisonSessions}>
+                          {t('compare_clear')}
+                        </Button>
+                      </div>
+                    )}
+                    {comparisonSessions.length < 2 ? (
+                      <div className="rounded-lg border border-border bg-card p-8 text-center">
+                        <p className="text-muted-foreground text-sm">{t('compare_placeholder')}</p>
+                      </div>
+                    ) : isLoadingComparison ? (
+                      <div className="rounded-lg border border-border bg-card p-8 text-center">
+                        <p className="text-muted-foreground text-sm">{t('compare_loading')}</p>
+                      </div>
+                    ) : (
+                      <>
+                        <KPICards kpis={computeKPIs(comparisonData, filters.includePitLaps)} />
+                        <div id="chart-lap-time-compare">
+                          <LapTimeChart data={comparisonData} />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div id="chart-driver-compare">
+                            <DriverComparisonChart data={comparisonData} includePitLaps={filters.includePitLaps} />
+                          </div>
+                          {comparisonData.some(l => l.S1_s !== null) && (
+                            <div id="chart-sector-compare">
+                              <SectorChart data={comparisonData} />
+                            </div>
+                          )}
+                        </div>
+                        <div id="chart-stint-compare">
+                          <StintTimeline data={comparisonData} includePitLaps={filters.includePitLaps} />
+                        </div>
+                      </>
+                    )}
                   </section>
                 )}
               </>
