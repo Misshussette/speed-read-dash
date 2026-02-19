@@ -55,7 +55,7 @@ const Index = () => {
             <Button size="lg" onClick={() => navigate('/auth?tab=signup')}>
               {t('land_cta_signup')} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" onClick={() => navigate('/auth')}>
+            <Button variant="outline" size="lg" className="text-foreground" onClick={() => navigate('/auth')}>
               <LogIn className="mr-2 h-4 w-4" /> {t('land_cta_signin')}
             </Button>
           </div>
