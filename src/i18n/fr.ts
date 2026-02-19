@@ -236,6 +236,17 @@ const fr: Record<string, string> = {
   garage_ctrl_added: 'Contrôleur ajouté !',
   garage_ctrl_updated: 'Contrôleur mis à jour !',
 
+  // Configurations
+  garage_configurations: 'Configurations',
+  garage_add_config: 'Ajouter configuration',
+  garage_config_name: 'Nom de la configuration',
+  garage_config_added: 'Configuration ajoutée !',
+  garage_config_updated: 'Configuration mise à jour !',
+  garage_no_configs: 'Pas encore de configuration. Créez-en une pour combiner véhicule, setup et contrôleur.',
+  garage_select_vehicle: 'Sélectionner véhicule',
+  garage_select_setup: 'Sélectionner setup',
+  garage_select_ctrl: 'Sélectionner contrôleur',
+
   // Setup Performance
   setup_perf_title: 'Impact Performance',
   setup_perf_index: 'Indice de performance',

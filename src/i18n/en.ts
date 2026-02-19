@@ -269,6 +269,17 @@ const en: Record<string, string> = {
   garage_ctrl_added: 'Controller added!',
   garage_ctrl_updated: 'Controller updated!',
 
+  // Configurations
+  garage_configurations: 'Configurations',
+  garage_add_config: 'Add Configuration',
+  garage_config_name: 'Configuration Name',
+  garage_config_added: 'Configuration added!',
+  garage_config_updated: 'Configuration updated!',
+  garage_no_configs: 'No configurations yet. Create one to combine vehicle, setup, and controller.',
+  garage_select_vehicle: 'Select vehicle',
+  garage_select_setup: 'Select setup',
+  garage_select_ctrl: 'Select controller',
+
   // Setup Performance
   setup_perf_title: 'Performance Impact',
   setup_perf_index: 'Performance Index',

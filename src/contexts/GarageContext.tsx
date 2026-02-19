@@ -1,16 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Car, Setup, Controller, SessionGarageLink } from '@/types/garage';
+import type { Car, Setup, Controller, Configuration, SessionGarageLink } from '@/types/garage';
 import {
   getAllCars, saveCar as saveCarDB, deleteCar as deleteCarDB,
   getAllSetups, saveSetup as saveSetupDB, deleteSetup as deleteSetupDB,
   getAllSessionLinks, saveSessionLink as saveLinkDB,
   getAllControllers, saveController as saveControllerDB, deleteController as deleteControllerDB,
+  getAllConfigurations, saveConfiguration as saveConfigDB, deleteConfiguration as deleteConfigDB,
 } from '@/lib/garage-store';
 
 interface GarageState {
   cars: Car[];
   setups: Setup[];
   controllers: Controller[];
+  configurations: Configuration[];
   sessionLinks: SessionGarageLink[];
 
   addCar: (car: Omit<Car, 'id' | 'createdAt'>) => Promise<Car>;
@@ -26,11 +28,16 @@ interface GarageState {
   updateController: (controller: Controller) => Promise<void>;
   removeController: (id: string) => Promise<void>;
 
+  addConfiguration: (data: Omit<Configuration, 'id' | 'createdAt'>) => Promise<Configuration>;
+  updateConfiguration: (config: Configuration) => Promise<void>;
+  removeConfiguration: (id: string) => Promise<void>;
+
   getSetupsForCar: (carId: string) => Setup[];
-  linkSessionToGarage: (sessionId: string, carId: string | null, setupId: string | null) => Promise<void>;
+  linkSessionToGarage: (sessionId: string, carId: string | null, setupId: string | null, configurationId?: string | null) => Promise<void>;
   getSessionLink: (sessionId: string) => SessionGarageLink | undefined;
   getCarById: (id: string) => Car | undefined;
   getSetupById: (id: string) => Setup | undefined;
+  getConfigurationById: (id: string) => Configuration | undefined;
 }
 
 const GarageContext = createContext<GarageState | null>(null);
@@ -39,11 +46,12 @@ export function GarageProvider({ children }: { children: React.ReactNode }) {
   const [cars, setCars] = useState<Car[]>([]);
   const [setups, setSetups] = useState<Setup[]>([]);
   const [controllers, setControllers] = useState<Controller[]>([]);
+  const [configurations, setConfigurations] = useState<Configuration[]>([]);
   const [sessionLinks, setSessionLinks] = useState<SessionGarageLink[]>([]);
 
   useEffect(() => {
-    Promise.all([getAllCars(), getAllSetups(), getAllSessionLinks(), getAllControllers()]).then(
-      ([c, s, l, ctrl]) => { setCars(c); setSetups(s); setSessionLinks(l); setControllers(ctrl); }
+    Promise.all([getAllCars(), getAllSetups(), getAllSessionLinks(), getAllControllers(), getAllConfigurations()]).then(
+      ([c, s, l, ctrl, configs]) => { setCars(c); setSetups(s); setSessionLinks(l); setControllers(ctrl); setConfigurations(configs); }
     );
   }, []);
 
@@ -123,10 +131,29 @@ export function GarageProvider({ children }: { children: React.ReactNode }) {
     setControllers(prev => prev.filter(c => c.id !== id));
   }, []);
 
+  // ── Configurations ──
+  const addConfiguration = useCallback(async (data: Omit<Configuration, 'id' | 'createdAt'>) => {
+    const config: Configuration = { ...data, id: crypto.randomUUID(), createdAt: Date.now() };
+    await saveConfigDB(config);
+    setConfigurations(prev => [...prev, config]);
+    return config;
+  }, []);
+
+  const updateConfiguration = useCallback(async (config: Configuration) => {
+    await saveConfigDB(config);
+    setConfigurations(prev => prev.map(c => c.id === config.id ? config : c));
+  }, []);
+
+  const removeConfiguration = useCallback(async (id: string) => {
+    await deleteConfigDB(id);
+    setConfigurations(prev => prev.filter(c => c.id !== id));
+    setSessionLinks(prev => prev.map(l => l.configuration_id === id ? { ...l, configuration_id: null } : l));
+  }, []);
+
   // ── Helpers ──
   const getSetupsForCarFn = useCallback((carId: string) => setups.filter(s => s.car_id === carId), [setups]);
-  const linkSessionToGarage = useCallback(async (sessionId: string, carId: string | null, setupId: string | null) => {
-    const link: SessionGarageLink = { session_id: sessionId, car_id: carId, setup_id: setupId };
+  const linkSessionToGarage = useCallback(async (sessionId: string, carId: string | null, setupId: string | null, configurationId: string | null = null) => {
+    const link: SessionGarageLink = { session_id: sessionId, car_id: carId, setup_id: setupId, configuration_id: configurationId };
     await saveLinkDB(link);
     setSessionLinks(prev => {
       const idx = prev.findIndex(l => l.session_id === sessionId);
@@ -137,16 +164,18 @@ export function GarageProvider({ children }: { children: React.ReactNode }) {
   const getSessionLinkFn = useCallback((sessionId: string) => sessionLinks.find(l => l.session_id === sessionId), [sessionLinks]);
   const getCarById = useCallback((id: string) => cars.find(c => c.id === id), [cars]);
   const getSetupById = useCallback((id: string) => setups.find(s => s.id === id), [setups]);
+  const getConfigurationById = useCallback((id: string) => configurations.find(c => c.id === id), [configurations]);
 
   return (
     <GarageContext.Provider value={{
-      cars, setups, controllers, sessionLinks,
+      cars, setups, controllers, configurations, sessionLinks,
       addCar, updateCar, removeCar,
       addSetup, updateSetup, removeSetup, duplicateSetup,
       addController, updateController, removeController,
+      addConfiguration, updateConfiguration, removeConfiguration,
       getSetupsForCar: getSetupsForCarFn,
       linkSessionToGarage, getSessionLink: getSessionLinkFn,
-      getCarById, getSetupById,
+      getCarById, getSetupById, getConfigurationById,
     }}>
       {children}
     </GarageContext.Provider>

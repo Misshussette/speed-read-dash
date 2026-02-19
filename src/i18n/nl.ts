@@ -230,6 +230,17 @@ const nl: Record<string, string> = {
   garage_ctrl_added: 'Controller toegevoegd!',
   garage_ctrl_updated: 'Controller bijgewerkt!',
 
+  // Configurations
+  garage_configurations: 'Configuraties',
+  garage_add_config: 'Configuratie toevoegen',
+  garage_config_name: 'Configuratienaam',
+  garage_config_added: 'Configuratie toegevoegd!',
+  garage_config_updated: 'Configuratie bijgewerkt!',
+  garage_no_configs: 'Nog geen configuraties. Maak er een om voertuig, setup en controller te combineren.',
+  garage_select_vehicle: 'Voertuig selecteren',
+  garage_select_setup: 'Setup selecteren',
+  garage_select_ctrl: 'Controller selecteren',
+
   // Setup Performance
   setup_perf_title: 'Prestatie-impact',
   setup_perf_index: 'Prestatie-index',

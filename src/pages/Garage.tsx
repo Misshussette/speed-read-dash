@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, Car, Settings2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, X, Gauge } from 'lucide-react';
+import { Plus, Trash2, Car, Settings2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, X, Gauge, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useGarage } from '@/contexts/GarageContext';
 import { useI18n } from '@/i18n/I18nContext';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { computeTrackBenchmark } from '@/lib/track-benchmark';
 import type { LapRecord } from '@/types/telemetry';
 import type { TrackBenchmark } from '@/lib/track-benchmark';
-import type { Car as CarType, Setup, Controller } from '@/types/garage';
+import type { Car as CarType, Setup, Controller, Configuration } from '@/types/garage';
 import SetupPerformanceImpact from '@/components/garage/SetupPerformanceImpact';
 
 /* ── Vehicle Edit Dialog (inline) ── */
@@ -169,10 +170,11 @@ function ControllerForm({ controller, onSave, onCancel }: {
 const Garage = () => {
   const { t } = useI18n();
   const {
-    cars, setups, controllers, sessionLinks,
+    cars, setups, controllers, configurations, sessionLinks,
     addCar, updateCar, removeCar,
     addSetup, updateSetup, removeSetup, duplicateSetup,
     addController, updateController, removeController,
+    addConfiguration, updateConfiguration, removeConfiguration,
     getSetupsForCar,
   } = useGarage();
 
@@ -189,6 +191,13 @@ const Garage = () => {
   // ── Controller state ──
   const [showNewCtrl, setShowNewCtrl] = useState(false);
   const [editingCtrl, setEditingCtrl] = useState<string | null>(null);
+
+  // ── Configuration state ──
+  const [showNewConfig, setShowNewConfig] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<string | null>(null);
+  const [configForm, setConfigForm] = useState<{ name: string; vehicle_id: string; setup_id: string; controller_id: string; notes: string }>({
+    name: '', vehicle_id: '', setup_id: '', controller_id: '', notes: '',
+  });
 
   // ── Setup performance data cache ──
   const [sessionCache, setSessionCache] = useState<Record<string, { laps: LapRecord[]; benchmark: TrackBenchmark }>>({});
@@ -282,6 +291,48 @@ const Garage = () => {
     }
   };
 
+  // ── Configuration handlers ──
+  const resetConfigForm = () => setConfigForm({ name: '', vehicle_id: '', setup_id: '', controller_id: '', notes: '' });
+
+  const handleSaveConfig = async (existingId?: string) => {
+    if (!configForm.name.trim() || !configForm.vehicle_id) return;
+    if (existingId) {
+      const existing = configurations.find(c => c.id === existingId);
+      if (existing) await updateConfiguration({
+        ...existing,
+        name: configForm.name.trim(),
+        vehicle_id: configForm.vehicle_id,
+        setup_id: configForm.setup_id || null,
+        controller_id: configForm.controller_id || null,
+        notes: configForm.notes.trim() || null,
+      });
+      setEditingConfig(null);
+      toast.success(t('garage_config_updated'));
+    } else {
+      await addConfiguration({
+        name: configForm.name.trim(),
+        vehicle_id: configForm.vehicle_id,
+        setup_id: configForm.setup_id || null,
+        controller_id: configForm.controller_id || null,
+        notes: configForm.notes.trim() || null,
+      });
+      setShowNewConfig(false);
+      toast.success(t('garage_config_added'));
+    }
+    resetConfigForm();
+  };
+
+  const startEditConfig = (config: Configuration) => {
+    setEditingConfig(config.id);
+    setConfigForm({
+      name: config.name,
+      vehicle_id: config.vehicle_id,
+      setup_id: config.setup_id || '',
+      controller_id: config.controller_id || '',
+      notes: config.notes || '',
+    });
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6 space-y-6">
       <h1 className="text-xl font-bold text-foreground">{t('nav_garage')}</h1>
@@ -291,6 +342,7 @@ const Garage = () => {
           <TabsTrigger value="vehicles"><Car className="h-3.5 w-3.5 mr-1.5" />{t('garage_vehicles')}</TabsTrigger>
           <TabsTrigger value="setups"><Wrench className="h-3.5 w-3.5 mr-1.5" />{t('garage_setups')}</TabsTrigger>
           <TabsTrigger value="controllers"><Settings2 className="h-3.5 w-3.5 mr-1.5" />{t('garage_controllers')}</TabsTrigger>
+          <TabsTrigger value="configurations"><Layers className="h-3.5 w-3.5 mr-1.5" />{t('garage_configurations')}</TabsTrigger>
         </TabsList>
 
         {/* ═══════ VEHICLES ═══════ */}
@@ -520,6 +572,100 @@ const Garage = () => {
                 )}
               </Card>
             ))
+          )}
+        </TabsContent>
+
+        {/* ═══════ CONFIGURATIONS ═══════ */}
+        <TabsContent value="configurations" className="space-y-4 mt-4">
+          <div className="flex items-center justify-end">
+            <Button variant="outline" size="sm" onClick={() => { setShowNewConfig(!showNewConfig); setEditingConfig(null); resetConfigForm(); }}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> {t('garage_add_config')}
+            </Button>
+          </div>
+
+          {(showNewConfig || editingConfig) && (
+            <Card className="bg-card border-border">
+              <CardContent className="pt-4 space-y-3">
+                <Input placeholder={t('garage_config_name')} value={configForm.name} onChange={e => setConfigForm(prev => ({ ...prev, name: e.target.value }))} className="text-sm h-9" />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('garage_vehicles')}</label>
+                    <Select value={configForm.vehicle_id} onValueChange={v => setConfigForm(prev => ({ ...prev, vehicle_id: v, setup_id: '' }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t('garage_select_vehicle')} /></SelectTrigger>
+                      <SelectContent>
+                        {cars.map(c => <SelectItem key={c.id} value={c.id}>{c.brand} {c.model}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('garage_setups')}</label>
+                    <Select value={configForm.setup_id} onValueChange={v => setConfigForm(prev => ({ ...prev, setup_id: v }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t('garage_select_setup')} /></SelectTrigger>
+                      <SelectContent>
+                        {(configForm.vehicle_id ? getSetupsForCar(configForm.vehicle_id) : setups).map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.label || '—'}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('garage_controllers')}</label>
+                    <Select value={configForm.controller_id} onValueChange={v => setConfigForm(prev => ({ ...prev, controller_id: v }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t('garage_select_ctrl')} /></SelectTrigger>
+                      <SelectContent>
+                        {controllers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Textarea placeholder={t('garage_notes')} value={configForm.notes} onChange={e => setConfigForm(prev => ({ ...prev, notes: e.target.value }))} className="text-sm min-h-[60px]" />
+                <div className="flex items-center gap-2 justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => { setShowNewConfig(false); setEditingConfig(null); resetConfigForm(); }}>{t('garage_cancel')}</Button>
+                  <Button size="sm" onClick={() => handleSaveConfig(editingConfig || undefined)} disabled={!configForm.name.trim() || !configForm.vehicle_id}>
+                    {editingConfig ? t('garage_save') : t('event_create')}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {configurations.length === 0 && !showNewConfig ? (
+            <Card className="bg-card border-border">
+              <CardContent className="py-12 text-center">
+                <Layers className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">{t('garage_no_configs')}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            configurations.filter(() => !showNewConfig || true).map(config => {
+              if (editingConfig === config.id) return null; // form shown above
+              const vehicle = cars.find(c => c.id === config.vehicle_id);
+              const setup = setups.find(s => s.id === config.setup_id);
+              const ctrl = controllers.find(c => c.id === config.controller_id);
+              return (
+                <Card key={config.id} className="bg-card border-border">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">{config.name}</CardTitle>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {vehicle && <span className="text-xs text-muted-foreground"><Car className="h-3 w-3 inline mr-0.5" />{vehicle.brand} {vehicle.model}</span>}
+                        {setup && <span className="text-xs text-muted-foreground"><Wrench className="h-3 w-3 inline mr-0.5" />{setup.label || '—'}</span>}
+                        {ctrl && <span className="text-xs text-muted-foreground"><Settings2 className="h-3 w-3 inline mr-0.5" />{ctrl.name}</span>}
+                      </div>
+                      {config.notes && <p className="text-xs text-muted-foreground mt-1">{config.notes}</p>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditConfig(config)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeConfiguration(config.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              );
+            })
           )}
         </TabsContent>
       </Tabs>
