@@ -8,8 +8,13 @@ import { GarageProvider } from "@/contexts/GarageContext";
 import { DisplayModeProvider } from "@/contexts/DisplayModeContext";
 import { I18nProvider } from "@/i18n/I18nContext";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import AppLayout from "@/components/AppLayout";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
+import Events from "./pages/Events";
+import Analysis from "./pages/Analysis";
+import Comparison from "./pages/Comparison";
+import Garage from "./pages/Garage";
+import SettingsPage from "./pages/Settings";
 import Auth from "./pages/Auth";
 import About from "./pages/About";
 import Admin from "./pages/Admin";
@@ -46,23 +51,22 @@ const App = () => {
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/auth" element={<Auth />} />
-                        <Route
-                          path="/app"
-                          element={
-                            <ProtectedRoute>
-                              <Dashboard />
-                            </ProtectedRoute>
-                          }
-                        />
                         <Route path="/about" element={<About />} />
-                        <Route
-                          path="/admin"
-                          element={
-                            <ProtectedRoute>
-                              <Admin />
-                            </ProtectedRoute>
-                          }
-                        />
+
+                        {/* Protected app routes with sidebar layout */}
+                        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                          <Route path="/events" element={<Events />} />
+                          <Route path="/analysis" element={<Events />} />
+                          <Route path="/analysis/:sessionId" element={<Analysis />} />
+                          <Route path="/comparison" element={<Comparison />} />
+                          <Route path="/garage" element={<Garage />} />
+                          <Route path="/settings" element={<SettingsPage />} />
+                          <Route path="/admin" element={<Admin />} />
+                        </Route>
+
+                        {/* Legacy route redirect */}
+                        <Route path="/app" element={<Navigate to="/events" replace />} />
+
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </BrowserRouter>

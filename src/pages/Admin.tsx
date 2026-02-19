@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Gauge, Users, Calendar, FileUp, Shield, ArrowLeft, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Calendar, FileUp, Shield, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useAuth } from '@/hooks/useAuth';
 
 interface UserRow { id: string; user_id: string; display_name: string | null; created_at: string; }
 interface EventRow { id: string; name: string; created_by: string; club_id: string | null; created_at: string; }
@@ -26,7 +25,6 @@ const statusColor = (s: string) => {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { isPlatformAdmin, loading: roleLoading } = useUserRole();
 
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -66,7 +64,7 @@ const Admin = () => {
 
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-background dark flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
@@ -74,177 +72,165 @@ const Admin = () => {
 
   if (!isPlatformAdmin) {
     return (
-      <div className="min-h-screen bg-background dark flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Shield className="h-12 w-12 text-destructive" />
         <p className="text-foreground font-semibold text-lg">Access Denied</p>
         <p className="text-muted-foreground text-sm">This page is restricted to platform administrators.</p>
-        <Button variant="outline" onClick={() => navigate('/')}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Home
-        </Button>
+        <Button variant="outline" onClick={() => navigate('/events')}>Back to Events</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-primary" />
-              <span className="font-bold text-foreground">Stint<span className="text-primary">Lab</span></span>
-            </Link>
-            <Badge variant="outline" className="text-xs border-primary/30 text-primary">Admin</Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app')}>Dashboard</Button>
-          </div>
+    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-foreground">Admin</h1>
+          <Badge variant="outline" className="text-xs border-primary/30 text-primary">Platform</Badge>
         </div>
-      </header>
+        <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </Button>
+      </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <Users className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{users.length}</p>
+              <p className="text-xs text-muted-foreground">Users</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <Calendar className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{events.length}</p>
+              <p className="text-xs text-muted-foreground">Events</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6 flex items-center gap-4">
+            <FileUp className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{imports.length}</p>
+              <p className="text-xs text-muted-foreground">Imports</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="users">
+        <TabsList className="bg-card border border-border">
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="imports">Imports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
           <Card className="bg-card border-border">
-            <CardContent className="pt-6 flex items-center gap-4">
-              <Users className="h-8 w-8 text-primary" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{users.length}</p>
-                <p className="text-xs text-muted-foreground">Users</p>
-              </div>
+            <CardHeader><CardTitle className="text-base">Users</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Name</TableHead>
+                    <TableHead className="text-xs">Role</TableHead>
+                    <TableHead className="text-xs">Joined</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map(u => (
+                    <TableRow key={u.id}>
+                      <TableCell className="text-sm">{u.display_name || '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">{getUserRole(u.user_id)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="events">
           <Card className="bg-card border-border">
-            <CardContent className="pt-6 flex items-center gap-4">
-              <Calendar className="h-8 w-8 text-primary" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{events.length}</p>
-                <p className="text-xs text-muted-foreground">Events</p>
-              </div>
+            <CardHeader><CardTitle className="text-base">Events</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Name</TableHead>
+                    <TableHead className="text-xs">Creator</TableHead>
+                    <TableHead className="text-xs">Club</TableHead>
+                    <TableHead className="text-xs">Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {events.map(e => (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-sm font-medium">{e.name}</TableCell>
+                      <TableCell className="text-xs">{getUserName(e.created_by)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{e.club_id ? 'Yes' : '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(e.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="imports">
           <Card className="bg-card border-border">
-            <CardContent className="pt-6 flex items-center gap-4">
-              <FileUp className="h-8 w-8 text-primary" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{imports.length}</p>
-                <p className="text-xs text-muted-foreground">Imports</p>
-              </div>
+            <CardHeader><CardTitle className="text-base">Imports</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">File</TableHead>
+                    <TableHead className="text-xs">Status</TableHead>
+                    <TableHead className="text-xs">Rows</TableHead>
+                    <TableHead className="text-xs">User</TableHead>
+                    <TableHead className="text-xs">Date</TableHead>
+                    <TableHead className="text-xs">Error</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {imports.map(imp => (
+                    <TableRow key={imp.id}>
+                      <TableCell className="text-sm truncate max-w-[200px]">{imp.filename || '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-xs ${statusColor(imp.status)}`}>
+                          {imp.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs font-mono">{imp.rows_processed}</TableCell>
+                      <TableCell className="text-xs">{getUserName(imp.created_by)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(imp.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-xs text-destructive truncate max-w-[200px]">
+                        {imp.error_message || '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        </div>
-
-        <Tabs defaultValue="users">
-          <TabsList className="bg-card border border-border">
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="imports">Imports</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users">
-            <Card className="bg-card border-border">
-              <CardHeader><CardTitle className="text-base">Users</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Name</TableHead>
-                      <TableHead className="text-xs">Role</TableHead>
-                      <TableHead className="text-xs">Joined</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map(u => (
-                      <TableRow key={u.id}>
-                        <TableCell className="text-sm">{u.display_name || '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">{getUserRole(u.user_id)}</Badge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(u.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="events">
-            <Card className="bg-card border-border">
-              <CardHeader><CardTitle className="text-base">Events</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Name</TableHead>
-                      <TableHead className="text-xs">Creator</TableHead>
-                      <TableHead className="text-xs">Club</TableHead>
-                      <TableHead className="text-xs">Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {events.map(e => (
-                      <TableRow key={e.id}>
-                        <TableCell className="text-sm font-medium">{e.name}</TableCell>
-                        <TableCell className="text-xs">{getUserName(e.created_by)}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{e.club_id ? 'Yes' : '—'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(e.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="imports">
-            <Card className="bg-card border-border">
-              <CardHeader><CardTitle className="text-base">Imports</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">File</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Rows</TableHead>
-                      <TableHead className="text-xs">User</TableHead>
-                      <TableHead className="text-xs">Date</TableHead>
-                      <TableHead className="text-xs">Error</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {imports.map(imp => (
-                      <TableRow key={imp.id}>
-                        <TableCell className="text-sm truncate max-w-[200px]">{imp.filename || '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={`text-xs ${statusColor(imp.status)}`}>
-                            {imp.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs font-mono">{imp.rows_processed}</TableCell>
-                        <TableCell className="text-xs">{getUserName(imp.created_by)}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(imp.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-xs text-destructive truncate max-w-[200px]">
-                          {imp.error_message || '—'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

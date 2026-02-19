@@ -25,7 +25,7 @@ const Index = () => {
       if (!eventId) return;
     }
     await uploadFile(file, eventId);
-    navigate('/app');
+    navigate('/events');
   }, [uploadFile, navigate, t, activeEventId, createEvent]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
@@ -95,7 +95,7 @@ const Index = () => {
           </div>
 
           {hasExistingData && (
-            <Button variant="ghost" className="mt-6 text-primary hover:text-primary" onClick={() => navigate('/app')}>
+            <Button variant="ghost" className="mt-6 text-primary hover:text-primary" onClick={() => navigate('/events')}>
               {t('continue_dashboard')} ({sessions.length} {t('session_count')}) <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
