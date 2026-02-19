@@ -50,6 +50,16 @@ export interface Setup {
   createdAt: number;
 }
 
+/** Controller configuration — user-defined input device */
+export interface Controller {
+  id: string;
+  name: string;
+  type: string;
+  custom_parameters: Record<string, string>;
+  notes: string | null;
+  createdAt: number;
+}
+
 /** Links a session to garage equipment — editable after import */
 export interface SessionGarageLink {
   session_id: string; // matches SessionMeta.id

@@ -1,18 +1,19 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import type { Car, Setup, SessionGarageLink } from '@/types/garage';
+import type { Car, Setup, Controller, SessionGarageLink } from '@/types/garage';
 
 const DB_NAME = 'stintlab_garage';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const CARS_STORE = 'cars';
 const SETUPS_STORE = 'setups';
 const LINKS_STORE = 'session_links';
+const CONTROLLERS_STORE = 'controllers';
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 function getDB() {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         if (!db.objectStoreNames.contains(CARS_STORE)) {
           db.createObjectStore(CARS_STORE, { keyPath: 'id' });
         }
@@ -22,6 +23,9 @@ function getDB() {
         }
         if (!db.objectStoreNames.contains(LINKS_STORE)) {
           db.createObjectStore(LINKS_STORE, { keyPath: 'session_id' });
+        }
+        if (!db.objectStoreNames.contains(CONTROLLERS_STORE)) {
+          db.createObjectStore(CONTROLLERS_STORE, { keyPath: 'id' });
         }
       },
     });
@@ -116,4 +120,21 @@ export async function getAllSessionLinks(): Promise<SessionGarageLink[]> {
 export async function saveSessionLink(link: SessionGarageLink): Promise<void> {
   const db = await getDB();
   await db.put(LINKS_STORE, link);
+}
+
+// ── Controllers ─────────────────────────────────
+
+export async function getAllControllers(): Promise<Controller[]> {
+  const db = await getDB();
+  return db.getAll(CONTROLLERS_STORE);
+}
+
+export async function saveController(controller: Controller): Promise<void> {
+  const db = await getDB();
+  await db.put(CONTROLLERS_STORE, controller);
+}
+
+export async function deleteController(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete(CONTROLLERS_STORE, id);
 }
