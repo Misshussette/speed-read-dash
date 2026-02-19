@@ -20,10 +20,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'global': 'globalThis',
-    'process.env': '{}',
-    'process.browser': 'true',
-    'process.version': '"v18.0.0"',
-    'process': 'globalThis.__process || (globalThis.__process = {"env":{},"browser":true,"version":"v18.0.0"})',
   },
   optimizeDeps: {
     include: ['buffer', 'mdb-reader'],
