@@ -1,4 +1,4 @@
-import { CalendarDays, BarChart3, GitCompareArrows, Wrench, Settings, Gauge, Shield } from 'lucide-react';
+import { Flag, GitCompareArrows, Wrench, Settings, Gauge, Shield } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/i18n/I18nContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -21,8 +21,7 @@ const AppSidebar = () => {
   const { isPlatformAdmin } = useUserRole();
 
   const items = [
-    { title: t('nav_events'), url: '/events', icon: CalendarDays },
-    { title: t('nav_analysis'), url: '/analysis', icon: BarChart3 },
+    { title: t('nav_runs'), url: '/events', icon: Flag },
     { title: t('nav_comparison'), url: '/comparison', icon: GitCompareArrows },
     { title: t('nav_garage'), url: '/garage', icon: Wrench },
     { title: t('nav_settings'), url: '/settings', icon: Settings },

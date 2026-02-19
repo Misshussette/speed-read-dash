@@ -23,7 +23,8 @@ const en: Record<string, string> = {
   land_workspace_note: 'StintLab is a private workspace. Your data is stored securely in your personal account and is never shared without your consent.',
 
   // Nav
-  nav_events: 'Events',
+  nav_runs: 'My Runs',
+  nav_events: 'My Runs',
   nav_analysis: 'Analysis',
   nav_comparison: 'Comparison',
   nav_garage: 'Garage',
@@ -144,7 +145,8 @@ const en: Record<string, string> = {
   session_col_file: 'File',
   session_col_name: 'Name',
   session_count: 'sessions',
-  sessions_title: 'Sessions',
+  sessions_title: 'Runs',
+  runs_title: 'Runs',
   session_renamed: 'Session renamed!',
   session_meta_saved: 'Session metadata saved!',
   session_search_placeholder: 'Search by name, track, tags…',
@@ -353,8 +355,16 @@ const en: Record<string, string> = {
 
   // Events actions
   events_actions: 'Actions',
-  events_open_analysis: 'Analyze',
+  events_open_analysis: 'Open',
+  runs_open: 'Open',
   events_open_comparison: 'Open Comparison',
+
+  // Tab labels (natural language)
+  tab_performance: 'Your Performance',
+  tab_stints: 'Stints',
+  tab_drivers: 'Drivers',
+  tab_track_ref: 'Track Reference',
+  tab_insights: 'Insights',
 
   // Comparison
   compare_select_min2: 'Select at least 2 sessions to start comparing.',

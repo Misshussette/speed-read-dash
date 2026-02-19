@@ -95,21 +95,21 @@ const Analysis = () => {
       <div className="max-w-[1200px] mx-auto px-4 py-20 text-center space-y-4">
         <p className="text-lg font-semibold text-foreground">{t('analysis_not_found')}</p>
         <p className="text-sm text-muted-foreground">{t('analysis_not_found_hint')}</p>
-        <Button onClick={() => navigate('/events')}>{t('nav_events')}</Button>
+        <Button onClick={() => navigate('/events')}>{t('nav_runs')}</Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-4 space-y-4">
-      {/* Session header */}
+      {/* Run header */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/events')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold text-foreground truncate">
-            {sessionMeta.display_name || sessionMeta.filename?.replace(/\.csv$/i, '') || sessionMeta.track || 'Session'}
+            {sessionMeta.display_name || sessionMeta.filename?.replace(/\.csv$/i, '') || sessionMeta.track || 'Run'}
           </h1>
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
             {sessionMeta.track && <span>{sessionMeta.track}</span>}
@@ -122,26 +122,25 @@ const Analysis = () => {
         </div>
       </div>
 
-      {/* Equipment link */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
-        <Select value={selectedConfigId} onValueChange={setSelectedConfigId}>
-          <SelectTrigger className="h-8 text-xs w-[220px]">
-            <SelectValue placeholder={t('analysis_select_config')} />
-          </SelectTrigger>
-          <SelectContent>
-            {configurations.map(c => (
-              <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button size="sm" className="h-8 text-xs" disabled={!selectedConfigId || selectedConfigId === garageLink?.configuration_id} onClick={handleLinkConfig}>
-          {t('analysis_link')}
-        </Button>
-        {configurations.length === 0 && (
-          <span className="text-xs text-muted-foreground">{t('analysis_no_configs_hint')}</span>
-        )}
-      </div>
+      {/* Equipment — optional, passive */}
+      {configurations.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+          <Select value={selectedConfigId} onValueChange={setSelectedConfigId}>
+            <SelectTrigger className="h-8 text-xs w-[220px]">
+              <SelectValue placeholder={t('analysis_select_config')} />
+            </SelectTrigger>
+            <SelectContent>
+              {configurations.map(c => (
+                <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" className="h-8 text-xs" disabled={!selectedConfigId || selectedConfigId === garageLink?.configuration_id} onClick={handleLinkConfig}>
+            {t('analysis_link')}
+          </Button>
+        </div>
+      )}
 
       {/* Mobile field mode */}
       {isMobile && rawData.length > 0 ? (
@@ -160,11 +159,11 @@ const Analysis = () => {
               {/* Analysis tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="bg-card border border-border">
-                  <TabsTrigger value="overview">{t('mode_overview')}</TabsTrigger>
-                  <TabsTrigger value="stints">{t('mode_stints')}</TabsTrigger>
-                  <TabsTrigger value="drivers">{t('mode_drivers')}</TabsTrigger>
-                  <TabsTrigger value="track">{t('nav_track')}</TabsTrigger>
-                  <TabsTrigger value="insights">{t('nav_insights')}</TabsTrigger>
+                  <TabsTrigger value="overview">{t('tab_performance')}</TabsTrigger>
+                  <TabsTrigger value="stints">{t('tab_stints')}</TabsTrigger>
+                  <TabsTrigger value="drivers">{t('tab_drivers')}</TabsTrigger>
+                  <TabsTrigger value="track">{t('tab_track_ref')}</TabsTrigger>
+                  <TabsTrigger value="insights">{t('tab_insights')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-4">

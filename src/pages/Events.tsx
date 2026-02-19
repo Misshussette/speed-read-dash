@@ -106,7 +106,7 @@ const Events = () => {
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-foreground">{t('nav_events')}</h1>
+        <h1 className="text-xl font-bold text-foreground">{t('nav_runs')}</h1>
         <div className="flex items-center gap-2 flex-wrap">
           {clubs.length > 0 && (
             <div className="flex items-center gap-1">
@@ -225,7 +225,7 @@ const Events = () => {
             <Card key={group.key || '__all'} className="bg-card border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold">
-                  {group.key ? group.key : t('sessions_title')} ({group.sessions.length})
+                  {group.key ? group.key : t('runs_title')} ({group.sessions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -287,7 +287,7 @@ const Events = () => {
                           <TableCell className="px-2">
                             <div className="flex items-center justify-end gap-1">
                               <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openSession(s.id)}>
-                                <BarChart3 className="h-3 w-3 mr-1" />{t('events_open_analysis')}
+                                <BarChart3 className="h-3 w-3 mr-1" />{t('runs_open')}
                               </Button>
                               <Button variant={isComparing ? 'default' : 'outline'} size="sm" className="h-6 text-xs px-2"
                                 onClick={(e) => { e.stopPropagation(); toggleComparisonSession(s.id); }}>
