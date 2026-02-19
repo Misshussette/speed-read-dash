@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.import-mdb-races]
 verify_jwt = false
+
+[functions.insert-mdb-laps]
+verify_jwt = false

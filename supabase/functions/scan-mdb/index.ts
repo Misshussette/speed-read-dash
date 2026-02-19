@@ -185,27 +185,50 @@ Deno.serve(async (req) => {
       console.log(`RaceHistoryClas: ${clasRows.length} rows, columns: ${clasTable.getColumnNames().join(", ")}`);
     }
 
-    // NOTE: We intentionally do NOT read RaceHistoryLap here.
-    // That table can have hundreds of thousands of rows and would exceed
-    // edge function memory limits. Lap counts come from RaceHistory metadata
-    // (LapRace / LapNumber columns) or from RaceHistoryClas.TotalLaps.
+    // Read RaceHistorySum for best lap times (small table)
+    const sumName = userTables.find(
+      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistorysum"
+    );
+    let sumRows: Record<string, unknown>[] = [];
+    if (sumName) {
+      const sumTable = reader.getTable(sumName);
+      sumRows = sumTable.getData();
+      console.log(`RaceHistorySum: ${sumRows.length} rows`);
+    }
 
-    // Group participants by race from RaceHistoryClas
+    // Aggregate lap counts from RaceHistoryClas (sum TotalLaps per RaceID)
+    const lapCountByRace: Record<string, number> = {};
     const driversByRace: Record<string, { name: string; lane: number | null; bestLap: number | null }[]> = {};
     for (const row of clasRows) {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
       if (!raceId) continue;
-
+      const totalLaps = toNum(findColumn(row, ["TotalLaps", "Total_Laps", "totallaps"])) || 0;
+      lapCountByRace[raceId] = (lapCountByRace[raceId] || 0) + totalLaps;
       if (!driversByRace[raceId]) driversByRace[raceId] = [];
       const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
+      const avgLap = toNum(findColumn(row, ["AverageLap", "Average_Lap", "averagelap"]));
       driversByRace[raceId].push({
         name: driverId || "Unknown",
-        lane: null, // Lane is in RaceHistoryLap, not in Clas
-        bestLap: null, // Can compute from AverageLap if needed
+        lane: null,
+        bestLap: avgLap !== null ? avgLap / 1000 : null,
       });
     }
 
-    // Build race catalog from RaceHistory
+    // Aggregate best lap from RaceHistorySum (min LapTimeMin per RaceID)
+    const bestLapByRace: Record<string, number> = {};
+    for (const row of sumRows) {
+      const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
+      if (!raceId) continue;
+      const lapTimeMin = toNum(findColumn(row, ["LapTimeMin", "Lap_Time_Min", "laptimemin"]));
+      if (lapTimeMin !== null && lapTimeMin > 0) {
+        const lapTimeSec = lapTimeMin / 1000;
+        if (!bestLapByRace[raceId] || lapTimeSec < bestLapByRace[raceId]) {
+          bestLapByRace[raceId] = lapTimeSec;
+        }
+      }
+    }
+
+    // Build race catalog from RaceHistory enriched with aggregated stats
     const raceCatalog = raceHistoryRows.map((row) => {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid", "ID"]));
       const rawDate = findColumn(row, ["RaceDate", "Race_Date", "racedate", "Date", "date"]);
@@ -218,7 +241,8 @@ Deno.serve(async (req) => {
         track: toStr(findColumn(row, ["TrackID", "Track_ID", "trackid", "TrackName", "Track"])),
         track_length: toNum(findColumn(row, ["TrackLength", "Track_Length", "tracklength", "TrackLenght"])),
         duration: toStr(findColumn(row, ["TimeRace", "Time_Race", "timerace", "RaceDuration"])),
-        lap_count: toNum(findColumn(row, ["LapRace", "LapNumber", "Lap_Number", "TotalLaps"])) || 0,
+        lap_count: lapCountByRace[raceId] || 0,
+        best_lap: bestLapByRace[raceId] || null,
         seg_number: segNumber,
         has_sectors: segNumber !== null && segNumber > 0,
         comment: toStr(findColumn(row, ["Comment", "Comments", "Notes", "comment"])),
