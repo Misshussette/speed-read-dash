@@ -47,6 +47,7 @@ interface TelemetryState {
   rawData: LapRecord[];
   hasSectorData: boolean;
   isLoading: boolean;
+  loadingProgress: { loaded: number; total: number | null } | null;
   errors: string[];
   filters: Filters;
   setFilters: (f: Filters) => void;
@@ -91,6 +92,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const [rawData, setRawData] = useState<LapRecord[]>([]);
   const [hasSectorData, setHasSectorData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number | null } | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [scope, setScope] = useState<AnalysisScope>(DEFAULT_SCOPE);
@@ -176,8 +178,12 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!activeSessionId) { setRawData([]); setHasSectorData(false); return; }
     setIsLoading(true);
+    setLoadingProgress({ loaded: 0, total: null });
 
     const loadLaps = async () => {
+      // Get expected total for progress bar
+      const expectedTotal = sessions.find(s => s.id === activeSessionId)?.laps || null;
+
       let allLaps: any[] = [];
       let offset = 0;
       const PAGE_SIZE = 1000;
@@ -195,6 +201,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
         allLaps = allLaps.concat(data);
         hasMore = data.length === PAGE_SIZE;
         offset += PAGE_SIZE;
+        setLoadingProgress({ loaded: allLaps.length, total: expectedTotal });
       }
 
       const sessionMeta = sessions.find(s => s.id === activeSessionId);
@@ -228,6 +235,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       setRawData(mapped);
       setHasSectorData(mapped.some(l => l.S1_s !== null));
       setIsLoading(false);
+      setLoadingProgress(null);
     };
 
     loadLaps();
@@ -666,7 +674,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       events, activeEventId, setActiveEventId, createEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
       comparisonData, isLoadingComparison,
-      rawData, hasSectorData, isLoading, errors, filters,
+      rawData, hasSectorData, isLoading, loadingProgress, errors, filters,
       setFilters, resetFilters,
       scope, setScope, resetScope, scopeOptions, scopedData, dualKPIs,
     }}>

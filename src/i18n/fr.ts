@@ -333,6 +333,8 @@ const fr: Record<string, string> = {
   analysis_link: 'Lier',
   analysis_config_linked: 'Configuration liée !',
   analysis_no_configs_hint: 'Créez d\'abord une configuration dans le Garage.',
+  loading_analysis: 'Chargement de l\'analyse…',
+  loading_laps_loaded: 'tours chargés',
   garage_hint_vehicle: 'Commencez ici — ajoutez votre voiture.',
   garage_hint_setup: 'Créez des setups pour chaque véhicule.',
   garage_hint_controller: 'Ajoutez votre contrôleur.',
