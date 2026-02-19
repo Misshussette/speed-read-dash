@@ -27,6 +27,7 @@ const fr: Record<string, string> = {
   nav_analysis: 'Analyse',
   nav_comparison: 'Comparaison',
   nav_garage: 'Garage',
+  nav_live: 'Live',
   nav_settings: 'Paramètres',
   nav_track: 'Circuit',
   nav_insights: 'Insights',
@@ -365,6 +366,20 @@ const fr: Record<string, string> = {
   issue_description_placeholder: 'Décrivez le problème ou la suggestion…',
   issue_submit: 'Envoyer',
   issue_submitted: 'Problème signalé — merci !',
+
+  // Live Mode
+  live_title: 'Live',
+  live_disconnected: 'Déconnecté',
+  live_connected: 'Connecté',
+  live_current_lap: 'Tour en cours',
+  live_connection: 'Connexion',
+  live_status: 'Statut',
+  live_source: 'Source',
+  live_latency: 'Latence',
+  live_hint: 'Connectez un système de chronométrage externe pour recevoir les données en temps réel. Intégration WebSocket à venir.',
+  live_standings: 'Classement',
+  live_lap_history: 'Historique des tours',
+  live_no_data: 'En attente de données…',
 };
 
 export default fr;

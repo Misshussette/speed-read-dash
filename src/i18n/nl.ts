@@ -26,6 +26,7 @@ const nl: Record<string, string> = {
   nav_analysis: 'Analyse',
   nav_comparison: 'Vergelijking',
   nav_garage: 'Garage',
+  nav_live: 'Live',
   nav_settings: 'Instellingen',
   nav_track: 'Circuit',
   nav_insights: 'Inzichten',
@@ -356,6 +357,19 @@ const nl: Record<string, string> = {
   issue_description_placeholder: 'Beschrijf het probleem of de suggestie…',
   issue_submit: 'Verzenden',
   issue_submitted: 'Probleem gemeld — bedankt!',
+
+  live_title: 'Live',
+  live_disconnected: 'Niet verbonden',
+  live_connected: 'Verbonden',
+  live_current_lap: 'Huidige ronde',
+  live_connection: 'Verbinding',
+  live_status: 'Status',
+  live_source: 'Bron',
+  live_latency: 'Latentie',
+  live_hint: 'Sluit een extern tijdwaarnemingssysteem aan voor realtime data. WebSocket-integratie binnenkort beschikbaar.',
+  live_standings: 'Klassement',
+  live_lap_history: 'Rondegeschiedenis',
+  live_no_data: 'Wachten op gegevens…',
 };
 
 export default nl;

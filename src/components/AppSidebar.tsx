@@ -1,4 +1,4 @@
-import { Flag, GitCompareArrows, Wrench, Settings, Gauge, Shield } from 'lucide-react';
+import { Flag, GitCompareArrows, Wrench, Settings, Gauge, Shield, Radio } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/i18n/I18nContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -10,7 +10,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 
@@ -24,6 +23,7 @@ const AppSidebar = () => {
     { title: t('nav_runs'), url: '/events', icon: Flag },
     { title: t('nav_comparison'), url: '/comparison', icon: GitCompareArrows },
     { title: t('nav_garage'), url: '/garage', icon: Wrench },
+    { title: t('nav_live'), url: '/live', icon: Radio },
     { title: t('nav_settings'), url: '/settings', icon: Settings },
   ];
 

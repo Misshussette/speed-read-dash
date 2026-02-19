@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import DisplayModeToggle from '@/components/dashboard/DisplayModeToggle';
 import LanguageSelector from '@/components/LanguageSelector';
+import ThemeToggle from '@/components/ThemeToggle';
 import ReportIssueDialog from '@/components/ReportIssueDialog';
 import UpdateNotification from '@/components/UpdateNotification';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -13,7 +14,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full dark">
+      <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-50 h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4">
@@ -24,6 +25,7 @@ const AppLayout = () => {
             <div className="flex items-center gap-2">
               <ReportIssueDialog />
               <DisplayModeToggle />
+              <ThemeToggle />
               {!isMobile && <LanguageSelector />}
             </div>
           </header>
