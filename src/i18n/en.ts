@@ -448,6 +448,7 @@ const en: Record<string, string> = {
   scope_all_drivers_active: 'All drivers',
   scope_saved: 'Analysis scope saved!',
   scope_cleared: 'Scope cleared — analyzing all drivers.',
+  scope_temp_expanded: 'Temp. expanded',
 };
 
 export default en;
