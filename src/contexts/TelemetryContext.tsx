@@ -355,24 +355,42 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setErrors([]);
 
     try {
+      // Upload file to storage (needed for import record tracking)
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('race-files')
         .upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      const { data, error: fnError } = await supabase.functions.invoke('scan-mdb', {
-        body: { file_path: filePath, event_id: targetEventId },
-      });
-      if (fnError) throw fnError;
+      // Scan MDB client-side (avoids edge function memory limits)
+      const { scanMdbFile } = await import('@/lib/mdb-client-parser');
+      const catalog = await scanMdbFile(file);
+
+      // Create import record
+      const { data: importData, error: importErr } = await supabase
+        .from('imports')
+        .insert({
+          event_id: targetEventId,
+          file_path: filePath,
+          filename: file.name,
+          status: 'catalog_ready',
+          source_type: 'mdb',
+          created_by: user.id,
+          started_at: new Date().toISOString(),
+          race_catalog: catalog as any,
+        })
+        .select('id')
+        .single();
+      if (importErr) throw importErr;
 
       setIsLoading(false);
       return {
-        import_id: data.import_id,
+        import_id: importData.id,
         file_path: filePath,
-        catalog: data.catalog,
+        catalog,
       };
     } catch (err: any) {
+      console.error('[MDB Scan] Error:', err);
       setErrors([err.message || 'MDB scan failed']);
       toast.error(err.message || 'MDB scan failed');
       setIsLoading(false);
