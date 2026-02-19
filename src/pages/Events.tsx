@@ -77,7 +77,7 @@ const Events = () => {
   const handleMdbImport = useCallback(async (selectedRaceIds: string[]) => {
     if (!mdbImportId || !mdbFilePath) return;
     setIsMdbImporting(true);
-    await importMdbRaces(mdbImportId, mdbFilePath, selectedRaceIds);
+    await importMdbRaces(mdbImportId, mdbFilePath, selectedRaceIds, undefined, mdbCatalog);
     setIsMdbImporting(false);
     setShowMdbSelector(false);
     setMdbCatalog([]);

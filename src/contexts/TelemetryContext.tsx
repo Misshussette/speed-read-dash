@@ -20,7 +20,7 @@ interface TelemetryState {
   setActiveSessionId: (id: string | null) => void;
   uploadFile: (file: File, eventIdOverride?: string) => Promise<void>;
   uploadMdbFile: (file: File, eventIdOverride?: string) => Promise<MdbScanResult | null>;
-  importMdbRaces: (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string) => Promise<void>;
+  importMdbRaces: (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string, raceCatalog?: any[]) => Promise<void>;
   removeSession: (id: string) => void;
   updateSessionMeta: (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => Promise<void>;
 
@@ -380,21 +380,48 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, activeEventId]);
 
-  const importMdbRaces = useCallback(async (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string) => {
+  const importMdbRaces = useCallback(async (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string, raceCatalog?: any[]) => {
     const targetEventId = eventIdOverride || activeEventId;
     if (!user || !targetEventId) return;
     setIsLoading(true);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('import-mdb-races', {
-        body: {
-          import_id: importId,
-          event_id: targetEventId,
-          file_path: filePath,
-          selected_race_ids: selectedRaceIds,
-        },
-      });
-      if (fnError) throw fnError;
+      // Import one race at a time to stay within edge function limits
+      const results: { race_id: string; session_id: string; name: string; laps_count: number }[] = [];
+      let lastSessionId: string | null = null;
+
+      for (const raceId of selectedRaceIds) {
+        // Find race metadata from catalog if available
+        const catalogEntry = raceCatalog?.find((r: any) => String(r.race_id) === String(raceId));
+        const raceMeta = catalogEntry ? {
+          name: catalogEntry.name,
+          date: catalogEntry.date,
+          track: catalogEntry.track,
+          seg_number: catalogEntry.seg_number ?? 0,
+        } : undefined;
+
+        const { data, error: fnError } = await supabase.functions.invoke('import-mdb-races', {
+          body: {
+            import_id: importId,
+            event_id: targetEventId,
+            file_path: filePath,
+            race_id: raceId,
+            race_meta: raceMeta,
+          },
+        });
+        if (fnError) throw fnError;
+        if (data?.session_id && !data.skipped) {
+          results.push(data);
+          lastSessionId = data.session_id;
+        }
+      }
+
+      // Update import status
+      await supabase.from('imports').update({
+        status: 'complete',
+        rows_processed: results.reduce((sum, r) => sum + r.laps_count, 0),
+        completed_at: new Date().toISOString(),
+      }).eq('id', importId);
 
       // Refresh sessions
       const { data: refreshed } = await supabase
@@ -415,14 +442,14 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
           event_type: s.event_type || null,
         }));
         setSessions(metas);
-        if (data?.results?.length > 0) {
-          setActiveSessionIdInternal(data.results[0].session_id);
+        if (lastSessionId) {
+          setActiveSessionIdInternal(lastSessionId);
         }
       }
 
       setFilters(defaultFilters);
       setScope(DEFAULT_SCOPE);
-      toast.success(`${data?.races_imported || 0} races imported!`);
+      toast.success(`${results.length} races imported!`);
     } catch (err: any) {
       setErrors([err.message || 'MDB import failed']);
       toast.error(err.message || 'MDB import failed');
