@@ -60,9 +60,21 @@ export interface Controller {
   createdAt: number;
 }
 
+/** A real-world equipment combination used on track */
+export interface Configuration {
+  id: string;
+  name: string;
+  vehicle_id: string;
+  setup_id: string | null;
+  controller_id: string | null;
+  notes: string | null;
+  createdAt: number;
+}
+
 /** Links a session to garage equipment — editable after import */
 export interface SessionGarageLink {
   session_id: string; // matches SessionMeta.id
   car_id: string | null;
   setup_id: string | null;
+  configuration_id: string | null;
 }

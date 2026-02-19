@@ -1,12 +1,13 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import type { Car, Setup, Controller, SessionGarageLink } from '@/types/garage';
+import type { Car, Setup, Controller, Configuration, SessionGarageLink } from '@/types/garage';
 
 const DB_NAME = 'stintlab_garage';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const CARS_STORE = 'cars';
 const SETUPS_STORE = 'setups';
 const LINKS_STORE = 'session_links';
 const CONTROLLERS_STORE = 'controllers';
+const CONFIGS_STORE = 'configurations';
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -26,6 +27,9 @@ function getDB() {
         }
         if (!db.objectStoreNames.contains(CONTROLLERS_STORE)) {
           db.createObjectStore(CONTROLLERS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(CONFIGS_STORE)) {
+          db.createObjectStore(CONFIGS_STORE, { keyPath: 'id' });
         }
       },
     });
@@ -137,4 +141,30 @@ export async function saveController(controller: Controller): Promise<void> {
 export async function deleteController(id: string): Promise<void> {
   const db = await getDB();
   await db.delete(CONTROLLERS_STORE, id);
+}
+
+// ── Configurations ──────────────────────────────
+
+export async function getAllConfigurations(): Promise<Configuration[]> {
+  const db = await getDB();
+  return db.getAll(CONFIGS_STORE);
+}
+
+export async function saveConfiguration(config: Configuration): Promise<void> {
+  const db = await getDB();
+  await db.put(CONFIGS_STORE, config);
+}
+
+export async function deleteConfiguration(id: string): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction([CONFIGS_STORE, LINKS_STORE], 'readwrite');
+  tx.objectStore(CONFIGS_STORE).delete(id);
+  // Nullify links pointing to this configuration
+  const allLinks: SessionGarageLink[] = await tx.objectStore(LINKS_STORE).getAll();
+  for (const link of allLinks) {
+    if (link.configuration_id === id) {
+      tx.objectStore(LINKS_STORE).put({ ...link, configuration_id: null });
+    }
+  }
+  await tx.done;
 }
