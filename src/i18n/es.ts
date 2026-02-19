@@ -322,6 +322,21 @@ const es: Record<string, string> = {
   settings_display: 'Pantalla',
   settings_display_mode: 'Modo de visualización',
   settings_language: 'Idioma',
+  settings_beta: 'Programa Beta',
+  settings_beta_label: 'Unirse al canal beta',
+  settings_beta_desc: 'Accede a nuevas funciones antes del lanzamiento estable.',
+  settings_beta_enabled: '¡Canal beta activado!',
+  settings_beta_disabled: 'De vuelta al canal estable.',
+  issue_report: 'Reportar problema',
+  issue_type: 'Tipo',
+  issue_type_bug: 'Error',
+  issue_type_feature: 'Solicitud de función',
+  issue_type_improvement: 'Mejora',
+  issue_type_other: 'Otro',
+  issue_description: 'Descripción',
+  issue_description_placeholder: 'Describe el problema o sugerencia…',
+  issue_submit: 'Enviar',
+  issue_submitted: '¡Problema reportado — gracias!',
 };
 
 export default es;

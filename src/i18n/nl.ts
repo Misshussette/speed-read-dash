@@ -322,6 +322,21 @@ const nl: Record<string, string> = {
   settings_display: 'Weergave',
   settings_display_mode: 'Analyse-weergavemodus',
   settings_language: 'Taal',
+  settings_beta: 'Bètaprogramma',
+  settings_beta_label: 'Bètakanaal inschakelen',
+  settings_beta_desc: 'Krijg vroeg toegang tot nieuwe functies.',
+  settings_beta_enabled: 'Bètakanaal ingeschakeld!',
+  settings_beta_disabled: 'Terug naar stabiel kanaal.',
+  issue_report: 'Probleem melden',
+  issue_type: 'Type',
+  issue_type_bug: 'Bug',
+  issue_type_feature: 'Functieverzoek',
+  issue_type_improvement: 'Verbetering',
+  issue_type_other: 'Overig',
+  issue_description: 'Beschrijving',
+  issue_description_placeholder: 'Beschrijf het probleem of de suggestie…',
+  issue_submit: 'Verzenden',
+  issue_submitted: 'Probleem gemeld — bedankt!',
 };
 
 export default nl;

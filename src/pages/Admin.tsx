@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, FileUp, Shield, RefreshCw } from 'lucide-react';
+import { Users, Calendar, FileUp, Shield, RefreshCw, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
+import AdminIssues from '@/pages/AdminIssues';
 
 interface UserRow { id: string; user_id: string; display_name: string | null; created_at: string; }
 interface EventRow { id: string; name: string; created_by: string; club_id: string | null; created_at: string; }
@@ -129,6 +130,7 @@ const Admin = () => {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="imports">Imports</TabsTrigger>
+          <TabsTrigger value="issues" className="flex items-center gap-1"><Bug className="h-3 w-3" /> Issues</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -229,6 +231,10 @@ const Admin = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="issues">
+          <AdminIssues />
         </TabsContent>
       </Tabs>
     </div>

@@ -329,6 +329,23 @@ const fr: Record<string, string> = {
   settings_display: 'Affichage',
   settings_display_mode: 'Mode d\'affichage analytique',
   settings_language: 'Langue',
+  settings_beta: 'Programme Bêta',
+  settings_beta_label: 'Rejoindre le canal bêta',
+  settings_beta_desc: 'Accédez aux nouvelles fonctionnalités avant la version stable.',
+  settings_beta_enabled: 'Canal bêta activé !',
+  settings_beta_disabled: 'Retour au canal stable.',
+
+  // Issue reporting
+  issue_report: 'Signaler un problème',
+  issue_type: 'Type',
+  issue_type_bug: 'Bug',
+  issue_type_feature: 'Demande de fonctionnalité',
+  issue_type_improvement: 'Amélioration',
+  issue_type_other: 'Autre',
+  issue_description: 'Description',
+  issue_description_placeholder: 'Décrivez le problème ou la suggestion…',
+  issue_submit: 'Envoyer',
+  issue_submitted: 'Problème signalé — merci !',
 };
 
 export default fr;
