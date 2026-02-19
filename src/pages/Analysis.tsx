@@ -1,12 +1,14 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Link2 } from 'lucide-react';
+import { ArrowLeft, Link2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useDisplayMode } from '@/contexts/DisplayModeContext';
 import { useGarage } from '@/contexts/GarageContext';
+import { useRunScope } from '@/hooks/useRunScope';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
 import { useI18n } from '@/i18n/I18nContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -23,6 +25,7 @@ import ScopePanel from '@/components/dashboard/ScopePanel';
 import ScopeKPICards from '@/components/dashboard/ScopeKPICards';
 import TrackBenchmark from '@/components/dashboard/TrackBenchmark';
 import MobileFieldView from '@/components/dashboard/MobileFieldView';
+import DriverScopeDialog from '@/components/dashboard/DriverScopeDialog';
 
 const Analysis = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -38,16 +41,45 @@ const Analysis = () => {
     isLoading,
   } = useTelemetry();
 
+  const { runScope, isLoadingScope, saveScope, clearScope } = useRunScope(sessionId || null);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedConfigId, setSelectedConfigId] = useState<string>('');
+  const [showDriverScope, setShowDriverScope] = useState(false);
 
-  // Set active session from URL — runs when sessionId or sessions change
+  // Set active session from URL
   useEffect(() => {
-    if (sessionId) {
-      setActiveSessionId(sessionId);
-    }
+    if (sessionId) setActiveSessionId(sessionId);
   }, [sessionId, setActiveSessionId]);
 
+  // Auto-show driver scope dialog after first load if no scope exists and multiple drivers
+  const [hasPrompted, setHasPrompted] = useState(false);
+  const availableDrivers = useMemo(() => {
+    const drivers = new Set<string>();
+    for (const r of rawData) {
+      if (r.driver && r.driver !== 'Unknown') drivers.add(r.driver);
+    }
+    return Array.from(drivers).sort();
+  }, [rawData]);
+
+  useEffect(() => {
+    if (
+      !isLoading && !isLoadingScope && !hasPrompted &&
+      rawData.length > 0 && availableDrivers.length > 1 &&
+      runScope === null && sessionId
+    ) {
+      setShowDriverScope(true);
+      setHasPrompted(true);
+    }
+  }, [isLoading, isLoadingScope, rawData.length, availableDrivers.length, runScope, hasPrompted, sessionId]);
+
+  // Apply persistent scope to the AnalysisScope system
+  const scopeDriverFilter = runScope?.drivers && runScope.drivers.length > 0 ? runScope.drivers : null;
+  
+  // Use persistent scope to filter data — this is the "user's data"
+  const userScopedData = useMemo(() => {
+    if (!scopeDriverFilter) return rawData;
+    return rawData.filter(r => scopeDriverFilter.includes(r.driver));
+  }, [rawData, scopeDriverFilter]);
 
   // Default mobile to guided mode
   useEffect(() => {
@@ -77,7 +109,21 @@ const Analysis = () => {
     toast.success(t('analysis_config_linked'));
   };
 
-  const analysisBase = scope.enabled ? scopedData : rawData;
+  const handleDriverScopeConfirm = async (drivers: string[]) => {
+    if (!sessionId) return;
+    if (drivers.length === 0) {
+      // "Analyze all" — clear any existing scope
+      await clearScope(sessionId);
+      toast.success(t('scope_cleared'));
+    } else {
+      await saveScope(sessionId, drivers);
+      toast.success(t('scope_saved'));
+    }
+    setShowDriverScope(false);
+  };
+
+  // Analysis uses user-scoped data as base, then applies ephemeral scope on top
+  const analysisBase = scope.enabled ? scopedData : userScopedData;
   const filterOptions = useMemo(() => getFilterOptions(analysisBase), [analysisBase]);
   const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
   const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
@@ -120,6 +166,20 @@ const Analysis = () => {
             {linkedCtrl && <span>• 🎮 {linkedCtrl.name}</span>}
           </div>
         </div>
+        {/* Persistent driver scope indicator */}
+        {availableDrivers.length > 1 && (
+          <Button
+            variant={scopeDriverFilter ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={() => setShowDriverScope(true)}
+          >
+            <Users className="h-3.5 w-3.5" />
+            {scopeDriverFilter
+              ? `${t('scope_edit_drivers')} (${scopeDriverFilter.length})`
+              : t('scope_all_drivers_active')}
+          </Button>
+        )}
       </div>
 
       {/* Equipment — optional, passive */}
@@ -209,6 +269,16 @@ const Analysis = () => {
           )}
         </>
       )}
+
+      {/* Driver scope selection dialog */}
+      <DriverScopeDialog
+        open={showDriverScope}
+        onOpenChange={setShowDriverScope}
+        availableDrivers={availableDrivers}
+        preselectedDrivers={runScope?.drivers}
+        sessionName={sessionMeta.display_name || sessionMeta.filename?.replace(/\.csv$/i, '') || undefined}
+        onConfirm={handleDriverScopeConfirm}
+      />
     </div>
   );
 };

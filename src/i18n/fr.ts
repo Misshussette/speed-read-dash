@@ -394,6 +394,19 @@ const fr: Record<string, string> = {
   upload_browse: 'CSV ou base PCLapCounter (.mdb)',
   upload_parsing: 'Traitement en cours…',
   upload_error_format: 'Format non supporté. Utilisez .csv ou .mdb',
+
+  // Driver Scope
+  scope_select_drivers_title: 'Sélectionnez vos pilotes',
+  scope_select_drivers_desc: 'Choisissez les pilotes à inclure dans votre analyse. Les données complètes restent disponibles pour le benchmarking.',
+  scope_select_drivers_desc_named: 'Choisissez les pilotes à analyser pour « {name} ». Les données complètes restent disponibles pour le benchmarking.',
+  scope_drivers_selected: 'sélectionné(s)',
+  scope_no_drivers: 'Aucun pilote détecté dans cette session.',
+  scope_skip_all_drivers: 'Analyser tout',
+  scope_confirm_selection: 'Confirmer la sélection',
+  scope_edit_drivers: 'Mes Pilotes',
+  scope_all_drivers_active: 'Tous les pilotes',
+  scope_saved: 'Scope d\'analyse sauvegardé !',
+  scope_cleared: 'Scope effacé — analyse de tous les pilotes.',
 };
 
 export default fr;
