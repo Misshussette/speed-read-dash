@@ -62,13 +62,18 @@ interface LapRow {
   sort_key: number;
 }
 
+/**
+ * Imports a SINGLE race from an MDB file.
+ * Called once per selected race to stay within edge function CPU/memory limits.
+ *
+ * Expects: { import_id, event_id, file_path, race_id, race_meta: { name, date, track, seg_number } }
+ */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -98,20 +103,17 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { import_id, event_id, file_path, selected_race_ids } = await req.json();
+    const { import_id, event_id, file_path, race_id, race_meta } = await req.json();
 
-    if (!import_id || !event_id || !file_path || !Array.isArray(selected_race_ids) || selected_race_ids.length === 0) {
+    if (!import_id || !event_id || !file_path || !race_id) {
       return new Response(
-        JSON.stringify({ error: "Missing import_id, event_id, file_path, or selected_race_ids" }),
+        JSON.stringify({ error: "Missing import_id, event_id, file_path, or race_id" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Update import status
-    await supabaseAdmin.from("imports").update({
-      status: "importing",
-      started_at: new Date().toISOString(),
-    }).eq("id", import_id);
+    const raceIdStr = String(race_id);
+    const meta = race_meta || { name: `Race ${raceIdStr}`, date: "", track: "", seg_number: 0 };
 
     // Download MDB
     const { data: fileData, error: dlError } = await supabaseAdmin.storage
@@ -119,12 +121,6 @@ Deno.serve(async (req) => {
       .download(file_path);
 
     if (dlError || !fileData) {
-      await supabaseAdmin.from("imports").update({
-        status: "error",
-        error_message: dlError?.message || "Failed to download file",
-        completed_at: new Date().toISOString(),
-      }).eq("id", import_id);
-
       return new Response(JSON.stringify({ error: "Failed to download file" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -133,247 +129,163 @@ Deno.serve(async (req) => {
 
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(new Uint8Array(arrayBuffer));
-    console.log(`MDB file size: ${buffer.length} bytes`);
+    console.log(`MDB file size: ${buffer.length} bytes, importing race: ${raceIdStr}`);
     const reader = new MDBReader(buffer);
     const tableNames = reader.getTableNames().filter(
       (t: string) => !t.startsWith("MSys") && !t.startsWith("pbcat") && t !== "Numbering"
     );
 
-    // Get race metadata from RaceHistory
-    const raceHistoryName = tableNames.find(
-      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistory"
-    );
-    const raceHistoryRows: Record<string, unknown>[] = raceHistoryName
-      ? reader.getTable(raceHistoryName).getData()
-      : [];
-
-    // Build race metadata map
-    const raceMetaMap: Record<string, { name: string; date: string; track: string; segNumber: number }> = {};
-    for (const row of raceHistoryRows) {
-      const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid", "ID"]));
-      if (!raceId) continue;
-      const rawDate = findColumn(row, ["RaceDate", "Race_Date", "racedate", "Date"]);
-      raceMetaMap[raceId] = {
-        name: toStr(findColumn(row, ["RaceName", "Race_Name", "racename", "Name"])) || `Race ${raceId}`,
-        date: rawDate instanceof Date ? rawDate.toISOString().split("T")[0] : toStr(rawDate).split("T")[0],
-        track: toStr(findColumn(row, ["TrackID", "Track_ID", "trackid", "TrackName", "Track"])),
-        segNumber: toNum(findColumn(row, ["SegNumber", "Seg_Number", "segnumber"])) ?? 0,
-      };
-    }
-
-    // Get participant info from RaceHistoryClas
-    const clasName = tableNames.find(
-      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistoryclas"
-    );
-    const clasRows: Record<string, unknown>[] = clasName
-      ? reader.getTable(clasName).getData()
-      : [];
-
-    // Driver IDs by race (RaceHistoryClas uses DriverID, not DriverName)
-    const driverIdMap: Record<string, Set<string>> = {};
-    for (const row of clasRows) {
-      const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
-      const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
-      if (raceId && driverId) {
-        if (!driverIdMap[raceId]) driverIdMap[raceId] = new Set();
-        driverIdMap[raceId].add(driverId);
-      }
-    }
-
-    // Get RaceHistoryLap table
+    // Find RaceHistoryLap
     const lapTableName = tableNames.find(
       (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistorylap"
     );
 
     if (!lapTableName) {
-      await supabaseAdmin.from("imports").update({
-        status: "error",
-        error_message: "RaceHistoryLap table not found",
-        completed_at: new Date().toISOString(),
-      }).eq("id", import_id);
-
       return new Response(JSON.stringify({ error: "RaceHistoryLap table not found" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Read all rows but immediately filter — only keep matching race_id
     const lapTable = reader.getTable(lapTableName);
-    const allLapRows = lapTable.getData();
-    console.log(`Total lap rows: ${allLapRows.length}, importing for ${selected_race_ids.length} races`);
-    console.log(`RaceHistoryLap columns: ${lapTable.getColumnNames().join(", ")}`);
+    const allRows = lapTable.getData();
+    console.log(`RaceHistoryLap total rows: ${allRows.length}, filtering for race ${raceIdStr}`);
 
-    // Convert selected_race_ids to strings for comparison
-    const selectedSet = new Set(selected_race_ids.map(String));
-
-    // Group laps by RaceID (only selected)
-    const lapsByRace: Record<string, Record<string, unknown>[]> = {};
-    for (const row of allLapRows) {
-      const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
-      if (!selectedSet.has(raceId)) continue;
-      if (!lapsByRace[raceId]) lapsByRace[raceId] = [];
-      lapsByRace[raceId].push(row);
-    }
-
-    const results: { race_id: string; session_id: string; name: string; laps_count: number }[] = [];
-    let totalRowsProcessed = 0;
-
-    // Process each selected race
-    for (const raceId of selected_race_ids) {
-      const raceIdStr = String(raceId);
-      const raceMeta = raceMetaMap[raceIdStr] || { name: `Race ${raceIdStr}`, date: "", track: "", segNumber: 0 };
-      const raceLapRows = lapsByRace[raceIdStr] || [];
-
-      if (raceLapRows.length === 0) {
-        console.log(`Skipping race ${raceIdStr}: no laps`);
-        continue;
-      }
-
-      // SegmentID in RaceHistoryLap represents dynamic sectors/segments, not fixed S1/S2/S3
-      // The has_sector_data flag should be based on SegNumber from RaceHistory
-      const hasSectors = raceMeta.segNumber > 0;
-
-      // Create session for this race
-      const { data: sessionData, error: sessionErr } = await supabaseAdmin
-        .from("sessions")
-        .insert({
-          event_id,
-          name: raceMeta.name,
-          display_name: raceMeta.name,
-          track: raceMeta.track || "Unknown",
-          date: raceMeta.date || new Date().toISOString().split("T")[0],
-          data_mode: "pclap",
-          has_sector_data: hasSectors,
-          total_laps: raceLapRows.length,
-          status: "processing",
-          created_by: userId,
-          filename: `${raceMeta.name}.mdb`,
-        })
-        .select("id")
-        .single();
-
-      if (sessionErr || !sessionData) {
-        console.error(`Failed to create session for race ${raceIdStr}:`, sessionErr);
-        continue;
-      }
-
-      const sessionId = sessionData.id;
-
-      // Convert MDB lap rows to StintLab format
-      const laps: LapRow[] = [];
-      for (let i = 0; i < raceLapRows.length; i++) {
-        const row = raceLapRows[i];
-
-        // LapTime in PCLapCounter is in milliseconds
-        const rawLapTime = toNum(findColumn(row, ["LapTime", "Lap_Time", "laptime"]));
-        const lapTimeS = rawLapTime !== null ? rawLapTime / 1000 : 0;
-
-        // RaceTime = elapsed session time in ms
-        const rawRaceTime = toNum(findColumn(row, ["RaceTime", "Race_Time", "racetime"]));
-        const sessionElapsedS = rawRaceTime !== null ? rawRaceTime / 1000 : null;
-
-        // PitStopTime in ms
-        const rawPitTime = toNum(findColumn(row, ["PitStopTime", "Pit_Stop_Time", "pitstoptime"]));
-        const pitTimeS = rawPitTime !== null && rawPitTime > 0 ? rawPitTime / 1000 : null;
-        const pitStopNo = toNum(findColumn(row, ["PitStopNo", "PitStop_No", "pitstopno"]));
-        const hasPit = pitTimeS !== null && pitTimeS > 0;
-
-        const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
-        const lane = toNum(findColumn(row, ["LaneID", "Lane_ID", "laneid", "Lane"]));
-        const lapNumber = toNum(findColumn(row, ["Lap", "LapNumber", "Lap_Number", "lapnumber"])) ?? i + 1;
-        const stint = toNum(findColumn(row, ["SegmentID", "Segment_ID", "segmentid"])) ?? 0;
-        const teamId = toStr(findColumn(row, ["TeamID", "Team_ID", "teamid"])) || null;
-        const carId = toStr(findColumn(row, ["CarID", "Car_ID", "carid"])) || null;
-
-        // RecDateTime for absolute timestamp
-        const recDateTime = findColumn(row, ["RecDateTime", "Rec_Date_Time", "recdatetime"]);
-        const timestamp = recDateTime instanceof Date ? recDateTime.toISOString() : (toStr(recDateTime) || null);
-
-        laps.push({
-          session_id: sessionId,
-          lap_number: lapNumber,
-          lap_time_s: lapTimeS,
-          s1_s: null, // Sectors are in SegmentLap, not as fixed S1/S2/S3 columns
-          s2_s: null,
-          s3_s: null,
-          stint,
-          driver: driverId || null,
-          pit_type: hasPit ? "pit" : null,
-          pit_time_s: pitTimeS,
-          timestamp,
-          lane,
-          driving_station: null,
-          team_number: teamId,
-          stint_elapsed_s: null,
-          session_elapsed_s: sessionElapsedS,
-          lap_status: "valid",
-          validation_flags: [],
-          sort_key: sessionElapsedS ?? i,
-        });
-      }
-
-      // Sort by chronological order
-      laps.sort((a, b) => a.sort_key - b.sort_key);
-
-      // Validation pass
-      const positiveTimes = laps.filter((l) => l.lap_time_s > 0).map((l) => l.lap_time_s);
-      const bounds = computeBounds(positiveTimes);
-      let prevElapsed: number | null = null;
-
-      for (const lap of laps) {
-        const flags: string[] = [];
-        if (lap.lap_time_s <= 0) flags.push("non_positive_time");
-        if (bounds && lap.lap_time_s > 0 && (lap.lap_time_s < bounds.lower || lap.lap_time_s > bounds.upper))
-          flags.push("statistical_outlier");
-        if (prevElapsed !== null && lap.session_elapsed_s !== null && lap.session_elapsed_s < prevElapsed)
-          flags.push("negative_time_delta");
-        lap.validation_flags = flags;
-        lap.lap_status = flags.includes("non_positive_time") ? "invalid" : flags.length > 0 ? "suspect" : "valid";
-        if (lap.session_elapsed_s !== null) prevElapsed = lap.session_elapsed_s;
-      }
-
-      // Insert laps in batches
-      const BATCH_SIZE = 500;
-      let insertFailed = false;
-      for (let i = 0; i < laps.length; i += BATCH_SIZE) {
-        const batch = laps.slice(i, i + BATCH_SIZE);
-        const { error: insertErr } = await supabaseAdmin.from("laps").insert(batch);
-        if (insertErr) {
-          console.error(`Lap insert error for race ${raceIdStr}:`, insertErr);
-          await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", sessionId);
-          insertFailed = true;
-          break;
-        }
-        totalRowsProcessed += batch.length;
-      }
-
-      if (!insertFailed) {
-        // Mark session ready
-        await supabaseAdmin.from("sessions").update({ status: "ready" }).eq("id", sessionId);
-
-        results.push({
-          race_id: raceIdStr,
-          session_id: sessionId,
-          name: raceMeta.name,
-          laps_count: laps.length,
-        });
+    const raceLapRows: Record<string, unknown>[] = [];
+    for (const row of allRows) {
+      const rowRaceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
+      if (rowRaceId === raceIdStr) {
+        raceLapRows.push(row);
       }
     }
 
-    // Mark import complete
-    await supabaseAdmin.from("imports").update({
-      status: "complete",
-      rows_processed: totalRowsProcessed,
-      completed_at: new Date().toISOString(),
-    }).eq("id", import_id);
+    console.log(`Matched ${raceLapRows.length} laps for race ${raceIdStr}`);
+
+    if (raceLapRows.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, race_id: raceIdStr, session_id: null, laps_count: 0, skipped: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const hasSectors = (meta.seg_number ?? 0) > 0;
+
+    // Create session
+    const { data: sessionData, error: sessionErr } = await supabaseAdmin
+      .from("sessions")
+      .insert({
+        event_id,
+        name: meta.name || `Race ${raceIdStr}`,
+        display_name: meta.name || `Race ${raceIdStr}`,
+        track: meta.track || "Unknown",
+        date: meta.date ? meta.date.split("T")[0] : new Date().toISOString().split("T")[0],
+        data_mode: "pclap",
+        has_sector_data: hasSectors,
+        total_laps: raceLapRows.length,
+        status: "processing",
+        created_by: userId,
+        filename: `${meta.name || raceIdStr}.mdb`,
+      })
+      .select("id")
+      .single();
+
+    if (sessionErr || !sessionData) {
+      console.error(`Failed to create session:`, sessionErr);
+      return new Response(JSON.stringify({ error: "Failed to create session" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const sessionId = sessionData.id;
+
+    // Convert rows to StintLab format
+    const laps: LapRow[] = [];
+    for (let i = 0; i < raceLapRows.length; i++) {
+      const row = raceLapRows[i];
+      const rawLapTime = toNum(findColumn(row, ["LapTime", "Lap_Time", "laptime"]));
+      const lapTimeS = rawLapTime !== null ? rawLapTime / 1000 : 0;
+      const rawRaceTime = toNum(findColumn(row, ["RaceTime", "Race_Time", "racetime"]));
+      const sessionElapsedS = rawRaceTime !== null ? rawRaceTime / 1000 : null;
+      const rawPitTime = toNum(findColumn(row, ["PitStopTime", "Pit_Stop_Time", "pitstoptime"]));
+      const pitTimeS = rawPitTime !== null && rawPitTime > 0 ? rawPitTime / 1000 : null;
+      const hasPit = pitTimeS !== null && pitTimeS > 0;
+      const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
+      const lane = toNum(findColumn(row, ["LaneID", "Lane_ID", "laneid", "Lane"]));
+      const lapNumber = toNum(findColumn(row, ["Lap", "LapNumber", "Lap_Number", "lapnumber"])) ?? i + 1;
+      const stint = toNum(findColumn(row, ["SegmentID", "Segment_ID", "segmentid"])) ?? 0;
+      const teamId = toStr(findColumn(row, ["TeamID", "Team_ID", "teamid"])) || null;
+      const recDateTime = findColumn(row, ["RecDateTime", "Rec_Date_Time", "recdatetime"]);
+      const timestamp = recDateTime instanceof Date ? recDateTime.toISOString() : (toStr(recDateTime) || null);
+
+      laps.push({
+        session_id: sessionId,
+        lap_number: lapNumber,
+        lap_time_s: lapTimeS,
+        s1_s: null,
+        s2_s: null,
+        s3_s: null,
+        stint,
+        driver: driverId || null,
+        pit_type: hasPit ? "pit" : null,
+        pit_time_s: pitTimeS,
+        timestamp,
+        lane,
+        driving_station: null,
+        team_number: teamId,
+        stint_elapsed_s: null,
+        session_elapsed_s: sessionElapsedS,
+        lap_status: "valid",
+        validation_flags: [],
+        sort_key: sessionElapsedS ?? i,
+      });
+    }
+
+    // Sort chronologically
+    laps.sort((a, b) => a.sort_key - b.sort_key);
+
+    // Validation
+    const positiveTimes = laps.filter((l) => l.lap_time_s > 0).map((l) => l.lap_time_s);
+    const bounds = computeBounds(positiveTimes);
+    let prevElapsed: number | null = null;
+    for (const lap of laps) {
+      const flags: string[] = [];
+      if (lap.lap_time_s <= 0) flags.push("non_positive_time");
+      if (bounds && lap.lap_time_s > 0 && (lap.lap_time_s < bounds.lower || lap.lap_time_s > bounds.upper))
+        flags.push("statistical_outlier");
+      if (prevElapsed !== null && lap.session_elapsed_s !== null && lap.session_elapsed_s < prevElapsed)
+        flags.push("negative_time_delta");
+      lap.validation_flags = flags;
+      lap.lap_status = flags.includes("non_positive_time") ? "invalid" : flags.length > 0 ? "suspect" : "valid";
+      if (lap.session_elapsed_s !== null) prevElapsed = lap.session_elapsed_s;
+    }
+
+    // Insert in batches
+    const BATCH_SIZE = 500;
+    let insertFailed = false;
+    for (let i = 0; i < laps.length; i += BATCH_SIZE) {
+      const batch = laps.slice(i, i + BATCH_SIZE);
+      const { error: insertErr } = await supabaseAdmin.from("laps").insert(batch);
+      if (insertErr) {
+        console.error(`Lap insert error:`, insertErr);
+        await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", sessionId);
+        insertFailed = true;
+        break;
+      }
+    }
+
+    if (!insertFailed) {
+      await supabaseAdmin.from("sessions").update({ status: "ready" }).eq("id", sessionId);
+    }
 
     return new Response(
       JSON.stringify({
-        success: true,
-        import_id,
-        races_imported: results.length,
-        total_laps: totalRowsProcessed,
-        results,
+        success: !insertFailed,
+        race_id: raceIdStr,
+        session_id: sessionId,
+        name: meta.name,
+        laps_count: laps.length,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
