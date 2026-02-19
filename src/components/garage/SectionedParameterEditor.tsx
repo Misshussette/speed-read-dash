@@ -21,6 +21,7 @@ const SECTION_LABELS: Record<SetupSection, string> = {
   guide: 'garage_section_guide',
   electrical: 'garage_section_electrical',
   body: 'garage_section_body',
+  geometry: 'garage_section_geometry',
   track_conditions: 'garage_section_track_conditions',
 };
 

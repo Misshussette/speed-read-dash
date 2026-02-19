@@ -32,6 +32,7 @@ export const SETUP_SECTIONS = [
   'guide',
   'electrical',
   'body',
+  'geometry',
   'track_conditions',
 ] as const;
 
@@ -84,6 +85,16 @@ export const SLOT_CAR_TEMPLATE: ParameterDefinition[] = [
   { key: 'body_type', label: 'Body Type', unit: null, type: 'text', min: null, max: null, options: [], category: 'body' },
   { key: 'body_weight', label: 'Body Weight', unit: 'g', type: 'number', min: 0, max: 200, options: [], category: 'body' },
   { key: 'body_paint', label: 'Paint / Livery', unit: null, type: 'text', min: null, max: null, options: [], category: 'body' },
+
+  // ── Geometry ──
+  { key: 'wheelbase', label: 'Wheelbase', unit: 'mm', type: 'number', min: 50, max: 200, options: [], category: 'geometry' },
+  { key: 'front_track', label: 'Front Track', unit: 'mm', type: 'number', min: 30, max: 100, options: [], category: 'geometry' },
+  { key: 'rear_track', label: 'Rear Track', unit: 'mm', type: 'number', min: 30, max: 100, options: [], category: 'geometry' },
+  { key: 'front_ground_clearance', label: 'Front Ground Clearance', unit: 'mm', type: 'number', min: 0, max: 10, options: [], category: 'geometry' },
+  { key: 'rear_ground_clearance', label: 'Rear Ground Clearance', unit: 'mm', type: 'number', min: 0, max: 10, options: [], category: 'geometry' },
+  { key: 'pod_height', label: 'Pod Height', unit: 'mm', type: 'number', min: 0, max: 30, options: [], category: 'geometry' },
+  { key: 'front_wheel_diameter_prepared', label: 'Front Wheel Ø (prepared)', unit: 'mm', type: 'number', min: 10, max: 30, options: [], category: 'geometry' },
+  { key: 'rear_wheel_diameter_prepared', label: 'Rear Wheel Ø (prepared)', unit: 'mm', type: 'number', min: 10, max: 30, options: [], category: 'geometry' },
 
   // ── Track Conditions ──
   { key: 'track_surface', label: 'Track Surface', unit: null, type: 'select', min: null, max: null, options: ['Plastic', 'Wood', 'Routed'], category: 'track_conditions' },

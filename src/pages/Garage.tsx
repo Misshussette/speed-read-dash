@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, Car, Settings2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, X, Gauge, Layers } from 'lucide-react';
+import { Plus, Trash2, Car, Settings2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, X, Gauge, Layers, Ruler } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import type { Car as CarType, Setup, Controller, Configuration } from '@/types/g
 import SetupPerformanceImpact from '@/components/garage/SetupPerformanceImpact';
 import SectionedParameterEditor from '@/components/garage/SectionedParameterEditor';
 import SetupMediaUpload from '@/components/garage/SetupMediaUpload';
+import TechnicalSheet from '@/components/garage/TechnicalSheet';
 
 /* ── Vehicle Edit Dialog (inline) ── */
 function VehicleForm({ car, onSave, onCancel }: { car?: CarType; onSave: (data: { brand: string; model: string; notes: string }) => void; onCancel: () => void }) {
@@ -129,6 +130,7 @@ const Garage = () => {
   const [newSetupLabel, setNewSetupLabel] = useState('');
   const [expandedSetup, setExpandedSetup] = useState<string | null>(null);
   const [editingSetup, setEditingSetup] = useState<string | null>(null);
+  const [setupDetailTab, setSetupDetailTab] = useState<string>('details');
 
   // ── Controller state ──
   const [showNewCtrl, setShowNewCtrl] = useState(false);
@@ -402,7 +404,7 @@ const Garage = () => {
                             </div>
 
                             {isExpanded && (
-                              <div className="px-3 pb-3 space-y-3 border-t border-border pt-2">
+                              <div className="px-3 pb-3 border-t border-border pt-2">
                                 {isEditing ? (
                                   <div className="space-y-2">
                                     <Input value={setup.label || ''} onChange={e => updateSetup({ ...setup, label: e.target.value })}
@@ -425,43 +427,61 @@ const Garage = () => {
                                     </div>
                                   </div>
                                 ) : (
-                                  <>
-                                    {setup.notes && <p className="text-xs text-muted-foreground">{setup.notes}</p>}
-                                    {Object.keys(setup.parameters).length > 0 && (
-                                      <div className="space-y-1">
-                                        {Object.entries(setup.parameters).map(([k, v]) => (
-                                          <div key={k} className="flex items-center gap-2 text-xs">
-                                            <span className="font-medium text-muted-foreground">{k}:</span>
-                                            <span>{String(v)}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {Object.keys(setup.custom_fields).length > 0 && (
-                                      <div className="space-y-1">
-                                        {Object.entries(setup.custom_fields).map(([k, v]) => (
-                                          <div key={k} className="flex items-center gap-2 text-xs">
-                                            <span className="font-medium text-muted-foreground">{k}:</span>
-                                            <span>{v}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {/* Media gallery (read-only) */}
-                                    {(setup.images || []).length > 0 && (
-                                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 pt-1">
-                                        {(setup.images || []).map((url, i) => (
-                                          <div key={i} className="aspect-square rounded-md overflow-hidden border border-border bg-muted">
-                                            <img src={url} alt={`Setup ${i + 1}`} className="w-full h-full object-cover" />
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {/* Performance Impact */}
-                                    {linkedSessions.length > 0 && (
-                                      <SetupPerformanceImpact setup={setup} laps={getSetupData(setup.id).laps} benchmark={getSetupData(setup.id).benchmark} />
-                                    )}
-                                  </>
+                                  <Tabs value={setupDetailTab} onValueChange={setSetupDetailTab} className="mt-1">
+                                    <TabsList className="h-7 bg-muted/50">
+                                      <TabsTrigger value="details" className="text-xs h-6 px-2">{t('garage_tab_details')}</TabsTrigger>
+                                      <TabsTrigger value="parameters" className="text-xs h-6 px-2">{t('garage_parameters')}</TabsTrigger>
+                                      <TabsTrigger value="techsheet" className="text-xs h-6 px-2"><Ruler className="h-3 w-3 mr-1" />{t('garage_techsheet')}</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="details" className="mt-2 space-y-3">
+                                      {setup.notes && <p className="text-xs text-muted-foreground">{setup.notes}</p>}
+                                      {/* Media gallery */}
+                                      {(setup.images || []).length > 0 && (
+                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 pt-1">
+                                          {(setup.images || []).map((url, i) => (
+                                            <div key={i} className="aspect-square rounded-md overflow-hidden border border-border bg-muted">
+                                              <img src={url} alt={`Setup ${i + 1}`} className="w-full h-full object-cover" />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {/* Performance Impact */}
+                                      {linkedSessions.length > 0 && (
+                                        <SetupPerformanceImpact setup={setup} laps={getSetupData(setup.id).laps} benchmark={getSetupData(setup.id).benchmark} />
+                                      )}
+                                    </TabsContent>
+
+                                    <TabsContent value="parameters" className="mt-2 space-y-2">
+                                      {Object.keys(setup.parameters).length > 0 && (
+                                        <div className="space-y-1">
+                                          {Object.entries(setup.parameters).filter(([, v]) => v !== '').map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-2 text-xs">
+                                              <span className="font-medium text-muted-foreground">{k}:</span>
+                                              <span>{String(v)}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {Object.keys(setup.custom_fields).length > 0 && (
+                                        <div className="space-y-1">
+                                          {Object.entries(setup.custom_fields).map(([k, v]) => (
+                                            <div key={k} className="flex items-center gap-2 text-xs">
+                                              <span className="font-medium text-muted-foreground">{k}:</span>
+                                              <span>{v}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {Object.keys(setup.parameters).length === 0 && Object.keys(setup.custom_fields).length === 0 && (
+                                        <p className="text-xs text-muted-foreground py-4 text-center">{t('garage_no_params')}</p>
+                                      )}
+                                    </TabsContent>
+
+                                    <TabsContent value="techsheet" className="mt-2">
+                                      <TechnicalSheet setup={setup} carLabel={`${car.brand} ${car.model}`} />
+                                    </TabsContent>
+                                  </Tabs>
                                 )}
                               </div>
                             )}
