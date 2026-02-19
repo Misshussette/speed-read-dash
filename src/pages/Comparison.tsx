@@ -86,6 +86,7 @@ const Comparison = () => {
           <CardContent className="py-12 text-center">
             <GitCompareArrows className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">{t('compare_placeholder')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('compare_go_events')}</p>
           </CardContent>
         </Card>
       ) : isLoadingComparison ? (

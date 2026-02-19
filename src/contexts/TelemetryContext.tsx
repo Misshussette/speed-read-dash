@@ -350,11 +350,43 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     });
   }, [activeSessionId]);
 
-  const setActiveSessionId = useCallback((id: string | null) => {
-    setActiveSessionIdInternal(id);
-    setFilters(defaultFilters);
-    setScope(DEFAULT_SCOPE);
-  }, []);
+  const setActiveSessionId = useCallback(async (id: string | null) => {
+    if (!id) {
+      setActiveSessionIdInternal(null);
+      setFilters(defaultFilters);
+      setScope(DEFAULT_SCOPE);
+      return;
+    }
+    // If the session is already loaded, just switch
+    const alreadyLoaded = sessions.find(s => s.id === id);
+    if (alreadyLoaded) {
+      setActiveSessionIdInternal(id);
+      setFilters(defaultFilters);
+      setScope(DEFAULT_SCOPE);
+      return;
+    }
+    // Session not in current list — fetch from DB and set its event
+    try {
+      const { data: sessionRow } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (!sessionRow) return;
+      // Switch event so sessions list loads, then set active
+      if (sessionRow.event_id && sessionRow.event_id !== activeEventId) {
+        setActiveEventId(sessionRow.event_id);
+      }
+      // Small delay to let event switch trigger session reload, then set active
+      setTimeout(() => {
+        setActiveSessionIdInternal(id);
+        setFilters(defaultFilters);
+        setScope(DEFAULT_SCOPE);
+      }, 100);
+    } catch {
+      // Silently fail — Analysis will show "not found" state
+    }
+  }, [sessions, activeEventId, setActiveEventId]);
 
   const updateSessionMeta = useCallback(async (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => {
     const { error } = await supabase.from('sessions').update(updates).eq('id', id);

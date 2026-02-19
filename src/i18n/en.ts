@@ -173,6 +173,7 @@ const en: Record<string, string> = {
   compare_loading: 'Loading comparison data...',
   compare_select_instructions: 'Click sessions below to add or remove them from the comparison.',
   compare_need_more: 'Select at least one more session to start comparing.',
+  compare_go_events: 'Select sessions from Events to compare.',
 
   // Analysis scope
   scope_active: 'Scope Active',

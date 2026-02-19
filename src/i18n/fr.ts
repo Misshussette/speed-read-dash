@@ -145,6 +145,7 @@ const fr: Record<string, string> = {
   compare_loading: 'Chargement des données de comparaison...',
   compare_select_instructions: 'Cliquez sur les sessions ci-dessous pour les ajouter ou retirer de la comparaison.',
   compare_need_more: 'Sélectionnez au moins une session supplémentaire pour commencer la comparaison.',
+  compare_go_events: 'Sélectionnez des sessions depuis Événements pour comparer.',
 
   scope_active: 'Scope actif',
   scope_title: 'Périmètre d\'analyse',

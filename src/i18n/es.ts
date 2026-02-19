@@ -141,6 +141,7 @@ const es: Record<string, string> = {
   compare_loading: 'Cargando datos de comparación...',
   compare_select_instructions: 'Haz clic en las sesiones para añadirlas o quitarlas de la comparación.',
   compare_need_more: 'Selecciona al menos una sesión más para empezar a comparar.',
+  compare_go_events: 'Selecciona sesiones desde Eventos para comparar.',
 
   scope_active: 'Scope activo',
   scope_title: 'Ámbito de análisis',
