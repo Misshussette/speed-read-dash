@@ -4,7 +4,7 @@ const fr: Record<string, string> = {
   land_cta_signup: 'Vos données existent déjà. StintLab les rend lisibles.',
   land_cta_signin: 'Déjà un compte ? Se connecter',
   land_q1: 'Où est-ce que je perds du temps ?',
-  land_q1_detail: 'La télémétrie tour par tour révèle exactement quels secteurs vous coûtent du rythme — plus besoin de deviner après la course.',
+  land_q1_detail: 'La télémétrie tour par tour révèle exactement quels secteurs vous coûtent du rythme — plus besoin de deviner après la course.\n(sous réserve que la piste dispose de Split Time)',
   land_q2: 'Ce réglage est-il vraiment plus rapide ?',
   land_q2_detail: 'Associez votre configuration d\'équipement aux sessions et mesurez l\'impact réel de chaque ajustement.',
   land_q3: 'Est-ce que je progresse ou je roule simplement ?',
