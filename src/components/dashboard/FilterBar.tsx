@@ -12,6 +12,8 @@ interface FilterBarProps {
   onReset: () => void;
   scopeOptions?: { entities: string[]; drivers: string[]; lanes: number[] };
   hasScope?: boolean;
+  /** Drivers in the user's persistent scope (null = no scope / all drivers) */
+  scopedDrivers?: string[] | null;
 }
 
 interface LabeledSelectProps {
@@ -37,8 +39,9 @@ const LabeledSelect = ({ label, value, allLabel, options, onValueChange }: Label
   </div>
 );
 
-const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope }: FilterBarProps) => {
+const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope, scopedDrivers }: FilterBarProps) => {
   const { t } = useI18n();
+  const isOutOfScope = (driver: string) => scopedDrivers && scopedDrivers.length > 0 && !scopedDrivers.includes(driver);
 
   return (
     <div className="flex flex-wrap items-end gap-3">
@@ -81,6 +84,7 @@ const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope
           </button>
           {options.drivers.map(d => {
             const active = filters.drivers.length === 0 || filters.drivers.includes(d);
+            const outOfScope = isOutOfScope(d);
             return (
               <button
                 key={d}
@@ -96,11 +100,14 @@ const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope
                 }}
                 className={`px-2.5 py-1 text-xs rounded-md transition-colors font-medium ${
                   active
-                    ? 'bg-primary/20 text-primary border border-primary/30'
+                    ? outOfScope
+                      ? 'bg-accent/30 text-accent-foreground border border-dashed border-accent-foreground/30'
+                      : 'bg-primary/20 text-primary border border-primary/30'
                     : 'bg-secondary/30 text-muted-foreground border border-transparent hover:border-border'
                 }`}
+                title={outOfScope ? t('scope_temp_expanded') : undefined}
               >
-                {d}
+                {d}{outOfScope ? ' ↗' : ''}
               </button>
             );
           })}

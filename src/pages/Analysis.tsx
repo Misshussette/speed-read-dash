@@ -75,11 +75,26 @@ const Analysis = () => {
   // Apply persistent scope to the AnalysisScope system
   const scopeDriverFilter = runScope?.drivers && runScope.drivers.length > 0 ? runScope.drivers : null;
   
-  // Use persistent scope to filter data — this is the "user's data"
+  // Use persistent scope to filter data — this is the "user's default data"
   const userScopedData = useMemo(() => {
     if (!scopeDriverFilter) return rawData;
     return rawData.filter(r => scopeDriverFilter.includes(r.driver));
   }, [rawData, scopeDriverFilter]);
+
+  // Determine effective drivers: if user has ephemeral driver filter, expand from rawData
+  const hasEphemeralDriverExpansion = useMemo(() => {
+    if (!scopeDriverFilter || filters.drivers.length === 0) return false;
+    return filters.drivers.some(d => !scopeDriverFilter.includes(d));
+  }, [scopeDriverFilter, filters.drivers]);
+
+  // When user temporarily selects drivers outside scope, expand the analysis base from rawData
+  const expandedAnalysisData = useMemo(() => {
+    if (!hasEphemeralDriverExpansion) return userScopedData;
+    // Merge: scoped data + any extra drivers the user picked temporarily
+    const extraDrivers = filters.drivers.filter(d => !scopeDriverFilter!.includes(d));
+    const extraData = rawData.filter(r => extraDrivers.includes(r.driver));
+    return [...userScopedData, ...extraData];
+  }, [hasEphemeralDriverExpansion, userScopedData, rawData, filters.drivers, scopeDriverFilter]);
 
   // Default mobile to guided mode
   useEffect(() => {
@@ -122,9 +137,14 @@ const Analysis = () => {
     setShowDriverScope(false);
   };
 
-  // Analysis uses user-scoped data as base, then applies ephemeral scope on top
-  const analysisBase = scope.enabled ? scopedData : userScopedData;
-  const filterOptions = useMemo(() => getFilterOptions(analysisBase), [analysisBase]);
+  // Analysis uses user-scoped data (with potential temporary expansion) as base
+  const analysisBase = scope.enabled ? scopedData : expandedAnalysisData;
+  const filterOptions = useMemo(() => {
+    const opts = getFilterOptions(analysisBase);
+    // Always show ALL available drivers so users can temporarily expand
+    opts.drivers = availableDrivers;
+    return opts;
+  }, [analysisBase, availableDrivers]);
   const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
   const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
 
@@ -168,17 +188,24 @@ const Analysis = () => {
         </div>
         {/* Persistent driver scope indicator */}
         {availableDrivers.length > 1 && (
-          <Button
-            variant={scopeDriverFilter ? 'default' : 'outline'}
-            size="sm"
-            className="h-8 text-xs gap-1.5"
-            onClick={() => setShowDriverScope(true)}
-          >
-            <Users className="h-3.5 w-3.5" />
-            {scopeDriverFilter
-              ? `${t('scope_edit_drivers')} (${scopeDriverFilter.length})`
-              : t('scope_all_drivers_active')}
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant={scopeDriverFilter ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setShowDriverScope(true)}
+            >
+              <Users className="h-3.5 w-3.5" />
+              {scopeDriverFilter
+                ? `${t('scope_edit_drivers')} (${scopeDriverFilter.length})`
+                : t('scope_all_drivers_active')}
+            </Button>
+            {hasEphemeralDriverExpansion && (
+              <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">
+                {t('scope_temp_expanded')}
+              </Badge>
+            )}
+          </div>
         )}
       </div>
 
@@ -209,7 +236,7 @@ const Analysis = () => {
         <>
           {/* Filter bar */}
           <div className="border-b border-border pb-3">
-            <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopeOptions={scopeOptions} hasScope={scope.enabled} />
+            <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopeOptions={scopeOptions} hasScope={scope.enabled} scopedDrivers={scopeDriverFilter} />
           </div>
 
           {rawData.length > 0 && (

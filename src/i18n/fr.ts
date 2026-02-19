@@ -407,6 +407,7 @@ const fr: Record<string, string> = {
   scope_all_drivers_active: 'Tous les pilotes',
   scope_saved: 'Scope d\'analyse sauvegardé !',
   scope_cleared: 'Scope effacé — analyse de tous les pilotes.',
+  scope_temp_expanded: 'Vue étendue temp.',
 };
 
 export default fr;
