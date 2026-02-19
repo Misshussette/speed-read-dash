@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     const arrayBuffer = await fileData.arrayBuffer();
-    const reader = new MDBReader(Buffer.from(new Uint8Array(arrayBuffer)));
+    const reader = new MDBReader(arrayBuffer);
     const tableNames = reader.getTableNames();
 
     // Get race metadata from RaceHistory
