@@ -23,21 +23,77 @@ export interface ParameterDefinition {
   category: string;     // e.g. 'chassis', 'drivetrain', 'electronics'
 }
 
-/** Predefined parameter templates for common slot-car disciplines */
-export const PARAMETER_TEMPLATES: ParameterDefinition[] = [
-  { key: 'tires', label: 'Tires', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
+/** All supported parameter sections for structured display */
+export const SETUP_SECTIONS = [
+  'chassis',
+  'drivetrain',
+  'motor',
+  'running_gear',
+  'guide',
+  'electrical',
+  'body',
+  'track_conditions',
+] as const;
+
+export type SetupSection = typeof SETUP_SECTIONS[number];
+
+/** Predefined Slot Car Advanced Template — organized by section */
+export const SLOT_CAR_TEMPLATE: ParameterDefinition[] = [
+  // ── Chassis ──
+  { key: 'chassis_type', label: 'Chassis Type', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
+  { key: 'ride_height_front', label: 'Front Ride Height', unit: 'mm', type: 'number', min: 0, max: 20, options: [], category: 'chassis' },
+  { key: 'ride_height_rear', label: 'Rear Ride Height', unit: 'mm', type: 'number', min: 0, max: 20, options: [], category: 'chassis' },
+  { key: 'chassis_flex', label: 'Chassis Flex', unit: null, type: 'select', min: null, max: null, options: ['Rigid', 'Medium', 'Soft'], category: 'chassis' },
+  { key: 'ballast_weight', label: 'Ballast Weight', unit: 'g', type: 'number', min: 0, max: 100, options: [], category: 'chassis' },
+  { key: 'ballast_position', label: 'Ballast Position', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
+
+  // ── Drivetrain ──
   { key: 'gear_ratio', label: 'Gear Ratio', unit: null, type: 'text', min: null, max: null, options: [], category: 'drivetrain' },
-  { key: 'ride_height', label: 'Ride Height', unit: 'mm', type: 'number', min: 0, max: 20, options: [], category: 'chassis' },
-  { key: 'magnet', label: 'Magnet', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
-  { key: 'controller_profile', label: 'Controller Profile', unit: null, type: 'text', min: null, max: null, options: [], category: 'electronics' },
-  { key: 'motor_brand', label: 'Motor Brand', unit: null, type: 'text', min: null, max: null, options: [], category: 'drivetrain' },
   { key: 'pinion', label: 'Pinion', unit: 'teeth', type: 'number', min: 5, max: 30, options: [], category: 'drivetrain' },
   { key: 'crown', label: 'Crown', unit: 'teeth', type: 'number', min: 20, max: 40, options: [], category: 'drivetrain' },
-  { key: 'front_axle', label: 'Front Axle', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
-  { key: 'rear_axle', label: 'Rear Axle', unit: null, type: 'text', min: null, max: null, options: [], category: 'chassis' },
-  { key: 'body_weight', label: 'Body Weight', unit: 'g', type: 'number', min: 0, max: 200, options: [], category: 'chassis' },
-  { key: 'brake_setting', label: 'Brake Setting', unit: null, type: 'select', min: null, max: null, options: ['Off', 'Low', 'Medium', 'High'], category: 'electronics' },
+  { key: 'axle_type', label: 'Axle Type', unit: null, type: 'text', min: null, max: null, options: [], category: 'drivetrain' },
+  { key: 'differential', label: 'Differential', unit: null, type: 'select', min: null, max: null, options: ['None', 'Locked', 'Open', 'Limited Slip'], category: 'drivetrain' },
+
+  // ── Motor ──
+  { key: 'motor_brand', label: 'Motor Brand', unit: null, type: 'text', min: null, max: null, options: [], category: 'motor' },
+  { key: 'motor_model', label: 'Motor Model', unit: null, type: 'text', min: null, max: null, options: [], category: 'motor' },
+  { key: 'motor_rpm', label: 'Motor RPM', unit: 'rpm', type: 'number', min: 0, max: 50000, options: [], category: 'motor' },
+  { key: 'motor_magnet', label: 'Motor Magnet', unit: null, type: 'text', min: null, max: null, options: [], category: 'motor' },
+
+  // ── Running Gear ──
+  { key: 'front_tires', label: 'Front Tires', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+  { key: 'rear_tires', label: 'Rear Tires', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+  { key: 'front_wheels', label: 'Front Wheels', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+  { key: 'rear_wheels', label: 'Rear Wheels', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+  { key: 'front_axle', label: 'Front Axle', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+  { key: 'rear_axle', label: 'Rear Axle', unit: null, type: 'text', min: null, max: null, options: [], category: 'running_gear' },
+
+  // ── Guide ──
+  { key: 'guide_type', label: 'Guide Type', unit: null, type: 'text', min: null, max: null, options: [], category: 'guide' },
+  { key: 'guide_spring', label: 'Guide Spring', unit: null, type: 'select', min: null, max: null, options: ['Soft', 'Medium', 'Hard'], category: 'guide' },
+  { key: 'guide_flag', label: 'Guide Flag', unit: null, type: 'text', min: null, max: null, options: [], category: 'guide' },
+
+  // ── Electrical ──
+  { key: 'controller_profile', label: 'Controller Profile', unit: null, type: 'text', min: null, max: null, options: [], category: 'electrical' },
+  { key: 'magnet', label: 'Traction Magnet', unit: null, type: 'text', min: null, max: null, options: [], category: 'electrical' },
+  { key: 'magnet_position', label: 'Magnet Position', unit: null, type: 'text', min: null, max: null, options: [], category: 'electrical' },
+  { key: 'brake_setting', label: 'Brake Setting', unit: null, type: 'select', min: null, max: null, options: ['Off', 'Low', 'Medium', 'High'], category: 'electrical' },
+  { key: 'braids', label: 'Braids', unit: null, type: 'text', min: null, max: null, options: [], category: 'electrical' },
+
+  // ── Body ──
+  { key: 'body_type', label: 'Body Type', unit: null, type: 'text', min: null, max: null, options: [], category: 'body' },
+  { key: 'body_weight', label: 'Body Weight', unit: 'g', type: 'number', min: 0, max: 200, options: [], category: 'body' },
+  { key: 'body_paint', label: 'Paint / Livery', unit: null, type: 'text', min: null, max: null, options: [], category: 'body' },
+
+  // ── Track Conditions ──
+  { key: 'track_surface', label: 'Track Surface', unit: null, type: 'select', min: null, max: null, options: ['Plastic', 'Wood', 'Routed'], category: 'track_conditions' },
+  { key: 'track_grip', label: 'Track Grip', unit: null, type: 'select', min: null, max: null, options: ['Low', 'Medium', 'High'], category: 'track_conditions' },
+  { key: 'temperature', label: 'Temperature', unit: '°C', type: 'number', min: -10, max: 50, options: [], category: 'track_conditions' },
+  { key: 'tire_treatment', label: 'Tire Treatment', unit: null, type: 'text', min: null, max: null, options: [], category: 'track_conditions' },
 ];
+
+/** Legacy flat template — kept for backward compatibility */
+export const PARAMETER_TEMPLATES: ParameterDefinition[] = SLOT_CAR_TEMPLATE;
 
 export interface Setup {
   id: string;
@@ -47,6 +103,7 @@ export interface Setup {
   tags: string[];
   parameters: Record<string, string | number>;  // key from ParameterDefinition -> value
   custom_fields: Record<string, string>;         // user-defined free-form fields
+  images: string[];                               // storage URLs for media attachments
   createdAt: number;
 }
 

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useGarage } from '@/contexts/GarageContext';
@@ -16,6 +15,8 @@ import type { LapRecord } from '@/types/telemetry';
 import type { TrackBenchmark } from '@/lib/track-benchmark';
 import type { Car as CarType, Setup, Controller, Configuration } from '@/types/garage';
 import SetupPerformanceImpact from '@/components/garage/SetupPerformanceImpact';
+import SectionedParameterEditor from '@/components/garage/SectionedParameterEditor';
+import SetupMediaUpload from '@/components/garage/SetupMediaUpload';
 
 /* ── Vehicle Edit Dialog (inline) ── */
 function VehicleForm({ car, onSave, onCancel }: { car?: CarType; onSave: (data: { brand: string; model: string; notes: string }) => void; onCancel: () => void }) {
@@ -43,66 +44,7 @@ function VehicleForm({ car, onSave, onCancel }: { car?: CarType; onSave: (data: 
   );
 }
 
-/* ── Setup Parameters Editor (key/value) ── */
-function ParameterEditor({ parameters, customFields, onChange }: {
-  parameters: Record<string, string | number>;
-  customFields: Record<string, string>;
-  onChange: (params: Record<string, string | number>, custom: Record<string, string>) => void;
-}) {
-  const { t } = useI18n();
-  const [newKey, setNewKey] = useState('');
-  const [newValue, setNewValue] = useState('');
-
-  const allEntries = [
-    ...Object.entries(parameters).map(([k, v]) => ({ key: k, value: String(v), source: 'param' as const })),
-    ...Object.entries(customFields).map(([k, v]) => ({ key: k, value: v, source: 'custom' as const })),
-  ];
-
-  const handleAdd = () => {
-    if (!newKey.trim()) return;
-    onChange(parameters, { ...customFields, [newKey.trim()]: newValue.trim() });
-    setNewKey('');
-    setNewValue('');
-  };
-
-  const handleRemove = (key: string, source: 'param' | 'custom') => {
-    if (source === 'param') {
-      const next = { ...parameters };
-      delete next[key];
-      onChange(next, customFields);
-    } else {
-      const next = { ...customFields };
-      delete next[key];
-      onChange(parameters, next);
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      {allEntries.length > 0 && (
-        <div className="space-y-1">
-          {allEntries.map(e => (
-            <div key={e.key} className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-muted-foreground min-w-[100px]">{e.key}</span>
-              <span className="flex-1">{e.value}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemove(e.key, e.source)}>
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="flex items-center gap-2">
-        <Input placeholder={t('garage_param_key')} value={newKey} onChange={e => setNewKey(e.target.value)} className="text-sm h-8 w-32" />
-        <Input placeholder={t('garage_param_value')} value={newValue} onChange={e => setNewValue(e.target.value)} className="text-sm h-8 flex-1"
-          onKeyDown={e => e.key === 'Enter' && handleAdd()} />
-        <Button variant="outline" size="sm" className="h-8" onClick={handleAdd} disabled={!newKey.trim()}>
-          <Plus className="h-3 w-3" />
-        </Button>
-      </div>
-    </div>
-  );
-}
+/* ── (ParameterEditor removed — replaced by SectionedParameterEditor) ── */
 
 /* ── Controller Form ── */
 function ControllerForm({ controller, onSave, onCancel }: {
@@ -267,7 +209,7 @@ const Garage = () => {
 
   const handleAddSetup = async (carId: string) => {
     if (!newSetupLabel.trim()) return;
-    await addSetup({ car_id: carId, label: newSetupLabel.trim(), notes: null, tags: [], parameters: {}, custom_fields: {} });
+    await addSetup({ car_id: carId, label: newSetupLabel.trim(), notes: null, tags: [], parameters: {}, custom_fields: {}, images: [] });
     setNewSetupLabel('');
     setShowNewSetup(null);
     toast.success(t('garage_setup_added'));
@@ -468,10 +410,15 @@ const Garage = () => {
                                     <Textarea value={setup.notes || ''} onChange={e => updateSetup({ ...setup, notes: e.target.value })}
                                       placeholder={t('garage_notes')} className="text-sm min-h-[60px]" />
                                     <p className="text-xs font-medium text-muted-foreground">{t('garage_parameters')}</p>
-                                    <ParameterEditor
+                                    <SectionedParameterEditor
                                       parameters={setup.parameters}
                                       customFields={setup.custom_fields}
                                       onChange={(params, custom) => updateSetup({ ...setup, parameters: params, custom_fields: custom })}
+                                    />
+                                    <SetupMediaUpload
+                                      images={setup.images || []}
+                                      onImagesChange={imgs => updateSetup({ ...setup, images: imgs })}
+                                      setupId={setup.id}
                                     />
                                     <div className="flex justify-end">
                                       <Button variant="ghost" size="sm" onClick={() => setEditingSetup(null)}>{t('garage_done')}</Button>
@@ -496,6 +443,16 @@ const Garage = () => {
                                           <div key={k} className="flex items-center gap-2 text-xs">
                                             <span className="font-medium text-muted-foreground">{k}:</span>
                                             <span>{v}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {/* Media gallery (read-only) */}
+                                    {(setup.images || []).length > 0 && (
+                                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 pt-1">
+                                        {(setup.images || []).map((url, i) => (
+                                          <div key={i} className="aspect-square rounded-md overflow-hidden border border-border bg-muted">
+                                            <img src={url} alt={`Setup ${i + 1}`} className="w-full h-full object-cover" />
                                           </div>
                                         ))}
                                       </div>

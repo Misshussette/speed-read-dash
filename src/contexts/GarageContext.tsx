@@ -81,6 +81,7 @@ export function GarageProvider({ children }: { children: React.ReactNode }) {
       ...data, id: crypto.randomUUID(), createdAt: Date.now(),
       tags: data.tags || [], parameters: data.parameters || {},
       custom_fields: data.custom_fields || {},
+      images: data.images || [],
       label: data.label || null, notes: data.notes || null,
     };
     await saveSetupDB(setup);
