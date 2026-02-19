@@ -418,6 +418,23 @@ const en: Record<string, string> = {
   live_standings: 'Standings',
   live_lap_history: 'Lap History',
   live_no_data: 'Waiting for data…',
+  // MDB Import
+  mdb_select_races: 'Select races to import',
+  mdb_select_races_desc: '{count} races found in PCLapCounter database.',
+  mdb_search_races: 'Search by name, track, driver…',
+  mdb_select_all: 'Select all',
+  mdb_races_selected: 'races selected',
+  mdb_import_selected: 'Import selection',
+  mdb_importing: 'Importing…',
+  mdb_no_races_found: 'No races found.',
+  mdb_scanning: 'Scanning MDB file…',
+  mdb_scan_complete: 'Race catalog ready!',
+  mdb_import_complete: 'Import complete!',
+  mdb_import_error: 'Error during MDB import.',
+  upload_drop: 'Click or drag a file',
+  upload_browse: 'CSV or PCLapCounter database (.mdb)',
+  upload_parsing: 'Processing…',
+  upload_error_format: 'Unsupported format. Use .csv or .mdb',
 };
 
 export default en;

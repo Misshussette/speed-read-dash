@@ -183,8 +183,10 @@ export type Database = {
           file_path: string
           filename: string | null
           id: string
+          race_catalog: Json | null
           rows_processed: number | null
           session_id: string | null
+          source_type: string
           started_at: string | null
           status: string
         }
@@ -197,8 +199,10 @@ export type Database = {
           file_path: string
           filename?: string | null
           id?: string
+          race_catalog?: Json | null
           rows_processed?: number | null
           session_id?: string | null
+          source_type?: string
           started_at?: string | null
           status?: string
         }
@@ -211,8 +215,10 @@ export type Database = {
           file_path?: string
           filename?: string | null
           id?: string
+          race_catalog?: Json | null
           rows_processed?: number | null
           session_id?: string | null
+          source_type?: string
           started_at?: string | null
           status?: string
         }

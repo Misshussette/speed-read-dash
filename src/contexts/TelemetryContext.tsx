@@ -7,12 +7,20 @@ import { toast } from 'sonner';
 
 interface ClubMeta { id: string; name: string; role: string; }
 
+export interface MdbScanResult {
+  import_id: string;
+  file_path: string;
+  catalog: any[];
+}
+
 interface TelemetryState {
   // Multi-session
   sessions: SessionMeta[];
   activeSessionId: string | null;
   setActiveSessionId: (id: string | null) => void;
   uploadFile: (file: File, eventIdOverride?: string) => Promise<void>;
+  uploadMdbFile: (file: File, eventIdOverride?: string) => Promise<MdbScanResult | null>;
+  importMdbRaces: (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string) => Promise<void>;
   removeSession: (id: string) => void;
   updateSessionMeta: (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => Promise<void>;
 
@@ -337,6 +345,92 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, activeEventId]);
 
+  const uploadMdbFile = useCallback(async (file: File, eventIdOverride?: string): Promise<MdbScanResult | null> => {
+    const targetEventId = eventIdOverride || activeEventId;
+    if (!user || !targetEventId) {
+      toast.error('Select an event first.');
+      return null;
+    }
+    setIsLoading(true);
+    setErrors([]);
+
+    try {
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('race-files')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data, error: fnError } = await supabase.functions.invoke('scan-mdb', {
+        body: { file_path: filePath, event_id: targetEventId },
+      });
+      if (fnError) throw fnError;
+
+      setIsLoading(false);
+      return {
+        import_id: data.import_id,
+        file_path: filePath,
+        catalog: data.catalog,
+      };
+    } catch (err: any) {
+      setErrors([err.message || 'MDB scan failed']);
+      toast.error(err.message || 'MDB scan failed');
+      setIsLoading(false);
+      return null;
+    }
+  }, [user, activeEventId]);
+
+  const importMdbRaces = useCallback(async (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string) => {
+    const targetEventId = eventIdOverride || activeEventId;
+    if (!user || !targetEventId) return;
+    setIsLoading(true);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('import-mdb-races', {
+        body: {
+          import_id: importId,
+          event_id: targetEventId,
+          file_path: filePath,
+          selected_race_ids: selectedRaceIds,
+        },
+      });
+      if (fnError) throw fnError;
+
+      // Refresh sessions
+      const { data: refreshed } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('event_id', targetEventId)
+        .order('created_at', { ascending: false });
+
+      if (refreshed) {
+        const metas: SessionMeta[] = refreshed.map((s: any) => ({
+          id: s.id, session_id: s.id,
+          date: s.date || '', track: s.track || '',
+          car_model: s.car_model || '', brand: s.brand || '',
+          filename: s.filename || '', laps: s.total_laps,
+          importedAt: new Date(s.created_at).getTime(),
+          display_name: s.display_name || null,
+          tags: s.tags || [], notes: s.notes || null,
+          event_type: s.event_type || null,
+        }));
+        setSessions(metas);
+        if (data?.results?.length > 0) {
+          setActiveSessionIdInternal(data.results[0].session_id);
+        }
+      }
+
+      setFilters(defaultFilters);
+      setScope(DEFAULT_SCOPE);
+      toast.success(`${data?.races_imported || 0} races imported!`);
+    } catch (err: any) {
+      setErrors([err.message || 'MDB import failed']);
+      toast.error(err.message || 'MDB import failed');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, activeEventId]);
+
   const removeSession = useCallback(async (id: string) => {
     await supabase.from('sessions').delete().eq('id', id);
     setSessions(prev => {
@@ -490,7 +584,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   return (
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
-      uploadFile, removeSession, updateSessionMeta,
+      uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta,
       clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
