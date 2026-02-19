@@ -359,7 +359,9 @@ const en: Record<string, string> = {
   // Comparison
   compare_select_min2: 'Select at least 2 sessions to start comparing.',
 
-  // Analysis equipment linking
+  // Analysis
+  analysis_not_found: 'Session not found.',
+  analysis_not_found_hint: 'This session may have been deleted or the link is invalid. Return to Events to select a session.',
   analysis_select_config: 'Link configuration…',
   analysis_link: 'Link',
   analysis_config_linked: 'Configuration linked!',

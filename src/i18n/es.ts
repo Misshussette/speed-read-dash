@@ -316,6 +316,8 @@ const es: Record<string, string> = {
   events_open_analysis: 'Analizar',
   events_open_comparison: 'Abrir comparación',
   compare_select_min2: 'Seleccione al menos 2 sesiones para comparar.',
+  analysis_not_found: 'Sesión no encontrada.',
+  analysis_not_found_hint: 'Esta sesión puede haber sido eliminada o el enlace es inválido. Vuelve a Eventos para seleccionar una sesión.',
   analysis_select_config: 'Vincular configuración…',
   analysis_link: 'Vincular',
   analysis_config_linked: '¡Configuración vinculada!',

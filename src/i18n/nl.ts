@@ -316,6 +316,8 @@ const nl: Record<string, string> = {
   events_open_analysis: 'Analyseren',
   events_open_comparison: 'Vergelijking openen',
   compare_select_min2: 'Selecteer minstens 2 sessies om te vergelijken.',
+  analysis_not_found: 'Sessie niet gevonden.',
+  analysis_not_found_hint: 'Deze sessie is mogelijk verwijderd of de link is ongeldig. Ga terug naar Evenementen om een sessie te selecteren.',
   analysis_select_config: 'Configuratie koppelen…',
   analysis_link: 'Koppelen',
   analysis_config_linked: 'Configuratie gekoppeld!',

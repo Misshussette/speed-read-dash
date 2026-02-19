@@ -322,6 +322,8 @@ const fr: Record<string, string> = {
   events_open_analysis: 'Analyser',
   events_open_comparison: 'Ouvrir la comparaison',
   compare_select_min2: 'Sélectionnez au moins 2 sessions pour comparer.',
+  analysis_not_found: 'Session introuvable.',
+  analysis_not_found_hint: 'Cette session a peut-être été supprimée ou le lien est invalide. Retournez aux Événements pour sélectionner une session.',
   analysis_select_config: 'Lier une configuration…',
   analysis_link: 'Lier',
   analysis_config_linked: 'Configuration liée !',
