@@ -328,6 +328,26 @@ const en: Record<string, string> = {
   garage_geo_rgc: 'Rear Clr.',
   garage_geo_pod: 'Pod Height',
 
+  // Events actions
+  events_actions: 'Actions',
+  events_open_analysis: 'Analyze',
+  events_open_comparison: 'Open Comparison',
+
+  // Comparison
+  compare_select_min2: 'Select at least 2 sessions to start comparing.',
+
+  // Analysis equipment linking
+  analysis_select_config: 'Link configuration…',
+  analysis_link: 'Link',
+  analysis_config_linked: 'Configuration linked!',
+  analysis_no_configs_hint: 'Create a configuration in Garage first.',
+
+  // Garage helper hints
+  garage_hint_vehicle: 'Start here — add your slot car.',
+  garage_hint_setup: 'Create setups for each vehicle to track parameters.',
+  garage_hint_controller: 'Add your controller to include in configurations.',
+  garage_hint_config: 'Combine vehicle + setup + controller into a race configuration.',
+
   // Settings
   settings_account: 'Account',
   settings_logged_in: 'Logged in',

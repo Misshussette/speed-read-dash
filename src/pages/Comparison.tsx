@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { GitCompareArrows } from 'lucide-react';
+import { GitCompareArrows, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useI18n } from '@/i18n/I18nContext';
 import { computeKPIs } from '@/lib/metrics';
@@ -22,6 +23,8 @@ const Comparison = () => {
   const compKpis = useMemo(() => computeKPIs(comparisonData, filters.includePitLaps), [comparisonData, filters.includePitLaps]);
   const hasSectors = comparisonData.some(l => l.S1_s !== null);
 
+  const selectedMetas = sessions.filter(s => comparisonSessions.includes(s.id));
+
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -33,10 +36,28 @@ const Comparison = () => {
         )}
       </div>
 
+      {/* Selected session chips */}
+      {selectedMetas.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedMetas.map(s => (
+            <Badge key={s.id} variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+              {s.filename?.replace(/\.csv$/i, '') || s.track || s.id.slice(0, 8)}
+              <button onClick={() => toggleComparisonSession(s.id)} className="hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Session selector */}
       <Card className="bg-card border-border">
         <CardContent className="pt-4">
-          <p className="text-xs text-muted-foreground mb-3">{t('compare_select_instructions')}</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            {comparisonSessions.length < 2
+              ? t('compare_select_min2')
+              : t('compare_select_instructions')}
+          </p>
           <div className="flex flex-wrap gap-2">
             {sessions.map(s => {
               const selected = comparisonSessions.includes(s.id);
@@ -56,9 +77,6 @@ const Comparison = () => {
               );
             })}
           </div>
-          {comparisonSessions.length > 0 && comparisonSessions.length < 2 && (
-            <p className="text-xs text-muted-foreground mt-2">{t('compare_need_more')}</p>
-          )}
         </CardContent>
       </Card>
 

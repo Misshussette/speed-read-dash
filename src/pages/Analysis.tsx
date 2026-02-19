@@ -1,14 +1,16 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useDisplayMode } from '@/contexts/DisplayModeContext';
 import { useGarage } from '@/contexts/GarageContext';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
 import { useI18n } from '@/i18n/I18nContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from 'sonner';
 import FilterBar from '@/components/dashboard/FilterBar';
 import KPICards from '@/components/dashboard/KPICards';
 import LapTimeChart from '@/components/dashboard/LapTimeChart';
@@ -28,7 +30,7 @@ const Analysis = () => {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const { setDisplayMode } = useDisplayMode();
-  const { getSessionLink, getCarById, getSetupById } = useGarage();
+  const { configurations, cars, setups, controllers, getSessionLink, getCarById, getSetupById, getConfigurationById, linkSessionToGarage } = useGarage();
 
   const {
     rawData, hasSectorData, filters, setFilters, resetFilters,
@@ -37,6 +39,7 @@ const Analysis = () => {
   } = useTelemetry();
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedConfigId, setSelectedConfigId] = useState<string>('');
 
   // Set active session from URL
   useEffect(() => {
@@ -55,8 +58,23 @@ const Analysis = () => {
 
   const sessionMeta = sessions.find(s => s.id === sessionId);
   const garageLink = sessionId ? getSessionLink(sessionId) : undefined;
-  const linkedCar = garageLink?.car_id ? getCarById(garageLink.car_id) : undefined;
-  const linkedSetup = garageLink?.setup_id ? getSetupById(garageLink.setup_id) : undefined;
+  const linkedConfig = garageLink?.configuration_id ? getConfigurationById(garageLink.configuration_id) : undefined;
+  const linkedCar = linkedConfig ? getCarById(linkedConfig.vehicle_id) : (garageLink?.car_id ? getCarById(garageLink.car_id) : undefined);
+  const linkedSetup = linkedConfig?.setup_id ? getSetupById(linkedConfig.setup_id) : (garageLink?.setup_id ? getSetupById(garageLink.setup_id) : undefined);
+  const linkedCtrl = linkedConfig?.controller_id ? controllers.find(c => c.id === linkedConfig.controller_id) : undefined;
+
+  // Sync selected config from existing link
+  useEffect(() => {
+    setSelectedConfigId(garageLink?.configuration_id || '');
+  }, [garageLink?.configuration_id]);
+
+  const handleLinkConfig = async () => {
+    if (!sessionId || !selectedConfigId) return;
+    const config = getConfigurationById(selectedConfigId);
+    if (!config) return;
+    await linkSessionToGarage(sessionId, config.vehicle_id, config.setup_id, selectedConfigId);
+    toast.success(t('analysis_config_linked'));
+  };
 
   const analysisBase = scope.enabled ? scopedData : rawData;
   const filterOptions = useMemo(() => getFilterOptions(analysisBase), [analysisBase]);
@@ -97,8 +115,30 @@ const Analysis = () => {
             {sessionMeta.date && <span>• {sessionMeta.date}</span>}
             {linkedCar && <span>• 🚗 {linkedCar.brand} {linkedCar.model}</span>}
             {linkedSetup?.label && <span>• ⚙️ {linkedSetup.label}</span>}
+            {linkedCtrl && <span>• 🎮 {linkedCtrl.name}</span>}
           </div>
         </div>
+      </div>
+
+      {/* Equipment link */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+        <Select value={selectedConfigId} onValueChange={setSelectedConfigId}>
+          <SelectTrigger className="h-8 text-xs w-[220px]">
+            <SelectValue placeholder={t('analysis_select_config')} />
+          </SelectTrigger>
+          <SelectContent>
+            {configurations.map(c => (
+              <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="sm" className="h-8 text-xs" disabled={!selectedConfigId || selectedConfigId === garageLink?.configuration_id} onClick={handleLinkConfig}>
+          {t('analysis_link')}
+        </Button>
+        {configurations.length === 0 && (
+          <span className="text-xs text-muted-foreground">{t('analysis_no_configs_hint')}</span>
+        )}
       </div>
 
       {/* Mobile field mode */}
