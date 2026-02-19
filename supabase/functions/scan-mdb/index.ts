@@ -185,23 +185,10 @@ Deno.serve(async (req) => {
       console.log(`RaceHistoryClas: ${clasRows.length} rows, columns: ${clasTable.getColumnNames().join(", ")}`);
     }
 
-    // Find RaceHistoryLap to get lap counts per race (lightweight: just count, don't store all)
-    const lapTableName = userTables.find(
-      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistorylap"
-    );
-
-    const lapCountByRace: Record<string, number> = {};
-    if (lapTableName) {
-      const lapTable = reader.getTable(lapTableName);
-      const lapRows = lapTable.getData();
-      for (const row of lapRows) {
-        const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
-        if (raceId) {
-          lapCountByRace[raceId] = (lapCountByRace[raceId] || 0) + 1;
-        }
-      }
-      console.log(`RaceHistoryLap: ${lapRows.length} total rows across ${Object.keys(lapCountByRace).length} races`);
-    }
+    // NOTE: We intentionally do NOT read RaceHistoryLap here.
+    // That table can have hundreds of thousands of rows and would exceed
+    // edge function memory limits. Lap counts come from RaceHistory metadata
+    // (LapRace / LapNumber columns) or from RaceHistoryClas.TotalLaps.
 
     // Group participants by race from RaceHistoryClas
     const driversByRace: Record<string, { name: string; lane: number | null; bestLap: number | null }[]> = {};
@@ -231,7 +218,7 @@ Deno.serve(async (req) => {
         track: toStr(findColumn(row, ["TrackID", "Track_ID", "trackid", "TrackName", "Track"])),
         track_length: toNum(findColumn(row, ["TrackLength", "Track_Length", "tracklength", "TrackLenght"])),
         duration: toStr(findColumn(row, ["TimeRace", "Time_Race", "timerace", "RaceDuration"])),
-        lap_count: lapCountByRace[raceId] || toNum(findColumn(row, ["LapNumber", "Lap_Number", "LapRace"])) || 0,
+        lap_count: toNum(findColumn(row, ["LapRace", "LapNumber", "Lap_Number", "TotalLaps"])) || 0,
         seg_number: segNumber,
         has_sectors: segNumber !== null && segNumber > 0,
         comment: toStr(findColumn(row, ["Comment", "Comments", "Notes", "comment"])),
@@ -259,7 +246,6 @@ Deno.serve(async (req) => {
         success: true,
         import_id: importId,
         race_count: raceCatalog.length,
-        total_laps: Object.values(lapCountByRace).reduce((a, b) => a + b, 0),
         catalog: raceCatalog,
         available_tables: userTables,
       }),
