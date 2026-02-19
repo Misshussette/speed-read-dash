@@ -416,6 +416,32 @@ const fr: Record<string, string> = {
   scope_saved: 'Scope d\'analyse sauvegardé !',
   scope_cleared: 'Scope effacé — analyse de tous les pilotes.',
   scope_temp_expanded: 'Vue étendue temp.',
+
+  // Clubs
+  club_title: 'Clubs',
+  club_create: 'Créer un club',
+  club_create_title: 'Nouveau club',
+  club_join: 'Rejoindre',
+  club_join_title: 'Rejoindre un club',
+  club_name_placeholder: 'Nom du club',
+  club_desc_placeholder: 'Description (optionnel)',
+  club_enter_code: 'Code d\'invitation',
+  club_created: 'Club créé !',
+  club_joined: 'Vous avez rejoint le club !',
+  club_already_member: 'Vous êtes déjà membre de ce club.',
+  club_invalid_code: 'Code d\'invitation invalide.',
+  club_code_expired: 'Ce code d\'invitation a expiré.',
+  club_empty: 'Aucun club. Créez-en un ou rejoignez-en un avec un code d\'invitation.',
+  club_members: 'Membres',
+  club_invites: 'Invitations',
+  club_generate_code: 'Générer un code',
+  club_invite_created: 'Code d\'invitation créé !',
+  club_no_invites: 'Aucun code d\'invitation actif.',
+  club_code_copied: 'Code copié !',
+  club_role_organizer: 'Organisateur',
+  club_role_member: 'Membre',
+  club_role_updated: 'Rôle mis à jour !',
+  nav_clubs: 'Clubs',
 };
 
 export default fr;
