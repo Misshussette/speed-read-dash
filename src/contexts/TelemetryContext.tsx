@@ -35,6 +35,7 @@ interface TelemetryState {
   activeEventId: string | null;
   setActiveEventId: (id: string | null) => void;
   createEvent: (name: string, clubId?: string | null) => Promise<string | null>;
+  updateEvent: (eventId: string, updates: { club_id?: string | null; name?: string }) => Promise<void>;
 
   // Comparison
   comparisonSessions: string[];
@@ -276,6 +277,13 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     }
     return null;
   }, [user]);
+
+  const updateEvent = useCallback(async (eventId: string, updates: { club_id?: string | null; name?: string }) => {
+    const { error } = await supabase.from('events').update(updates).eq('id', eventId);
+    if (error) { toast.error(error.message); return; }
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...updates } : e));
+    toast.success('Event updated');
+  }, []);
 
   const uploadFile = useCallback(async (file: File, eventIdOverride?: string) => {
     const targetEventId = eventIdOverride || activeEventId;
@@ -671,7 +679,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       sessions, activeSessionId, setActiveSessionId,
       uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta,
       clubs, activeClubId, setActiveClubId, createClub,
-      events, activeEventId, setActiveEventId, createEvent,
+      events, activeEventId, setActiveEventId, createEvent, updateEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
       comparisonData, isLoadingComparison,
       rawData, hasSectorData, isLoading, loadingProgress, errors, filters,

@@ -1,7 +1,7 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MdbRaceSelector, { type RaceCatalogEntry, type MdbImportOptions } from '@/components/MdbRaceSelector';
-import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag } from 'lucide-react';
+import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,7 +24,7 @@ const Events = () => {
   const {
     sessions, uploadFile, uploadMdbFile, importMdbRaces, removeSession, isLoading, updateSessionMeta,
     clubs, activeClubId, setActiveClubId,
-    events, activeEventId, setActiveEventId, createEvent,
+    events, activeEventId, setActiveEventId, createEvent, updateEvent,
     comparisonSessions, toggleComparisonSession, clearComparisonSessions,
   } = useTelemetry();
   const { configurations } = useGarage();
@@ -181,6 +181,31 @@ const Events = () => {
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
+
+          {/* Share event with club */}
+          {activeEventId && clubs.length > 0 && (() => {
+            const activeEvent = events.find(e => e.id === activeEventId);
+            if (!activeEvent) return null;
+            return (
+              <div className="flex items-center gap-1">
+                <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select
+                  value={activeEvent.club_id || 'none'}
+                  onValueChange={(v) => updateEvent(activeEventId, { club_id: v === 'none' ? null : v })}
+                >
+                  <SelectTrigger className="h-8 text-xs w-[150px]">
+                    <SelectValue placeholder={t('event_share_club')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">{t('event_not_shared')}</SelectItem>
+                    {clubs.map(c => (
+                      <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

@@ -135,6 +135,8 @@ const nl: Record<string, string> = {
   event_create: 'Aanmaken',
   event_created: 'Evenement aangemaakt!',
   event_no_event: 'Maak een evenement aan om te beginnen.',
+  event_share_club: 'Delen met club',
+  event_not_shared: 'Niet gedeeld',
 
   mode_overview: 'Overzicht',
   mode_stints: 'Stints',

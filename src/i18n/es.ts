@@ -135,6 +135,8 @@ const es: Record<string, string> = {
   event_create: 'Crear',
   event_created: '¡Evento creado!',
   event_no_event: 'Crea un evento para empezar a subir sesiones.',
+  event_share_club: 'Compartir con club',
+  event_not_shared: 'No compartido',
 
   mode_overview: 'Resumen',
   mode_stints: 'Stints',
