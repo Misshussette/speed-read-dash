@@ -79,26 +79,34 @@ export async function extractMdbLaps(
   const lapTable = reader.getTable(lapTableName);
   const allRows = lapTable.getData();
   console.log(`[MDB Client] RaceHistoryLap: ${allRows.length} rows, filtering for ${raceIdSet.size} races`);
+  console.log(`[MDB Client] Race IDs to match:`, Array.from(raceIdSet));
 
   if (allRows.length > 0) {
-    console.log(`[MDB Client] Sample columns:`, Object.keys(allRows[0]));
+    const sampleRow = allRows[0] as Record<string, unknown>;
+    console.log(`[MDB Client] Sample columns:`, Object.keys(sampleRow));
+    console.log(`[MDB Client] Sample row values:`, JSON.stringify(sampleRow, (_k, v) => v instanceof Date ? v.toISOString() : v));
+    // Show what RaceID looks like in the data
+    const sampleRaceId = findColumn(sampleRow, ['RaceID', 'Race_ID', 'raceid']);
+    console.log(`[MDB Client] Sample RaceID value: ${JSON.stringify(sampleRaceId)} (type: ${typeof sampleRaceId})`);
   }
 
   const result = new Map<string, ParsedMdbLap[]>();
   const bestTimes = new Map<string, number>();
   let matchedCount = 0;
+  let skippedNoRace = 0;
+  let skippedNoTime = 0;
 
   for (const row of allRows) {
     const r = row as Record<string, unknown>;
     const raceId = toStr(findColumn(r, ['RaceID', 'Race_ID', 'raceid']));
-    if (!raceIdSet.has(raceId)) continue;
+    if (!raceIdSet.has(raceId)) { skippedNoRace++; continue; }
 
     const driverId = toStr(findColumn(r, ['DriverID', 'Driver_ID', 'driverid']));
     if (driverSet && !driverSet.has(driverId.toLowerCase())) continue;
 
     const rawLapTime = toNum(findColumn(r, ['LapTime', 'Lap_Time', 'laptime']));
     const lapTimeS = rawLapTime !== null ? rawLapTime / 1000 : 0;
-    if (lapTimeS <= 0) continue;
+    if (lapTimeS <= 0) { skippedNoTime++; continue; }
 
     const rawRaceTime = toNum(findColumn(r, ['RaceTime', 'Race_Time', 'racetime']));
     const rawPitTime = toNum(findColumn(r, ['PitStopTime', 'Pit_Stop_Time', 'pitstoptime']));
@@ -140,7 +148,7 @@ export async function extractMdbLaps(
     }
   }
 
-  console.log(`[MDB Client] Extracted ${matchedCount} laps for ${result.size} races`);
+  console.log(`[MDB Client] Extracted ${matchedCount} laps for ${result.size} races (skipped: ${skippedNoRace} no race match, ${skippedNoTime} no time)`);
   onProgress?.(`Extracted ${matchedCount} laps for ${result.size} races`);
   return result;
 }
