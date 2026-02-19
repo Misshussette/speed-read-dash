@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, FileUp, Shield, RefreshCw, Bug } from 'lucide-react';
+import { Users, Calendar, FileUp, Shield, RefreshCw, Bug, MessageSquareHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -89,9 +89,14 @@ const Admin = () => {
           <h1 className="text-xl font-bold text-foreground">Admin</h1>
           <Badge variant="outline" className="text-xs border-primary/30 text-primary">Platform</Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/admin/feedback')}>
+            <MessageSquareHeart className="h-4 w-4 mr-1" /> Beta Feedback
+          </Button>
+          <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}

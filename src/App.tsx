@@ -25,6 +25,8 @@ import About from "./pages/About";
 import Admin from "./pages/Admin";
 import Clubs from "./pages/Clubs";
 import NotFound from "./pages/NotFound";
+import BetaFeedback from "./pages/BetaFeedback";
+import AdminFeedback from "./pages/AdminFeedback";
 
 const queryClient = new QueryClient();
 
@@ -76,7 +78,10 @@ const App = () => {
 
                           <Route path="/live" element={<Live />} />
                           <Route path="/clubs" element={<Clubs />} />
+                          <Route path="/feedback" element={<BetaFeedback />} />
                           <Route path="/settings" element={<SettingsPage />} />
+                          <Route path="/admin" element={<Admin />} />
+                          <Route path="/admin/feedback" element={<AdminFeedback />} />
                           <Route path="/admin" element={<Admin />} />
                         </Route>
 
