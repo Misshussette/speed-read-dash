@@ -435,6 +435,19 @@ const en: Record<string, string> = {
   upload_browse: 'CSV or PCLapCounter database (.mdb)',
   upload_parsing: 'Processing…',
   upload_error_format: 'Unsupported format. Use .csv or .mdb',
+
+  // Driver Scope
+  scope_select_drivers_title: 'Select Your Drivers',
+  scope_select_drivers_desc: 'Choose which drivers to include in your analysis. The full race data remains available for benchmarking.',
+  scope_select_drivers_desc_named: 'Choose which drivers to analyze for "{name}". The full race data remains available for benchmarking.',
+  scope_drivers_selected: 'selected',
+  scope_no_drivers: 'No drivers detected in this session.',
+  scope_skip_all_drivers: 'Analyze All',
+  scope_confirm_selection: 'Confirm Selection',
+  scope_edit_drivers: 'My Drivers',
+  scope_all_drivers_active: 'All drivers',
+  scope_saved: 'Analysis scope saved!',
+  scope_cleared: 'Scope cleared — analyzing all drivers.',
 };
 
 export default en;
