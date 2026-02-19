@@ -10,6 +10,11 @@ const en: Record<string, string> = {
   land_q2_detail: 'Link your equipment configuration to sessions and measure the real impact of every adjustment.',
   land_q3: 'Am I improving or just driving?',
   land_q3_detail: 'Track your consistency, degradation, and pace evolution across sessions to see real progress.',
+  land_splittime_title: 'Split-Time Measurement in Development',
+  land_splittime_badge: 'In Development',
+  land_splittime_body: 'StintLab is building a portable measurement system to capture intermediate times directly at the track.\n\nCompatible with ChronO2 / Oxygen Slot.it for split time analysis, it can be used on slot or RC tracks without heavy infrastructure changes.\n\nThe system is designed for both fixed club installations and personal use, easily deployable.',
+  land_splittime_availability: 'Expected availability: July 2026',
+  land_splittime_link: 'Learn more (coming soon)',
   land_final_cta: 'Ready to find your edge?',
   land_workspace_note: 'Your data stays private. Secure personal workspace — nothing is shared without your consent.',
 

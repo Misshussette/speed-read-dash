@@ -112,6 +112,44 @@ const Index = () => {
         </section>
       ))}
 
+      {/* Split-Time Hardware Card */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-3xl mx-auto">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {/* Image placeholder */}
+            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
+              <span className="text-muted-foreground/40 text-sm tracking-wide uppercase select-none">
+                Photo à venir
+              </span>
+            </div>
+
+            <div className="p-8 md:p-10 space-y-5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                  {t('land_splittime_title')}
+                </h2>
+                <span className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {t('land_splittime_badge')}
+                </span>
+              </div>
+
+              <div className="text-muted-foreground text-base leading-relaxed space-y-4 whitespace-pre-line">
+                <p>{t('land_splittime_body')}</p>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground/70">
+                  {t('land_splittime_availability')}
+                </p>
+                <span className="text-xs text-muted-foreground/50 italic">
+                  {t('land_splittime_link')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-24 px-6 text-center bg-background">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">

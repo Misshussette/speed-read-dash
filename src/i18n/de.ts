@@ -9,6 +9,11 @@ const de: Record<string, string> = {
   land_q2_detail: 'Verknüpfen Sie Ihre Ausrüstungskonfiguration mit Sitzungen und messen Sie die tatsächliche Auswirkung jeder Anpassung.',
   land_q3: 'Verbessere ich mich oder fahre ich nur?',
   land_q3_detail: 'Verfolgen Sie Ihre Konstanz, Degradation und Tempoentwicklung über Sitzungen hinweg, um echte Fortschritte zu sehen.',
+  land_splittime_title: 'Split-Time-Messung in Entwicklung',
+  land_splittime_badge: 'In Entwicklung',
+  land_splittime_body: 'StintLab entwickelt ein tragbares Messsystem zur Erfassung von Zwischenzeiten direkt an der Strecke.\n\nKompatibel mit ChronO2 / Oxygen Slot.it für Split-Time-Analyse, einsetzbar auf Slot- oder RC-Bahnen ohne aufwendige Infrastrukturänderungen.\n\nDas System ist sowohl für feste Clubinstallationen als auch für den persönlichen Einsatz konzipiert und leicht aufstellbar.',
+  land_splittime_availability: 'Voraussichtliche Verfügbarkeit: Juli 2026',
+  land_splittime_link: 'Mehr erfahren (demnächst)',
   land_final_cta: 'Bereit, Ihren Vorteil zu finden?',
   land_workspace_note: 'Ihre Daten bleiben privat. Sicherer persönlicher Arbeitsbereich — nichts wird ohne Ihre Zustimmung geteilt.',
 
