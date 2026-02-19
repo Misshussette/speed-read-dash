@@ -44,6 +44,66 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_bug_reports: {
+        Row: {
+          actual_behavior: string
+          context: string
+          created_at: string
+          environment: string | null
+          expected_behavior: string
+          id: string
+          run_reference: string | null
+          screenshot_url: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          actual_behavior?: string
+          context?: string
+          created_at?: string
+          environment?: string | null
+          expected_behavior?: string
+          id?: string
+          run_reference?: string | null
+          screenshot_url?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          actual_behavior?: string
+          context?: string
+          created_at?: string
+          environment?: string | null
+          expected_behavior?: string
+          id?: string
+          run_reference?: string | null
+          screenshot_url?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      beta_feedback: {
+        Row: {
+          answers_json: Json
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          answers_json?: Json
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          answers_json?: Json
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       club_invites: {
         Row: {
           club_id: string
