@@ -170,6 +170,8 @@ const en: Record<string, string> = {
   event_create: 'Create',
   event_created: 'Event created!',
   event_no_event: 'Create an event to start uploading sessions.',
+  event_share_club: 'Share with club',
+  event_not_shared: 'Not shared',
 
   // Analysis modes
   mode_overview: 'Overview',

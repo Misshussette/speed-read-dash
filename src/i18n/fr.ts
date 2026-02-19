@@ -143,6 +143,8 @@ const fr: Record<string, string> = {
   event_create: 'Créer',
   event_created: 'Événement créé !',
   event_no_event: 'Créez un événement pour commencer à importer des sessions.',
+  event_share_club: 'Partager avec le club',
+  event_not_shared: 'Non partagé',
 
   mode_overview: 'Vue d\'ensemble',
   mode_stints: 'Relais',

@@ -135,6 +135,8 @@ const de: Record<string, string> = {
   event_create: 'Erstellen',
   event_created: 'Ereignis erstellt!',
   event_no_event: 'Erstellen Sie ein Ereignis, um mit dem Hochladen zu beginnen.',
+  event_share_club: 'Mit Club teilen',
+  event_not_shared: 'Nicht geteilt',
 
   mode_overview: 'Übersicht',
   mode_stints: 'Stints',
