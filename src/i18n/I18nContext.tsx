@@ -1,3 +1,4 @@
+// I18n context provider
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { Locale, supportedLocales } from './types';
 import en from './en';
