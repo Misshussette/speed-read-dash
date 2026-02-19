@@ -196,7 +196,7 @@ export default function MdbRaceSelector({ open, onOpenChange, catalog, isImporti
         </Collapsible>
 
         {/* Race list */}
-        <ScrollArea className="flex-1 min-h-0 max-h-[50vh] border rounded-md">
+        <ScrollArea className="flex-1 min-h-0 max-h-[45vh] border rounded-md [&>[data-radix-scroll-area-viewport]]:max-h-[45vh]">
           <div className="divide-y divide-border">
             {filtered.map(race => {
               const isExpanded = expandedRace === race.race_id;
