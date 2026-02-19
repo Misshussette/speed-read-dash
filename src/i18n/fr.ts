@@ -1,7 +1,7 @@
 const fr: Record<string, string> = {
   land_hero_statement: 'Chaque dixième de seconde raconte une histoire.',
   land_hero_sub: 'La plateforme de performance pour les pilotes qui refusent de deviner.',
-  land_cta_signup: 'Commencer à piloter plus intelligemment',
+  land_cta_signup: 'Vos données existent déjà. StintLab les rend lisibles.',
   land_cta_signin: 'Déjà un compte ? Se connecter',
   land_q1: 'Où est-ce que je perds du temps ?',
   land_q1_detail: 'La télémétrie tour par tour révèle exactement quels secteurs vous coûtent du rythme — plus besoin de deviner après la course.',
