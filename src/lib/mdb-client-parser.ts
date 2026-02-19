@@ -11,6 +11,139 @@ export interface MdbImportFilters {
   bestLapsOnly?: boolean;
 }
 
+export interface MdbScanCatalogEntry {
+  race_id: string;
+  name: string;
+  date: string;
+  track: string;
+  track_length: number | null;
+  duration: string;
+  lap_count: number;
+  best_lap: number | null;
+  seg_number: number | null;
+  has_sectors: boolean;
+  comment: string;
+  drivers: { name: string; lane: number | null; bestLap: number | null }[];
+}
+
+/**
+ * Scan MDB file client-side to build a race catalog.
+ * This replaces the scan-mdb edge function to avoid memory limits.
+ */
+export function scanMdbFile(file: File, onProgress?: (msg: string) => void): Promise<MdbScanCatalogEntry[]> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      onProgress?.('Reading MDB file...');
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+      console.log(`[MDB Client] File size: ${buffer.length} bytes`);
+
+      onProgress?.('Parsing MDB structure...');
+      const reader = new MDBReader(buffer);
+
+      const tableNames = reader.getTableNames();
+      const userTables = tableNames.filter(
+        (t: string) => !t.startsWith('MSys') && !t.startsWith('pbcat') && t !== 'Numbering'
+      );
+      console.log('[MDB Client] Tables found:', userTables);
+
+      // Find RaceHistory table
+      const raceHistoryName = userTables.find(
+        (t: string) => t.toLowerCase().replace(/[_\s]/g, '') === 'racehistory'
+      );
+      if (!raceHistoryName) throw new Error('RaceHistory table not found');
+
+      const raceHistoryRows = reader.getTable(raceHistoryName).getData();
+      console.log(`[MDB Client] RaceHistory: ${raceHistoryRows.length} rows`);
+
+      // Find RaceHistoryClas
+      const clasName = userTables.find(
+        (t: string) => t.toLowerCase().replace(/[_\s]/g, '') === 'racehistoryclas'
+      );
+      const clasRows = clasName ? reader.getTable(clasName).getData() : [];
+
+      // Find RaceHistorySum
+      const sumName = userTables.find(
+        (t: string) => t.toLowerCase().replace(/[_\s]/g, '') === 'racehistorysum'
+      );
+      const sumRows = sumName ? reader.getTable(sumName).getData() : [];
+
+      onProgress?.('Building race catalog...');
+
+      // Aggregate lap counts from RaceHistoryClas
+      const lapCountByRace: Record<string, number> = {};
+      const driversByRace: Record<string, { name: string; lane: number | null; bestLap: number | null }[]> = {};
+      for (const row of clasRows) {
+        const r = row as Record<string, unknown>;
+        const raceId = toStr(findColumn(r, ['RaceID', 'Race_ID', 'raceid']));
+        if (!raceId) continue;
+        const totalLaps = toNum(findColumn(r, ['TotalLaps', 'Total_Laps', 'totallaps'])) || 0;
+        lapCountByRace[raceId] = (lapCountByRace[raceId] || 0) + totalLaps;
+        if (!driversByRace[raceId]) driversByRace[raceId] = [];
+        const driverId = toStr(findColumn(r, ['DriverID', 'Driver_ID', 'driverid']));
+        const avgLap = toNum(findColumn(r, ['AverageLap', 'Average_Lap', 'averagelap']));
+        driversByRace[raceId].push({
+          name: driverId || 'Unknown',
+          lane: null,
+          bestLap: avgLap !== null ? avgLap / 1000 : null,
+        });
+      }
+
+      // Aggregate best lap from RaceHistorySum
+      const bestLapByRace: Record<string, number> = {};
+      for (const row of sumRows) {
+        const r = row as Record<string, unknown>;
+        const raceId = toStr(findColumn(r, ['RaceID', 'Race_ID', 'raceid']));
+        if (!raceId) continue;
+        const lapTimeMin = toNum(findColumn(r, ['LapTimeMin', 'Lap_Time_Min', 'laptimemin']));
+        if (lapTimeMin !== null && lapTimeMin > 0) {
+          const lapTimeSec = lapTimeMin / 1000;
+          if (!bestLapByRace[raceId] || lapTimeSec < bestLapByRace[raceId]) {
+            bestLapByRace[raceId] = lapTimeSec;
+          }
+        }
+      }
+
+      // Build catalog
+      const catalog: MdbScanCatalogEntry[] = raceHistoryRows.map((row) => {
+        const r = row as Record<string, unknown>;
+        const raceId = toStr(findColumn(r, ['RaceID', 'Race_ID', 'raceid', 'ID']));
+        const rawDate = findColumn(r, ['RaceDate', 'Race_Date', 'racedate', 'Date', 'date']);
+        const segNumber = toNum(findColumn(r, ['SegNumber', 'Seg_Number', 'segnumber']));
+
+        return {
+          race_id: raceId,
+          name: toStr(findColumn(r, ['RaceName', 'Race_Name', 'racename', 'Name'])) || `Race ${raceId}`,
+          date: rawDate instanceof Date ? rawDate.toISOString() : toStr(rawDate),
+          track: toStr(findColumn(r, ['TrackID', 'Track_ID', 'trackid', 'TrackName', 'Track'])),
+          track_length: toNum(findColumn(r, ['TrackLength', 'Track_Length', 'tracklength', 'TrackLenght'])),
+          duration: toStr(findColumn(r, ['TimeRace', 'Time_Race', 'timerace', 'RaceDuration'])),
+          lap_count: lapCountByRace[raceId] || 0,
+          best_lap: bestLapByRace[raceId] || null,
+          seg_number: segNumber,
+          has_sectors: segNumber !== null && segNumber > 0,
+          comment: toStr(findColumn(r, ['Comment', 'Comments', 'Notes', 'comment'])),
+          drivers: driversByRace[raceId] || [],
+        };
+      });
+
+      // Sort by date descending
+      catalog.sort((a, b) => {
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+
+      console.log(`[MDB Client] Catalog built: ${catalog.length} races`);
+      onProgress?.(`Found ${catalog.length} races`);
+      resolve(catalog);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 export interface ParsedMdbLap {
   lap_number: number;
   lap_time_s: number;
