@@ -5,7 +5,7 @@ const fr: Record<string, string> = {
   land_cta_signin: 'Se connecter',
   land_how_title: 'Comment ça marche',
   land_step_import: 'Importer',
-  land_step_import_desc: 'Déposez votre CSV de chronométrage — les sessions sont analysées et organisées automatiquement.',
+  land_step_import_desc: 'Déposez votre sauvegarde de chronométrage — les sessions sont analysées et organisées automatiquement.',
   land_step_analyze: 'Analyser',
   land_step_analyze_desc: 'Explorez les temps au tour, secteurs, relais et performances pilote avec des graphiques interactifs.',
   land_step_improve: 'Progresser',
