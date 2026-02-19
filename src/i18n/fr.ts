@@ -14,6 +14,12 @@ const fr: Record<string, string> = {
   land_splittime_body: 'StintLab prépare un système de mesure portable permettant de capturer des temps intermédiaires directement sur la piste.\n\nCompatible avec ChronO2 / Oxygen Slot.it pour l\'analyse split time, il pourra être utilisé sur des pistes slot ou RC sans modification lourde de l\'infrastructure.\n\nLe système est conçu aussi bien pour une installation fixe en club que pour une utilisation personnelle, facilement déployable.',
   land_splittime_availability: 'Disponibilité prévisionnelle : Juillet 2026',
   land_splittime_link: 'En savoir plus (bientôt)',
+  land_compat_title: 'Compatible avec vos systèmes de course',
+  land_compat_body: 'StintLab est conçu pour analyser les données de n\'importe quel système de chronométrage — slot, RC, et à terme des disciplines 1:1 comme le karting. Les intégrations sont en cours de développement pour couvrir un maximum de formats d\'export.',
+  land_compat_collab: 'Vous êtes un club, un organisateur ou un éditeur de logiciel de chronométrage ? Partagez-nous un export type de votre système afin que nous puissions valider la compatibilité et travailler ensemble à son intégration.',
+  land_compat_cta: 'Proposer un format de données',
+  land_compat_badge: 'Ouvert à tous les formats',
+  land_compat_photo_placeholder: 'Photo à venir',
   land_final_cta: 'Prêt à trouver votre avantage ?',
   land_workspace_note: 'Vos données restent privées. Espace de travail personnel sécurisé — rien n\'est partagé sans votre consentement.',
 

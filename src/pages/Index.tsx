@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Gauge, ArrowRight } from 'lucide-react';
+import { Gauge, ArrowRight, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/i18n/I18nContext';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -144,6 +144,49 @@ const Index = () => {
                 <span className="text-xs text-muted-foreground/50 italic">
                   {t('land_splittime_link')}
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Multi-Discipline Compatibility Card */}
+      <section className="py-20 px-6 bg-background">
+        <div className="max-w-3xl mx-auto">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {/* Replaceable image slot */}
+            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
+              <span className="text-muted-foreground/40 text-sm tracking-wide uppercase select-none">
+                {t('land_compat_photo_placeholder')}
+              </span>
+            </div>
+
+            <div className="p-8 md:p-10 space-y-5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                  {t('land_compat_title')}
+                </h2>
+                <span className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {t('land_compat_badge')}
+                </span>
+              </div>
+
+              <p className="text-muted-foreground text-base leading-relaxed">
+                {t('land_compat_body')}
+              </p>
+
+              <p className="text-muted-foreground/80 text-sm leading-relaxed italic">
+                {t('land_compat_collab')}
+              </p>
+
+              <div className="pt-2 border-t border-border">
+                <a
+                  href="mailto:contact@stintlab.com?subject=Proposition de format de données"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Mail className="h-4 w-4" />
+                  {t('land_compat_cta')}
+                </a>
               </div>
             </div>
           </div>
