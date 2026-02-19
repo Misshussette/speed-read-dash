@@ -11,6 +11,16 @@ const fr: Record<string, string> = {
   feat_analyze_desc: 'Graphiques interactifs, KPIs et comparaisons de pilotes',
   feat_export_title: 'Exporter',
   feat_export_desc: 'Téléchargez les données filtrées ou les graphiques en PNG',
+
+  // Nav
+  nav_events: 'Événements',
+  nav_analysis: 'Analyse',
+  nav_comparison: 'Comparaison',
+  nav_garage: 'Garage',
+  nav_settings: 'Paramètres',
+  nav_track: 'Circuit',
+  nav_insights: 'Insights',
+
   export_csv: 'Exporter CSV',
   new_upload: 'Nouveau fichier',
   all_tracks: 'Tous les circuits',
@@ -96,19 +106,32 @@ const fr: Record<string, string> = {
   session_empty: 'Aucune session importée. Téléchargez un CSV pour commencer.',
   session_col_date: 'Date',
   session_col_file: 'Fichier',
+  session_col_name: 'Nom',
   session_count: 'sessions',
+  sessions_title: 'Sessions',
+
+  // Events
+  event_select: 'Sélectionner un événement',
+  event_name_placeholder: 'Nom de l\'événement (ex: 24h Le Mans 2025)',
+  event_create: 'Créer',
+  event_created: 'Événement créé !',
+  event_no_event: 'Créez un événement pour commencer à importer des sessions.',
 
   mode_overview: 'Vue d\'ensemble',
   mode_stints: 'Relais',
   mode_drivers: 'Pilotes',
   mode_car: 'Voiture',
   mode_compare: 'Comparaison',
-  compare_placeholder: 'Sélectionnez au moins 2 sessions via le bouton comparer dans le gestionnaire de sessions ci-dessus.',
+
+  // Comparison
+  compare_placeholder: 'Sélectionnez au moins 2 sessions à comparer.',
   compare_add: 'Comparer',
   compare_remove: 'Retirer',
   compare_clear: 'Vider la comparaison',
   compare_selected: '{count} sessions sélectionnées',
   compare_loading: 'Chargement des données de comparaison...',
+  compare_select_instructions: 'Cliquez sur les sessions ci-dessous pour les ajouter ou retirer de la comparaison.',
+  compare_need_more: 'Sélectionnez au moins une session supplémentaire pour commencer la comparaison.',
 
   scope_active: 'Scope actif',
   scope_title: 'Périmètre d\'analyse',
@@ -154,11 +177,53 @@ const fr: Record<string, string> = {
   interp_pit_time_crit: 'Temps aux stands excessifs — temps perdu significatif.',
   interp_total_laps_ref: 'Total de tours dans votre sélection.',
 
+  // Track Benchmark
+  bench_title: 'Benchmark Circuit',
+  bench_track_best: 'Meilleur du circuit',
+  bench_user_best: 'Votre meilleur',
+  bench_gap_to_track: 'Écart au circuit',
+  bench_theoretical_best: 'Meilleur théorique',
+  bench_performance_index: 'Indice de performance',
+  bench_interp_no_data: '',
+  bench_interp_excellent: 'Vous êtes proche du potentiel du circuit.',
+  bench_interp_good: 'Performance solide — proche du benchmark de la session.',
+  bench_interp_moderate: 'Bonne base — concentrez-vous sur la régularité sectorielle.',
+  bench_interp_developing: 'Rythme en développement — identifiez les secteurs les plus faibles.',
+  bench_interp_significant_gap: 'Écart significatif — revoir le setup et l\'approche de pilotage.',
+  bench_interp_no_sector: '',
+  bench_interp_weak_sector: 'Principal écart de performance détecté dans {sector}.',
+
   mobile_pace_trend: 'Tendance rythme récent',
   mobile_current_stint: 'Relais en cours',
   mobile_laps: 'tours',
   mobile_stint_degrading: 'Le rythme se dégrade — envisagez un arrêt.',
   mobile_active_setup: 'Setup actif',
+
+  // Garage
+  garage_vehicles: 'Véhicules',
+  garage_controllers: 'Contrôleurs',
+  garage_add_car: 'Ajouter un véhicule',
+  garage_brand: 'Marque',
+  garage_model: 'Modèle',
+  garage_no_cars: 'Aucun véhicule. Ajoutez-en un pour commencer.',
+  garage_car_added: 'Véhicule ajouté !',
+  garage_setup_label: 'Nom du setup',
+  garage_setup_added: 'Setup ajouté !',
+  garage_no_setups: 'Aucun setup pour ce véhicule.',
+  garage_tags: 'Tags',
+  garage_param_templates: 'Modèles de paramètres',
+  garage_param_name: 'Paramètre',
+  garage_param_category: 'Catégorie',
+  garage_param_type: 'Type',
+  garage_param_unit: 'Unité',
+
+  // Settings
+  settings_account: 'Compte',
+  settings_logged_in: 'Connecté',
+  settings_logout: 'Se déconnecter',
+  settings_display: 'Affichage',
+  settings_display_mode: 'Mode d\'affichage analytique',
+  settings_language: 'Langue',
 };
 
 export default fr;

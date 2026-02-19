@@ -13,7 +13,16 @@ const en: Record<string, string> = {
   feat_export_title: 'Export',
   feat_export_desc: 'Download filtered data or charts as PNG',
 
-  // Nav / Header
+  // Nav
+  nav_events: 'Events',
+  nav_analysis: 'Analysis',
+  nav_comparison: 'Comparison',
+  nav_garage: 'Garage',
+  nav_settings: 'Settings',
+  nav_track: 'Track',
+  nav_insights: 'Insights',
+
+  // Header
   export_csv: 'Export CSV',
   new_upload: 'New Upload',
 
@@ -124,7 +133,16 @@ const en: Record<string, string> = {
   session_empty: 'No sessions imported yet. Upload a CSV to get started.',
   session_col_date: 'Date',
   session_col_file: 'File',
+  session_col_name: 'Name',
   session_count: 'sessions',
+  sessions_title: 'Sessions',
+
+  // Events
+  event_select: 'Select event',
+  event_name_placeholder: 'Event name (e.g. 24h Le Mans 2025)',
+  event_create: 'Create',
+  event_created: 'Event created!',
+  event_no_event: 'Create an event to start uploading sessions.',
 
   // Analysis modes
   mode_overview: 'Overview',
@@ -132,12 +150,16 @@ const en: Record<string, string> = {
   mode_drivers: 'Drivers',
   mode_car: 'Car',
   mode_compare: 'Comparison',
-  compare_placeholder: 'Select at least 2 sessions using the compare toggle in the Session Manager above.',
+
+  // Comparison
+  compare_placeholder: 'Select at least 2 sessions to compare.',
   compare_add: 'Compare',
   compare_remove: 'Remove',
   compare_clear: 'Clear comparison',
   compare_selected: '{count} sessions selected',
   compare_loading: 'Loading comparison data...',
+  compare_select_instructions: 'Click sessions below to add or remove them from the comparison.',
+  compare_need_more: 'Select at least one more session to start comparing.',
 
   // Analysis scope
   scope_active: 'Scope Active',
@@ -187,12 +209,54 @@ const en: Record<string, string> = {
   interp_pit_time_crit: 'Excessive pit time — significant time lost.',
   interp_total_laps_ref: 'Total laps in your selection.',
 
+  // Track Benchmark
+  bench_title: 'Track Benchmark',
+  bench_track_best: 'Track Best',
+  bench_user_best: 'Your Best',
+  bench_gap_to_track: 'Gap to Track',
+  bench_theoretical_best: 'Theoretical Best',
+  bench_performance_index: 'Performance Index',
+  bench_interp_no_data: '',
+  bench_interp_excellent: 'You are operating near track potential.',
+  bench_interp_good: 'Strong performance — close to the session benchmark.',
+  bench_interp_moderate: 'Solid base — focus on sector consistency to close the gap.',
+  bench_interp_developing: 'Developing pace — identify weakest sectors for targeted improvement.',
+  bench_interp_significant_gap: 'Significant gap to benchmark — review setup and driving approach.',
+  bench_interp_no_sector: '',
+  bench_interp_weak_sector: 'Main performance gap detected in {sector}.',
+
   // Mobile field mode
   mobile_pace_trend: 'Recent Pace Trend',
   mobile_current_stint: 'Current Stint',
   mobile_laps: 'laps',
   mobile_stint_degrading: 'Pace is degrading — consider a stop.',
   mobile_active_setup: 'Active Setup',
+
+  // Garage
+  garage_vehicles: 'Vehicles',
+  garage_controllers: 'Controllers',
+  garage_add_car: 'Add Vehicle',
+  garage_brand: 'Brand',
+  garage_model: 'Model',
+  garage_no_cars: 'No vehicles yet. Add one to get started.',
+  garage_car_added: 'Vehicle added!',
+  garage_setup_label: 'Setup Label',
+  garage_setup_added: 'Setup added!',
+  garage_no_setups: 'No setups for this vehicle.',
+  garage_tags: 'Tags',
+  garage_param_templates: 'Parameter Templates',
+  garage_param_name: 'Parameter',
+  garage_param_category: 'Category',
+  garage_param_type: 'Type',
+  garage_param_unit: 'Unit',
+
+  // Settings
+  settings_account: 'Account',
+  settings_logged_in: 'Logged in',
+  settings_logout: 'Log out',
+  settings_display: 'Display',
+  settings_display_mode: 'Analysis display mode',
+  settings_language: 'Language',
 };
 
 export default en;
