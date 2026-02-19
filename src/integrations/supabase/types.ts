@@ -44,6 +44,41 @@ export type Database = {
         }
         Relationships: []
       }
+      club_invites: {
+        Row: {
+          club_id: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          invite_code: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          invite_code: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_invites_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_members: {
         Row: {
           club_id: string
