@@ -1,7 +1,7 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MdbRaceSelector, { type RaceCatalogEntry, type MdbImportOptions } from '@/components/MdbRaceSelector';
-import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag, Share2 } from 'lucide-react';
+import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag, Share2, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useGarage } from '@/contexts/GarageContext';
@@ -22,12 +23,14 @@ const Events = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
   const {
-    sessions, uploadFile, uploadMdbFile, importMdbRaces, removeSession, isLoading, updateSessionMeta,
+    sessions, uploadFile, uploadMdbFile, importMdbRaces, removeSession, isLoading, updateSessionMeta, moveSessionsToEvent,
     clubs, activeClubId, setActiveClubId,
     events, activeEventId, setActiveEventId, createEvent, updateEvent,
     comparisonSessions, toggleComparisonSession, clearComparisonSessions,
   } = useTelemetry();
   const { configurations } = useGarage();
+
+  const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(new Set());
 
   const [newEventName, setNewEventName] = useState('');
   const [showNewEvent, setShowNewEvent] = useState(false);
@@ -173,7 +176,14 @@ const Events = () => {
               <Select value={activeEventId || ''} onValueChange={setActiveEventId}>
                 <SelectTrigger className="h-8 text-xs w-[160px]"><SelectValue placeholder={t('event_select')} /></SelectTrigger>
                 <SelectContent>
-                  {events.map(ev => <SelectItem key={ev.id} value={ev.id} className="text-xs">{ev.name}</SelectItem>)}
+                  {events.map(ev => (
+                    <SelectItem key={ev.id} value={ev.id} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        {ev.name}
+                        {ev.club_id && <Share2 className="h-2.5 w-2.5 text-primary" />}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             ) : null}
@@ -241,6 +251,37 @@ const Events = () => {
         </Card>
       )}
 
+      {/* Bulk Move Bar */}
+      {selectedRunIds.size > 0 && (
+        <Card className="bg-accent/10 border-accent/30">
+          <CardContent className="py-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <ArrowRightLeft className="h-4 w-4 text-accent-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                {t('runs_selected').replace('{count}', String(selectedRunIds.size))}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select onValueChange={async (targetEventId) => {
+                if (targetEventId === activeEventId) return;
+                await moveSessionsToEvent(Array.from(selectedRunIds), targetEventId);
+                setSelectedRunIds(new Set());
+                toast.success(t('runs_moved'));
+              }}>
+                <SelectTrigger className="h-7 text-xs w-[180px]">
+                  <SelectValue placeholder={t('runs_move_to_event')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {events.filter(e => e.id !== activeEventId).map(e => (
+                    <SelectItem key={e.id} value={e.id} className="text-xs">{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedRunIds(new Set())}>{t('compare_clear')}</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* Upload */}
       <Card className="bg-card border-border border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer"
         onClick={() => document.getElementById('events-csv-input')?.click()}>
@@ -304,6 +345,18 @@ const Events = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-8">
+                        <Checkbox
+                          checked={group.sessions.length > 0 && group.sessions.every(s => selectedRunIds.has(s.id))}
+                          onCheckedChange={(checked) => {
+                            setSelectedRunIds(prev => {
+                              const next = new Set(prev);
+                              group.sessions.forEach(s => checked ? next.add(s.id) : next.delete(s.id));
+                              return next;
+                            });
+                          }}
+                        />
+                      </TableHead>
                       <TableHead className="text-xs">{t('session_col_name')}</TableHead>
                       <TableHead className="text-xs">{t('filter_label_track')}</TableHead>
                       <TableHead className="text-xs">{t('filter_label_car')}</TableHead>
@@ -316,8 +369,21 @@ const Events = () => {
                     {group.sessions.map(s => {
                       const isComparing = comparisonSessions.includes(s.id);
                       const isRenaming = renamingId === s.id;
+                      const isSelected = selectedRunIds.has(s.id);
                       return (
                         <TableRow key={s.id} className="group">
+                          <TableCell className="w-8">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                setSelectedRunIds(prev => {
+                                  const next = new Set(prev);
+                                  checked ? next.add(s.id) : next.delete(s.id);
+                                  return next;
+                                });
+                              }}
+                            />
+                          </TableCell>
                           <TableCell className="text-sm font-medium text-foreground">
                             <div className="flex items-center gap-1.5">
                               {isRenaming ? (

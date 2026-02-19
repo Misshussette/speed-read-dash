@@ -145,6 +145,9 @@ const fr: Record<string, string> = {
   event_no_event: 'Créez un événement pour commencer à importer des sessions.',
   event_share_club: 'Partager avec le club',
   event_not_shared: 'Non partagé',
+  runs_selected: '{count} run(s) sélectionné(s)',
+  runs_move_to_event: 'Déplacer vers un event…',
+  runs_moved: 'Runs déplacés avec succès !',
 
   mode_overview: 'Vue d\'ensemble',
   mode_stints: 'Relais',

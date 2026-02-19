@@ -23,6 +23,7 @@ interface TelemetryState {
   importMdbRaces: (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string, raceCatalog?: any[], file?: File, importFilters?: { drivers?: string[]; bestLapsOnly?: boolean }) => Promise<void>;
   removeSession: (id: string) => void;
   updateSessionMeta: (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => Promise<void>;
+  moveSessionsToEvent: (sessionIds: string[], targetEventId: string) => Promise<void>;
 
   // Clubs
   clubs: ClubMeta[];
@@ -581,6 +582,13 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } as SessionMeta : s));
   }, []);
 
+  const moveSessionsToEvent = useCallback(async (sessionIds: string[], targetEventId: string) => {
+    const { error } = await supabase.from('sessions').update({ event_id: targetEventId }).in('id', sessionIds);
+    if (error) { toast.error(error.message); return; }
+    // Remove moved sessions from current list (they belong to a different event now)
+    setSessions(prev => prev.filter(s => !sessionIds.includes(s.id)));
+  }, []);
+
   // Scope
   const scopeOptions = useMemo(() => getScopeOptions(rawData), [rawData]);
   const scopedData = useMemo(() => applyScopeFilter(rawData, scope), [rawData, scope]);
@@ -677,7 +685,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   return (
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
-      uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta,
+      uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta, moveSessionsToEvent,
       clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent, updateEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
