@@ -457,6 +457,32 @@ const en: Record<string, string> = {
   scope_saved: 'Analysis scope saved!',
   scope_cleared: 'Scope cleared — analyzing all drivers.',
   scope_temp_expanded: 'Temp. expanded',
+
+  // Clubs
+  club_title: 'Clubs',
+  club_create: 'Create Club',
+  club_create_title: 'New Club',
+  club_join: 'Join',
+  club_join_title: 'Join a Club',
+  club_name_placeholder: 'Club name',
+  club_desc_placeholder: 'Description (optional)',
+  club_enter_code: 'Invite code',
+  club_created: 'Club created!',
+  club_joined: 'You joined the club!',
+  club_already_member: 'You are already a member of this club.',
+  club_invalid_code: 'Invalid invite code.',
+  club_code_expired: 'This invite code has expired.',
+  club_empty: 'No clubs yet. Create one or join with an invite code.',
+  club_members: 'Members',
+  club_invites: 'Invitations',
+  club_generate_code: 'Generate code',
+  club_invite_created: 'Invite code created!',
+  club_no_invites: 'No active invite codes.',
+  club_code_copied: 'Code copied!',
+  club_role_organizer: 'Organizer',
+  club_role_member: 'Member',
+  club_role_updated: 'Role updated!',
+  nav_clubs: 'Clubs',
 };
 
 export default en;
