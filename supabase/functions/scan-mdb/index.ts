@@ -122,11 +122,9 @@ Deno.serve(async (req) => {
 
     // Parse MDB
     const arrayBuffer = await fileData.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
     let reader: InstanceType<typeof MDBReader>;
     try {
-      reader = new MDBReader(Buffer.from(buffer));
+      reader = new MDBReader(arrayBuffer);
     } catch (parseErr) {
       await supabaseAdmin.from("imports").update({
         status: "error",
