@@ -316,6 +316,8 @@ const de: Record<string, string> = {
   events_open_analysis: 'Analysieren',
   events_open_comparison: 'Vergleich öffnen',
   compare_select_min2: 'Mindestens 2 Sitzungen zum Vergleich auswählen.',
+  analysis_not_found: 'Sitzung nicht gefunden.',
+  analysis_not_found_hint: 'Diese Sitzung wurde möglicherweise gelöscht oder der Link ist ungültig. Kehren Sie zu Ereignisse zurück, um eine Sitzung auszuwählen.',
   analysis_select_config: 'Konfiguration verknüpfen…',
   analysis_link: 'Verknüpfen',
   analysis_config_linked: 'Konfiguration verknüpft!',

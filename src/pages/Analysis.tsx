@@ -92,8 +92,9 @@ const Analysis = () => {
 
   if (!sessionMeta) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 py-12 text-center space-y-4">
-        <p className="text-muted-foreground">{t('no_data')}</p>
+      <div className="max-w-[1200px] mx-auto px-4 py-20 text-center space-y-4">
+        <p className="text-lg font-semibold text-foreground">{t('analysis_not_found')}</p>
+        <p className="text-sm text-muted-foreground">{t('analysis_not_found_hint')}</p>
         <Button onClick={() => navigate('/events')}>{t('nav_events')}</Button>
       </div>
     );

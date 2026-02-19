@@ -56,7 +56,7 @@ const App = () => {
                         {/* Protected app routes with sidebar layout */}
                         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                           <Route path="/events" element={<Events />} />
-                          <Route path="/analysis" element={<Events />} />
+                          <Route path="/analysis" element={<Navigate to="/events" replace />} />
                           <Route path="/analysis/:sessionId" element={<Analysis />} />
                           <Route path="/comparison" element={<Comparison />} />
                           <Route path="/garage" element={<Garage />} />
