@@ -18,10 +18,15 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
  * Always excludes invalid/suspect laps.
  * When includePitLaps is false (default), pit-related laps are also excluded.
  */
+/** Minimum credible lap time in seconds — anything below is transponder noise */
+const MIN_CREDIBLE_LAP_TIME_S = 5;
+
 function cleanLaps(data: LapRecord[], includePitLaps = false): LapRecord[] {
   return data.filter(r => {
     // Always exclude non-valid laps from calculations
     if (r.lap_status && r.lap_status !== 'valid') return false;
+    // Exclude absurdly short laps (transponder noise, intermediate passages)
+    if (r.lap_time_s < MIN_CREDIBLE_LAP_TIME_S) return false;
     if (!includePitLaps && r.pit_type !== '') return false;
     return true;
   });

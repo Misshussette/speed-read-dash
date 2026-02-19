@@ -4,6 +4,7 @@ import { ArrowLeft, Link2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useDisplayMode } from '@/contexts/DisplayModeContext';
@@ -38,7 +39,7 @@ const Analysis = () => {
   const {
     rawData, hasSectorData, filters, setFilters, resetFilters,
     sessions, setActiveSessionId, scope, scopedData, scopeOptions, dualKPIs,
-    isLoading,
+    isLoading, loadingProgress,
   } = useTelemetry();
 
   const { runScope, isLoadingScope, saveScope, clearScope } = useRunScope(sessionId || null);
@@ -148,9 +149,26 @@ const Analysis = () => {
   const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
 
   if (isLoading) {
+    const pct = loadingProgress?.total && loadingProgress.total > 0
+      ? Math.min(Math.round((loadingProgress.loaded / loadingProgress.total) * 100), 99)
+      : null;
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="text-center space-y-1.5">
+          <p className="text-sm font-medium text-foreground">
+            {t('loading_analysis')}
+          </p>
+          {loadingProgress && (
+            <div className="w-48 space-y-1">
+              <Progress value={pct ?? undefined} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {loadingProgress.loaded.toLocaleString()} {t('loading_laps_loaded')}
+                {pct !== null ? ` — ${pct}%` : ''}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

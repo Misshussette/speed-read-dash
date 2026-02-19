@@ -373,6 +373,8 @@ const en: Record<string, string> = {
   analysis_link: 'Link',
   analysis_config_linked: 'Configuration linked!',
   analysis_no_configs_hint: 'Create a configuration in Garage first.',
+  loading_analysis: 'Loading analysis…',
+  loading_laps_loaded: 'laps loaded',
 
   // Garage helper hints
   garage_hint_vehicle: 'Start here — add your slot car.',
