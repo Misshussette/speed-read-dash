@@ -70,6 +70,23 @@ export function scanMdbFile(file: File, onProgress?: (msg: string) => void): Pro
 
       onProgress?.('Building race catalog...');
 
+      // Auto-detect time unit from sample values
+      const scanSampleTimes: number[] = [];
+      for (const row of clasRows) {
+        const r = row as Record<string, unknown>;
+        const avg = toNum(findColumn(r, ['AverageLap', 'Average_Lap', 'averagelap']));
+        if (avg !== null && avg > 0) scanSampleTimes.push(avg);
+      }
+      for (const row of sumRows) {
+        const r = row as Record<string, unknown>;
+        const lt = toNum(findColumn(r, ['LapTimeMin', 'Lap_Time_Min', 'laptimemin']));
+        if (lt !== null && lt > 0) scanSampleTimes.push(lt);
+      }
+      scanSampleTimes.sort((a, b) => a - b);
+      const scanMedian = scanSampleTimes.length > 0 ? scanSampleTimes[Math.floor(scanSampleTimes.length / 2)] : 0;
+      const scanDivisor = scanMedian >= 200 ? 1000 : 1;
+      console.log(`[MDB Client] Scan time unit: median=${scanMedian}, divisor=${scanDivisor}`);
+
       // Aggregate lap counts from RaceHistoryClas
       const lapCountByRace: Record<string, number> = {};
       const driversByRace: Record<string, { name: string; lane: number | null; bestLap: number | null }[]> = {};
@@ -85,7 +102,7 @@ export function scanMdbFile(file: File, onProgress?: (msg: string) => void): Pro
         driversByRace[raceId].push({
           name: driverId || 'Unknown',
           lane: null,
-          bestLap: avgLap !== null ? avgLap / 1000 : null,
+          bestLap: avgLap !== null ? avgLap / scanDivisor : null,
         });
       }
 
@@ -97,7 +114,7 @@ export function scanMdbFile(file: File, onProgress?: (msg: string) => void): Pro
         if (!raceId) continue;
         const lapTimeMin = toNum(findColumn(r, ['LapTimeMin', 'Lap_Time_Min', 'laptimemin']));
         if (lapTimeMin !== null && lapTimeMin > 0) {
-          const lapTimeSec = lapTimeMin / 1000;
+          const lapTimeSec = lapTimeMin / scanDivisor;
           if (!bestLapByRace[raceId] || lapTimeSec < bestLapByRace[raceId]) {
             bestLapByRace[raceId] = lapTimeSec;
           }
@@ -214,11 +231,24 @@ export async function extractMdbLaps(
   console.log(`[MDB Client] RaceHistoryLap: ${allRows.length} rows, filtering for ${raceIdSet.size} races`);
   console.log(`[MDB Client] Race IDs to match:`, Array.from(raceIdSet));
 
+  // Auto-detect time unit: sample positive LapTime values and check median
+  // If median < 200, values are in seconds; if >= 200, in milliseconds
+  const sampleTimes: number[] = [];
+  for (const row of allRows) {
+    if (sampleTimes.length >= 200) break;
+    const r = row as Record<string, unknown>;
+    const raw = toNum(findColumn(r, ['LapTime', 'Lap_Time', 'laptime']));
+    if (raw !== null && raw > 0) sampleTimes.push(raw);
+  }
+  sampleTimes.sort((a, b) => a - b);
+  const medianTime = sampleTimes.length > 0 ? sampleTimes[Math.floor(sampleTimes.length / 2)] : 0;
+  const timeIsMilliseconds = medianTime >= 200;
+  const timeDivisor = timeIsMilliseconds ? 1000 : 1;
+  console.log(`[MDB Client] Time unit auto-detect: median raw=${medianTime}, divisor=${timeDivisor} (${timeIsMilliseconds ? 'ms' : 's'})`);
+
   if (allRows.length > 0) {
     const sampleRow = allRows[0] as Record<string, unknown>;
     console.log(`[MDB Client] Sample columns:`, Object.keys(sampleRow));
-    console.log(`[MDB Client] Sample row values:`, JSON.stringify(sampleRow, (_k, v) => v instanceof Date ? v.toISOString() : v));
-    // Show what RaceID looks like in the data
     const sampleRaceId = findColumn(sampleRow, ['RaceID', 'Race_ID', 'raceid']);
     console.log(`[MDB Client] Sample RaceID value: ${JSON.stringify(sampleRaceId)} (type: ${typeof sampleRaceId})`);
   }
@@ -238,7 +268,7 @@ export async function extractMdbLaps(
     if (driverSet && !driverSet.has(driverId.toLowerCase())) continue;
 
     const rawLapTime = toNum(findColumn(r, ['LapTime', 'Lap_Time', 'laptime']));
-    const lapTimeS = rawLapTime !== null ? rawLapTime / 1000 : 0;
+    const lapTimeS = rawLapTime !== null ? rawLapTime / timeDivisor : 0;
     if (lapTimeS <= 0) { skippedNoTime++; continue; }
 
     const rawRaceTime = toNum(findColumn(r, ['RaceTime', 'Race_Time', 'racetime']));
@@ -252,8 +282,8 @@ export async function extractMdbLaps(
       lane: toNum(findColumn(r, ['LaneID', 'Lane_ID', 'laneid', 'Lane'])),
       team_number: toStr(findColumn(r, ['TeamID', 'Team_ID', 'teamid'])) || null,
       stint: toNum(findColumn(r, ['SegmentID', 'Segment_ID', 'segmentid'])) ?? 0,
-      session_elapsed_s: rawRaceTime != null ? rawRaceTime / 1000 : null,
-      pit_time_s: rawPitTime != null && rawPitTime > 0 ? rawPitTime / 1000 : null,
+      session_elapsed_s: rawRaceTime != null ? rawRaceTime / timeDivisor : null,
+      pit_time_s: rawPitTime != null && rawPitTime > 0 ? rawPitTime / timeDivisor : null,
       pit_type: rawPitTime != null && rawPitTime > 0 ? 'pit' : null,
       timestamp: recDateTime instanceof Date
         ? recDateTime.toISOString()
