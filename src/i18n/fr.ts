@@ -376,6 +376,24 @@ const fr: Record<string, string> = {
   live_standings: 'Classement',
   live_lap_history: 'Historique des tours',
   live_no_data: 'En attente de données…',
+
+  // MDB Import
+  mdb_select_races: 'Sélectionner les courses à importer',
+  mdb_select_races_desc: '{count} courses trouvées dans la base PCLapCounter.',
+  mdb_search_races: 'Rechercher par nom, circuit, pilote…',
+  mdb_select_all: 'Tout sélectionner',
+  mdb_races_selected: 'courses sélectionnées',
+  mdb_import_selected: 'Importer la sélection',
+  mdb_importing: 'Import en cours…',
+  mdb_no_races_found: 'Aucune course trouvée.',
+  mdb_scanning: 'Analyse du fichier MDB…',
+  mdb_scan_complete: 'Catalogue de courses prêt !',
+  mdb_import_complete: 'Import terminé !',
+  mdb_import_error: 'Erreur lors de l\'import MDB.',
+  upload_drop: 'Cliquez ou glissez un fichier',
+  upload_browse: 'CSV ou base PCLapCounter (.mdb)',
+  upload_parsing: 'Traitement en cours…',
+  upload_error_format: 'Format non supporté. Utilisez .csv ou .mdb',
 };
 
 export default fr;

@@ -1,5 +1,6 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MdbRaceSelector, { type RaceCatalogEntry } from '@/components/MdbRaceSelector';
 import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,7 @@ const Events = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
   const {
-    sessions, uploadFile, removeSession, isLoading, updateSessionMeta,
+    sessions, uploadFile, uploadMdbFile, importMdbRaces, removeSession, isLoading, updateSessionMeta,
     clubs, activeClubId, setActiveClubId,
     events, activeEventId, setActiveEventId, createEvent,
     comparisonSessions, toggleComparisonSession, clearComparisonSessions,
@@ -36,16 +37,54 @@ const Events = () => {
   const [renameValue, setRenameValue] = useState('');
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
 
+  // MDB state
+  const [mdbCatalog, setMdbCatalog] = useState<RaceCatalogEntry[]>([]);
+  const [mdbImportId, setMdbImportId] = useState<string | null>(null);
+  const [mdbFilePath, setMdbFilePath] = useState<string | null>(null);
+  const [showMdbSelector, setShowMdbSelector] = useState(false);
+  const [isMdbImporting, setIsMdbImporting] = useState(false);
+
   const onFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.endsWith('.csv')) {
-      toast.error(t('upload_error_csv'));
+
+    const isMdb = file.name.toLowerCase().endsWith('.mdb');
+    const isCsv = file.name.toLowerCase().endsWith('.csv');
+
+    if (!isCsv && !isMdb) {
+      toast.error(t('upload_error_format'));
+      e.target.value = '';
       return;
     }
-    await uploadFile(file);
+
+    if (isMdb) {
+      // MDB: two-phase import
+      const result = await uploadMdbFile(file);
+      if (result) {
+        setMdbCatalog(result.catalog);
+        setMdbImportId(result.import_id);
+        setMdbFilePath(result.file_path);
+        setShowMdbSelector(true);
+        toast.success(t('mdb_scan_complete'));
+      }
+    } else {
+      await uploadFile(file);
+    }
+
     e.target.value = '';
-  }, [uploadFile, t]);
+  }, [uploadFile, uploadMdbFile, t]);
+
+  const handleMdbImport = useCallback(async (selectedRaceIds: string[]) => {
+    if (!mdbImportId || !mdbFilePath) return;
+    setIsMdbImporting(true);
+    await importMdbRaces(mdbImportId, mdbFilePath, selectedRaceIds);
+    setIsMdbImporting(false);
+    setShowMdbSelector(false);
+    setMdbCatalog([]);
+    setMdbImportId(null);
+    setMdbFilePath(null);
+    toast.success(t('mdb_import_complete'));
+  }, [mdbImportId, mdbFilePath, importMdbRaces, t]);
 
   const handleCreateEvent = async () => {
     if (!newEventName.trim()) return;
@@ -173,7 +212,7 @@ const Events = () => {
       <Card className="bg-card border-border border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer"
         onClick={() => document.getElementById('events-csv-input')?.click()}>
         <CardContent className="py-8 flex flex-col items-center gap-2">
-          <input id="events-csv-input" type="file" accept=".csv" className="hidden" onChange={onFileSelect} />
+          <input id="events-csv-input" type="file" accept=".csv,.mdb" className="hidden" onChange={onFileSelect} />
           <Upload className={`h-8 w-8 ${isLoading ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
           <p className="text-sm text-foreground font-medium">{isLoading ? t('upload_parsing') : t('upload_drop')}</p>
           <p className="text-xs text-muted-foreground">{t('upload_browse')}</p>
@@ -310,6 +349,15 @@ const Events = () => {
           ))}
         </>
       )}
+
+      {/* MDB Race Selector Dialog */}
+      <MdbRaceSelector
+        open={showMdbSelector}
+        onOpenChange={setShowMdbSelector}
+        catalog={mdbCatalog}
+        isImporting={isMdbImporting}
+        onImport={handleMdbImport}
+      />
     </div>
   );
 };
