@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_versions: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string
+          id: string
+          release_notes_short: string | null
+          released_at: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          id?: string
+          release_notes_short?: string | null
+          released_at?: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          id?: string
+          release_notes_short?: string | null
+          released_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       club_members: {
         Row: {
           club_id: string
@@ -203,6 +233,59 @@ export type Database = {
           },
         ]
       }
+      issues: {
+        Row: {
+          admin_comment: string | null
+          created_at: string
+          current_page: string | null
+          description: string
+          id: string
+          release_id: string | null
+          screenshot_url: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          admin_comment?: string | null
+          created_at?: string
+          current_page?: string | null
+          description: string
+          id?: string
+          release_id?: string | null
+          screenshot_url?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          admin_comment?: string | null
+          created_at?: string
+          current_page?: string | null
+          description?: string
+          id?: string
+          release_id?: string | null
+          screenshot_url?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "app_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       laps: {
         Row: {
           driver: string | null
@@ -283,6 +366,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          beta_opt_in: boolean
           created_at: string
           display_name: string | null
           id: string
@@ -291,6 +375,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          beta_opt_in?: boolean
           created_at?: string
           display_name?: string | null
           id?: string
@@ -299,6 +384,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          beta_opt_in?: boolean
           created_at?: string
           display_name?: string | null
           id?: string
