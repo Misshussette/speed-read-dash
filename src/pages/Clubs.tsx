@@ -241,7 +241,7 @@ const Clubs = () => {
                   value={joinCode}
                   onChange={e => setJoinCode(e.target.value)}
                   className="uppercase tracking-widest text-center text-lg font-mono"
-                  maxLength={8}
+                  maxLength={12}
                 />
                 <Button onClick={handleJoinClub} className="w-full" disabled={joinCode.length < 4}>
                   {t('club_join')}
