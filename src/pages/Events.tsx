@@ -79,17 +79,19 @@ const Events = () => {
   const handleMdbImport = useCallback(async (options: MdbImportOptions) => {
     if (!mdbImportId || !mdbFilePath) return;
     setIsMdbImporting(true);
-    await importMdbRaces(mdbImportId, mdbFilePath, options.raceIds, undefined, mdbCatalog, mdbFile ?? undefined, {
-      drivers: options.drivers,
-      bestLapsOnly: options.bestLapsOnly,
-    });
-    setIsMdbImporting(false);
-    setShowMdbSelector(false);
-    setMdbCatalog([]);
-    setMdbImportId(null);
-    setMdbFilePath(null);
-    setMdbFile(null);
-    toast.success(t('mdb_import_complete'));
+    try {
+      await importMdbRaces(mdbImportId, mdbFilePath, options.raceIds, undefined, mdbCatalog, mdbFile ?? undefined, {
+        drivers: options.drivers,
+        bestLapsOnly: options.bestLapsOnly,
+      });
+    } finally {
+      setIsMdbImporting(false);
+      setShowMdbSelector(false);
+      setMdbCatalog([]);
+      setMdbImportId(null);
+      setMdbFilePath(null);
+      setMdbFile(null);
+    }
   }, [mdbImportId, mdbFilePath, mdbFile, importMdbRaces, mdbCatalog, t]);
 
   const handleCreateEvent = async () => {
