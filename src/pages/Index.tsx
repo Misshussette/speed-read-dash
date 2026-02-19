@@ -7,6 +7,7 @@ import heroImg from '@/assets/hero-racing.jpg';
 import telemetryImg from '@/assets/section-telemetry.jpg';
 import setupImg from '@/assets/section-setup.jpg';
 import splittimeImg from '@/assets/section-splittime.jpg';
+import compatImg from '@/assets/section-compat.png';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -157,11 +158,12 @@ const Index = () => {
         <div className="max-w-3xl mx-auto">
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             {/* Replaceable image slot */}
-            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground/40 text-sm tracking-wide uppercase select-none">
-                {t('land_compat_photo_placeholder')}
-              </span>
-            </div>
+            <img
+              src={compatImg}
+              alt="Slot car racing in the rain"
+              className="w-full h-48 md:h-64 object-cover"
+              loading="lazy"
+            />
 
             <div className="p-8 md:p-10 space-y-5">
               <div className="flex items-center gap-3 flex-wrap">
