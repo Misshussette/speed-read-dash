@@ -299,13 +299,14 @@ const LapTimeChart = ({ data }: { data: LapRecord[] }) => {
               labelFormatter={(l) => `Lap ${l}`}
             />
             {/* Raw lines — one per driver-stint, visually secondary */}
-            {lineDescriptors.map(({ sk, colorIdx }) => (
-              <Line key={sk} dataKey={sk} stroke={COLORS[colorIdx % COLORS.length]} strokeWidth={1} dot={false}
-                strokeOpacity={0.3} isAnimationActive={false} connectNulls={false} />
-            ))}
-            {/* Rolling average — one per driver-stint, primary trace */}
+            {/* Rolling average — secondary, thin & muted */}
             {lineDescriptors.map(({ ak, colorIdx }) => (
-              <Line key={ak} dataKey={ak} stroke={COLORS[colorIdx % COLORS.length]} strokeWidth={2.5} dot={false}
+              <Line key={ak} dataKey={ak} stroke="hsl(215, 15%, 50%)" strokeWidth={1} dot={false}
+                strokeOpacity={0.5} strokeDasharray="4 2" isAnimationActive={false} connectNulls={false} />
+            ))}
+            {/* Raw lap times — primary, bold trace */}
+            {lineDescriptors.map(({ sk, colorIdx }) => (
+              <Line key={sk} dataKey={sk} stroke={COLORS[colorIdx % COLORS.length]} strokeWidth={2.5} dot={false}
                 isAnimationActive={false} connectNulls={false} />
             ))}
             {/* Pit lap markers */}
