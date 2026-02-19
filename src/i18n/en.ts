@@ -172,6 +172,9 @@ const en: Record<string, string> = {
   event_no_event: 'Create an event to start uploading sessions.',
   event_share_club: 'Share with club',
   event_not_shared: 'Not shared',
+  runs_selected: '{count} run(s) selected',
+  runs_move_to_event: 'Move to event…',
+  runs_moved: 'Runs moved successfully!',
 
   // Analysis modes
   mode_overview: 'Overview',

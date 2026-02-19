@@ -137,6 +137,9 @@ const de: Record<string, string> = {
   event_no_event: 'Erstellen Sie ein Ereignis, um mit dem Hochladen zu beginnen.',
   event_share_club: 'Mit Club teilen',
   event_not_shared: 'Nicht geteilt',
+  runs_selected: '{count} Run(s) ausgewählt',
+  runs_move_to_event: 'Zu Event verschieben…',
+  runs_moved: 'Runs erfolgreich verschoben!',
 
   mode_overview: 'Übersicht',
   mode_stints: 'Stints',
