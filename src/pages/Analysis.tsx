@@ -107,7 +107,7 @@ const Analysis = () => {
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold text-foreground truncate">
-            {sessionMeta.filename?.replace(/\.csv$/i, '') || sessionMeta.track || 'Session'}
+            {sessionMeta.display_name || sessionMeta.filename?.replace(/\.csv$/i, '') || sessionMeta.track || 'Session'}
           </h1>
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
             {sessionMeta.track && <span>{sessionMeta.track}</span>}

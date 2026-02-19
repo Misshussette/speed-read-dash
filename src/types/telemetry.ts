@@ -39,6 +39,11 @@ export interface SessionMeta {
   filename: string;
   laps: number;
   importedAt: number;
+  // Editable metadata
+  display_name: string | null;
+  tags: string[];
+  notes: string | null;
+  event_type: string | null;
 }
 
 export interface StoredSession {

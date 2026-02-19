@@ -14,6 +14,7 @@ interface TelemetryState {
   setActiveSessionId: (id: string | null) => void;
   uploadFile: (file: File, eventIdOverride?: string) => Promise<void>;
   removeSession: (id: string) => void;
+  updateSessionMeta: (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => Promise<void>;
 
   // Clubs
   clubs: ClubMeta[];
@@ -150,6 +151,10 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
             filename: s.filename || '',
             laps: s.total_laps,
             importedAt: new Date(s.created_at).getTime(),
+            display_name: s.display_name || null,
+            tags: s.tags || [],
+            notes: s.notes || null,
+            event_type: s.event_type || null,
           }));
           setSessions(metas);
           if (metas.length > 0) setActiveSessionIdInternal(metas[0].id);
@@ -312,6 +317,10 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
           filename: s.filename || '',
           laps: s.total_laps,
           importedAt: new Date(s.created_at).getTime(),
+          display_name: s.display_name || null,
+          tags: s.tags || [],
+          notes: s.notes || null,
+          event_type: s.event_type || null,
         }));
         setSessions(metas);
         setActiveSessionIdInternal(sessionData.id);
@@ -345,6 +354,12 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setActiveSessionIdInternal(id);
     setFilters(defaultFilters);
     setScope(DEFAULT_SCOPE);
+  }, []);
+
+  const updateSessionMeta = useCallback(async (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => {
+    const { error } = await supabase.from('sessions').update(updates).eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } as SessionMeta : s));
   }, []);
 
   // Scope
@@ -443,7 +458,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   return (
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
-      uploadFile, removeSession,
+      uploadFile, removeSession, updateSessionMeta,
       clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
