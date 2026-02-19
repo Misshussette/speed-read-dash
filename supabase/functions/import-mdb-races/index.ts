@@ -132,8 +132,12 @@ Deno.serve(async (req) => {
     }
 
     const arrayBuffer = await fileData.arrayBuffer();
-    const reader = new MDBReader(Buffer.from(new Uint8Array(arrayBuffer)));
-    const tableNames = reader.getTableNames();
+    const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+    console.log(`MDB file size: ${buffer.length} bytes`);
+    const reader = new MDBReader(buffer);
+    const tableNames = reader.getTableNames().filter(
+      (t: string) => !t.startsWith("MSys") && !t.startsWith("pbcat") && t !== "Numbering"
+    );
 
     // Get race metadata from RaceHistory
     const raceHistoryName = tableNames.find(
@@ -144,7 +148,7 @@ Deno.serve(async (req) => {
       : [];
 
     // Build race metadata map
-    const raceMetaMap: Record<string, { name: string; date: string; track: string }> = {};
+    const raceMetaMap: Record<string, { name: string; date: string; track: string; segNumber: number }> = {};
     for (const row of raceHistoryRows) {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid", "ID"]));
       if (!raceId) continue;
@@ -152,11 +156,12 @@ Deno.serve(async (req) => {
       raceMetaMap[raceId] = {
         name: toStr(findColumn(row, ["RaceName", "Race_Name", "racename", "Name"])) || `Race ${raceId}`,
         date: rawDate instanceof Date ? rawDate.toISOString().split("T")[0] : toStr(rawDate).split("T")[0],
-        track: toStr(findColumn(row, ["TrackName", "Track_Name", "trackname", "Track", "Circuit"])),
+        track: toStr(findColumn(row, ["TrackID", "Track_ID", "trackid", "TrackName", "Track"])),
+        segNumber: toNum(findColumn(row, ["SegNumber", "Seg_Number", "segnumber"])) ?? 0,
       };
     }
 
-    // Get driver info from RaceHistoryClas
+    // Get participant info from RaceHistoryClas
     const clasName = tableNames.find(
       (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistoryclas"
     );
@@ -164,15 +169,14 @@ Deno.serve(async (req) => {
       ? reader.getTable(clasName).getData()
       : [];
 
-    // Driver names by race+driverID
-    const driverNameMap: Record<string, Record<string, string>> = {};
+    // Driver IDs by race (RaceHistoryClas uses DriverID, not DriverName)
+    const driverIdMap: Record<string, Set<string>> = {};
     for (const row of clasRows) {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
       const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
-      const driverName = toStr(findColumn(row, ["DriverName", "Driver_Name", "drivername", "Driver"]));
       if (raceId && driverId) {
-        if (!driverNameMap[raceId]) driverNameMap[raceId] = {};
-        driverNameMap[raceId][driverId] = driverName || driverId;
+        if (!driverIdMap[raceId]) driverIdMap[raceId] = new Set();
+        driverIdMap[raceId].add(driverId);
       }
     }
 
@@ -197,6 +201,7 @@ Deno.serve(async (req) => {
     const lapTable = reader.getTable(lapTableName);
     const allLapRows = lapTable.getData();
     console.log(`Total lap rows: ${allLapRows.length}, importing for ${selected_race_ids.length} races`);
+    console.log(`RaceHistoryLap columns: ${lapTable.getColumnNames().join(", ")}`);
 
     // Convert selected_race_ids to strings for comparison
     const selectedSet = new Set(selected_race_ids.map(String));
@@ -216,7 +221,7 @@ Deno.serve(async (req) => {
     // Process each selected race
     for (const raceId of selected_race_ids) {
       const raceIdStr = String(raceId);
-      const raceMeta = raceMetaMap[raceIdStr] || { name: `Race ${raceIdStr}`, date: "", track: "" };
+      const raceMeta = raceMetaMap[raceIdStr] || { name: `Race ${raceIdStr}`, date: "", track: "", segNumber: 0 };
       const raceLapRows = lapsByRace[raceIdStr] || [];
 
       if (raceLapRows.length === 0) {
@@ -224,12 +229,9 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Detect sectors
-      const firstRow = raceLapRows[0];
-      const hasS1 = findColumn(firstRow, ["Sector1", "S1", "s1", "Sector_1"]) !== null;
-      const hasS2 = findColumn(firstRow, ["Sector2", "S2", "s2", "Sector_2"]) !== null;
-      const hasS3 = findColumn(firstRow, ["Sector3", "S3", "s3", "Sector_3"]) !== null;
-      const hasSectors = hasS1 && hasS2 && hasS3;
+      // SegmentID in RaceHistoryLap represents dynamic sectors/segments, not fixed S1/S2/S3
+      // The has_sector_data flag should be based on SegNumber from RaceHistory
+      const hasSectors = raceMeta.segNumber > 0;
 
       // Create session for this race
       const { data: sessionData, error: sessionErr } = await supabaseAdmin
@@ -256,44 +258,52 @@ Deno.serve(async (req) => {
       }
 
       const sessionId = sessionData.id;
-      const driverMap = driverNameMap[raceIdStr] || {};
 
       // Convert MDB lap rows to StintLab format
       const laps: LapRow[] = [];
       for (let i = 0; i < raceLapRows.length; i++) {
         const row = raceLapRows[i];
 
-        // LapTime: PCLap uses milliseconds
+        // LapTime in PCLapCounter is in milliseconds
         const rawLapTime = toNum(findColumn(row, ["LapTime", "Lap_Time", "laptime"]));
         const lapTimeS = rawLapTime !== null ? rawLapTime / 1000 : 0;
 
+        // RaceTime = elapsed session time in ms
         const rawRaceTime = toNum(findColumn(row, ["RaceTime", "Race_Time", "racetime"]));
         const sessionElapsedS = rawRaceTime !== null ? rawRaceTime / 1000 : null;
 
-        const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
-        const driverName = toStr(findColumn(row, ["DriverName", "Driver_Name", "drivername"])) || driverMap[driverId] || driverId || null;
+        // PitStopTime in ms
+        const rawPitTime = toNum(findColumn(row, ["PitStopTime", "Pit_Stop_Time", "pitstoptime"]));
+        const pitTimeS = rawPitTime !== null && rawPitTime > 0 ? rawPitTime / 1000 : null;
+        const pitStopNo = toNum(findColumn(row, ["PitStopNo", "PitStop_No", "pitstopno"]));
+        const hasPit = pitTimeS !== null && pitTimeS > 0;
 
-        const lane = toNum(findColumn(row, ["Lane", "LaneID", "Lane_ID", "lane"]));
-        const lapNumber = toNum(findColumn(row, ["LapNumber", "Lap_Number", "lapnumber", "LapNr"])) ?? i + 1;
-        const stint = toNum(findColumn(row, ["SegmentID", "Segment_ID", "segmentid", "Stint"])) ?? 0;
-        const pitFlag = findColumn(row, ["Pit", "PitStop", "pit", "IsPit"]);
-        const isPit = pitFlag === true || pitFlag === 1 || toStr(pitFlag).toLowerCase() === "true";
+        const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
+        const lane = toNum(findColumn(row, ["LaneID", "Lane_ID", "laneid", "Lane"]));
+        const lapNumber = toNum(findColumn(row, ["Lap", "LapNumber", "Lap_Number", "lapnumber"])) ?? i + 1;
+        const stint = toNum(findColumn(row, ["SegmentID", "Segment_ID", "segmentid"])) ?? 0;
+        const teamId = toStr(findColumn(row, ["TeamID", "Team_ID", "teamid"])) || null;
+        const carId = toStr(findColumn(row, ["CarID", "Car_ID", "carid"])) || null;
+
+        // RecDateTime for absolute timestamp
+        const recDateTime = findColumn(row, ["RecDateTime", "Rec_Date_Time", "recdatetime"]);
+        const timestamp = recDateTime instanceof Date ? recDateTime.toISOString() : (toStr(recDateTime) || null);
 
         laps.push({
           session_id: sessionId,
           lap_number: lapNumber,
           lap_time_s: lapTimeS,
-          s1_s: hasSectors ? (toNum(findColumn(row, ["Sector1", "S1", "s1", "Sector_1"])) ?? 0) / 1000 : null,
-          s2_s: hasSectors ? (toNum(findColumn(row, ["Sector2", "S2", "s2", "Sector_2"])) ?? 0) / 1000 : null,
-          s3_s: hasSectors ? (toNum(findColumn(row, ["Sector3", "S3", "s3", "Sector_3"])) ?? 0) / 1000 : null,
-          stint: stint,
-          driver: driverName,
-          pit_type: isPit ? "pit" : null,
-          pit_time_s: null,
-          timestamp: null,
-          lane: lane,
+          s1_s: null, // Sectors are in SegmentLap, not as fixed S1/S2/S3 columns
+          s2_s: null,
+          s3_s: null,
+          stint,
+          driver: driverId || null,
+          pit_type: hasPit ? "pit" : null,
+          pit_time_s: pitTimeS,
+          timestamp,
+          lane,
           driving_station: null,
-          team_number: null,
+          team_number: teamId,
           stint_elapsed_s: null,
           session_elapsed_s: sessionElapsedS,
           lap_status: "valid",
@@ -324,26 +334,30 @@ Deno.serve(async (req) => {
 
       // Insert laps in batches
       const BATCH_SIZE = 500;
+      let insertFailed = false;
       for (let i = 0; i < laps.length; i += BATCH_SIZE) {
         const batch = laps.slice(i, i + BATCH_SIZE);
         const { error: insertErr } = await supabaseAdmin.from("laps").insert(batch);
         if (insertErr) {
           console.error(`Lap insert error for race ${raceIdStr}:`, insertErr);
           await supabaseAdmin.from("sessions").update({ status: "error" }).eq("id", sessionId);
+          insertFailed = true;
           break;
         }
         totalRowsProcessed += batch.length;
       }
 
-      // Mark session ready
-      await supabaseAdmin.from("sessions").update({ status: "ready" }).eq("id", sessionId);
+      if (!insertFailed) {
+        // Mark session ready
+        await supabaseAdmin.from("sessions").update({ status: "ready" }).eq("id", sessionId);
 
-      results.push({
-        race_id: raceIdStr,
-        session_id: sessionId,
-        name: raceMeta.name,
-        laps_count: laps.length,
-      });
+        results.push({
+          race_id: raceIdStr,
+          session_id: sessionId,
+          name: raceMeta.name,
+          laps_count: laps.length,
+        });
+      }
     }
 
     // Mark import complete

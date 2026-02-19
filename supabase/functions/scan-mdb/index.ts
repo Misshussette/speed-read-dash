@@ -10,7 +10,6 @@ const corsHeaders = {
 
 /**
  * Flexible column name matching — maps by meaning, not strict naming.
- * Returns the first matching column value from a row.
  */
 function findColumn(row: Record<string, unknown>, candidates: string[]): unknown {
   for (const c of candidates) {
@@ -124,40 +123,47 @@ Deno.serve(async (req) => {
     // Parse MDB
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+    console.log(`MDB file size: ${buffer.length} bytes`);
+
     let reader: InstanceType<typeof MDBReader>;
     try {
       reader = new MDBReader(buffer);
-    } catch (parseErr) {
-      console.error("MDB parse error:", parseErr);
+    } catch (parseErr: unknown) {
+      const errMsg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+      console.error("MDB parse error:", errMsg);
       await supabaseAdmin.from("imports").update({
         status: "error",
-        error_message: `Failed to parse MDB: ${String(parseErr)}`,
+        error_message: `Failed to parse MDB: ${errMsg}`,
         completed_at: new Date().toISOString(),
       }).eq("id", importId);
 
-      return new Response(JSON.stringify({ error: "Invalid MDB file" }), {
+      return new Response(JSON.stringify({ error: "Invalid MDB file", details: errMsg }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const tableNames = reader.getTableNames();
-    console.log("MDB tables found:", tableNames);
+    // Filter out system tables
+    const userTables = tableNames.filter(
+      (t: string) => !t.startsWith("MSys") && !t.startsWith("pbcat") && t !== "Numbering"
+    );
+    console.log("MDB user tables found:", userTables);
 
-    // Find RaceHistory table (flexible naming)
-    const raceHistoryName = tableNames.find(
-      (t) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistory"
+    // Find RaceHistory table
+    const raceHistoryName = userTables.find(
+      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistory"
     );
 
     if (!raceHistoryName) {
       await supabaseAdmin.from("imports").update({
         status: "error",
-        error_message: `RaceHistory table not found. Available tables: ${tableNames.join(", ")}`,
+        error_message: `RaceHistory table not found. Available tables: ${userTables.join(", ")}`,
         completed_at: new Date().toISOString(),
       }).eq("id", importId);
 
       return new Response(
-        JSON.stringify({ error: "RaceHistory table not found", available_tables: tableNames }),
+        JSON.stringify({ error: "RaceHistory table not found", available_tables: userTables }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -168,8 +174,8 @@ Deno.serve(async (req) => {
     console.log(`RaceHistory: ${raceHistoryRows.length} rows, columns: ${raceHistoryTable.getColumnNames().join(", ")}`);
 
     // Find RaceHistoryClas table
-    const clasName = tableNames.find(
-      (t) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistoryclas"
+    const clasName = userTables.find(
+      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistoryclas"
     );
 
     let clasRows: Record<string, unknown>[] = [];
@@ -179,12 +185,11 @@ Deno.serve(async (req) => {
       console.log(`RaceHistoryClas: ${clasRows.length} rows, columns: ${clasTable.getColumnNames().join(", ")}`);
     }
 
-    // Find RaceHistoryLap to get lap counts per race
-    const lapTableName = tableNames.find(
-      (t) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistorylap"
+    // Find RaceHistoryLap to get lap counts per race (lightweight: just count, don't store all)
+    const lapTableName = userTables.find(
+      (t: string) => t.toLowerCase().replace(/[_\s]/g, "") === "racehistorylap"
     );
 
-    // Count laps per race from RaceHistoryLap (lightweight scan)
     const lapCountByRace: Record<string, number> = {};
     if (lapTableName) {
       const lapTable = reader.getTable(lapTableName);
@@ -198,33 +203,37 @@ Deno.serve(async (req) => {
       console.log(`RaceHistoryLap: ${lapRows.length} total rows across ${Object.keys(lapCountByRace).length} races`);
     }
 
-    // Group drivers by race from RaceHistoryClas
+    // Group participants by race from RaceHistoryClas
     const driversByRace: Record<string, { name: string; lane: number | null; bestLap: number | null }[]> = {};
     for (const row of clasRows) {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid"]));
       if (!raceId) continue;
 
       if (!driversByRace[raceId]) driversByRace[raceId] = [];
+      const driverId = toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"]));
       driversByRace[raceId].push({
-        name: toStr(findColumn(row, ["DriverName", "Driver_Name", "drivername", "Driver", "driver"])) || toStr(findColumn(row, ["DriverID", "Driver_ID", "driverid"])) || "Unknown",
-        lane: toNum(findColumn(row, ["Lane", "LaneID", "lane", "Lane_ID"])),
-        bestLap: toNum(findColumn(row, ["BestLap", "Best_Lap", "bestlap", "BestLapTime"])),
+        name: driverId || "Unknown",
+        lane: null, // Lane is in RaceHistoryLap, not in Clas
+        bestLap: null, // Can compute from AverageLap if needed
       });
     }
 
-    // Build race catalog
+    // Build race catalog from RaceHistory
     const raceCatalog = raceHistoryRows.map((row) => {
       const raceId = toStr(findColumn(row, ["RaceID", "Race_ID", "raceid", "ID"]));
       const rawDate = findColumn(row, ["RaceDate", "Race_Date", "racedate", "Date", "date"]);
+      const segNumber = toNum(findColumn(row, ["SegNumber", "Seg_Number", "segnumber"]));
 
       return {
         race_id: raceId,
         name: toStr(findColumn(row, ["RaceName", "Race_Name", "racename", "Name"])) || `Race ${raceId}`,
         date: rawDate instanceof Date ? rawDate.toISOString() : toStr(rawDate),
-        track: toStr(findColumn(row, ["TrackName", "Track_Name", "trackname", "Track", "Circuit"])),
-        duration: toStr(findColumn(row, ["RaceDuration", "Race_Duration", "raceduration", "Duration"])),
-        lap_count: lapCountByRace[raceId] || toNum(findColumn(row, ["LapCount", "Lap_Count", "lapcount", "TotalLaps"])) || 0,
-        best_lap: toNum(findColumn(row, ["BestLap", "Best_Lap", "bestlap"])),
+        track: toStr(findColumn(row, ["TrackID", "Track_ID", "trackid", "TrackName", "Track"])),
+        track_length: toNum(findColumn(row, ["TrackLength", "Track_Length", "tracklength", "TrackLenght"])),
+        duration: toStr(findColumn(row, ["TimeRace", "Time_Race", "timerace", "RaceDuration"])),
+        lap_count: lapCountByRace[raceId] || toNum(findColumn(row, ["LapNumber", "Lap_Number", "LapRace"])) || 0,
+        seg_number: segNumber,
+        has_sectors: segNumber !== null && segNumber > 0,
         comment: toStr(findColumn(row, ["Comment", "Comments", "Notes", "comment"])),
         drivers: driversByRace[raceId] || [],
       };
@@ -252,7 +261,7 @@ Deno.serve(async (req) => {
         race_count: raceCatalog.length,
         total_laps: Object.values(lapCountByRace).reduce((a, b) => a + b, 0),
         catalog: raceCatalog,
-        available_tables: tableNames,
+        available_tables: userTables,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
