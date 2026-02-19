@@ -41,12 +41,13 @@ const Analysis = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedConfigId, setSelectedConfigId] = useState<string>('');
 
-  // Set active session from URL
+  // Set active session from URL — runs when sessionId or sessions change
   useEffect(() => {
     if (sessionId) {
       setActiveSessionId(sessionId);
     }
   }, [sessionId, setActiveSessionId]);
+
 
   // Default mobile to guided mode
   useEffect(() => {

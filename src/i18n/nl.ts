@@ -141,6 +141,7 @@ const nl: Record<string, string> = {
   compare_loading: 'Vergelijkingsdata laden...',
   compare_select_instructions: 'Klik op sessies om ze toe te voegen of te verwijderen.',
   compare_need_more: 'Selecteer minstens één sessie meer om te vergelijken.',
+  compare_go_events: 'Selecteer sessies vanuit Evenementen om te vergelijken.',
 
   scope_active: 'Scope actief',
   scope_title: 'Analysebereik',

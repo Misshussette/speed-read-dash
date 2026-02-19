@@ -141,6 +141,7 @@ const de: Record<string, string> = {
   compare_loading: 'Vergleichsdaten werden geladen...',
   compare_select_instructions: 'Klicken Sie auf Sitzungen, um sie zur Vergleichsliste hinzuzufügen oder zu entfernen.',
   compare_need_more: 'Wählen Sie mindestens eine weitere Sitzung zum Vergleichen.',
+  compare_go_events: 'Wählen Sie Sitzungen unter Ereignisse zum Vergleichen.',
 
   scope_active: 'Scope aktiv',
   scope_title: 'Analysebereich',
