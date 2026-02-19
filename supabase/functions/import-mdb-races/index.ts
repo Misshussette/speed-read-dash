@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import MDBReader from "npm:mdb-reader@3.1.0";
+import { Buffer } from "node:buffer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,7 +132,7 @@ Deno.serve(async (req) => {
     }
 
     const arrayBuffer = await fileData.arrayBuffer();
-    const reader = new MDBReader(arrayBuffer);
+    const reader = new MDBReader(Buffer.from(new Uint8Array(arrayBuffer)));
     const tableNames = reader.getTableNames();
 
     // Get race metadata from RaceHistory

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import MDBReader from "npm:mdb-reader@3.1.0";
+import { Buffer } from "node:buffer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -122,10 +123,12 @@ Deno.serve(async (req) => {
 
     // Parse MDB
     const arrayBuffer = await fileData.arrayBuffer();
+    const buffer = Buffer.from(new Uint8Array(arrayBuffer));
     let reader: InstanceType<typeof MDBReader>;
     try {
-      reader = new MDBReader(arrayBuffer);
+      reader = new MDBReader(buffer);
     } catch (parseErr) {
+      console.error("MDB parse error:", parseErr);
       await supabaseAdmin.from("imports").update({
         status: "error",
         error_message: `Failed to parse MDB: ${String(parseErr)}`,
