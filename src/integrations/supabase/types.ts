@@ -315,12 +315,16 @@ export type Database = {
           created_by: string
           data_mode: string
           date: string | null
+          display_name: string | null
           event_id: string
+          event_type: string | null
           filename: string | null
           has_sector_data: boolean
           id: string
           name: string
+          notes: string | null
           status: string
+          tags: string[] | null
           total_laps: number
           track: string | null
         }
@@ -331,12 +335,16 @@ export type Database = {
           created_by: string
           data_mode?: string
           date?: string | null
+          display_name?: string | null
           event_id: string
+          event_type?: string | null
           filename?: string | null
           has_sector_data?: boolean
           id?: string
           name: string
+          notes?: string | null
           status?: string
+          tags?: string[] | null
           total_laps?: number
           track?: string | null
         }
@@ -347,12 +355,16 @@ export type Database = {
           created_by?: string
           data_mode?: string
           date?: string | null
+          display_name?: string | null
           event_id?: string
+          event_type?: string | null
           filename?: string | null
           has_sector_data?: boolean
           id?: string
           name?: string
+          notes?: string | null
           status?: string
+          tags?: string[] | null
           total_laps?: number
           track?: string | null
         }
