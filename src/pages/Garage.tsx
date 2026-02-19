@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Trash2, Car, Wrench, Settings2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Trash2, Car, Settings2, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,106 @@ import { useGarage } from '@/contexts/GarageContext';
 import { useI18n } from '@/i18n/I18nContext';
 import { PARAMETER_TEMPLATES } from '@/types/garage';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { computeTrackBenchmark } from '@/lib/track-benchmark';
+import type { LapRecord } from '@/types/telemetry';
+import type { TrackBenchmark } from '@/lib/track-benchmark';
+import SetupPerformanceImpact from '@/components/garage/SetupPerformanceImpact';
 
 const Garage = () => {
   const { t } = useI18n();
-  const { cars, setups, addCar, removeCar, addSetup, removeSetup, getSetupsForCar } = useGarage();
+  const { cars, setups, sessionLinks, addCar, removeCar, addSetup, removeSetup, getSetupsForCar } = useGarage();
   const [showNewCar, setShowNewCar] = useState(false);
   const [newBrand, setNewBrand] = useState('');
   const [newModel, setNewModel] = useState('');
   const [showNewSetup, setShowNewSetup] = useState<string | null>(null);
   const [newSetupLabel, setNewSetupLabel] = useState('');
+  const [expandedSetup, setExpandedSetup] = useState<string | null>(null);
+
+  // Cache: session_id -> { laps, benchmark }
+  const [sessionCache, setSessionCache] = useState<Record<string, { laps: LapRecord[]; benchmark: TrackBenchmark }>>({});
+
+  // Find which sessions are linked to which setups
+  const setupSessionMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const link of sessionLinks) {
+      if (link.setup_id) {
+        if (!map[link.setup_id]) map[link.setup_id] = [];
+        map[link.setup_id].push(link.session_id);
+      }
+    }
+    return map;
+  }, [sessionLinks]);
+
+  // Load lap data for a setup when expanded
+  useEffect(() => {
+    if (!expandedSetup) return;
+    const sessionIds = setupSessionMap[expandedSetup] || [];
+    const missing = sessionIds.filter(id => !sessionCache[id]);
+    if (missing.length === 0) return;
+
+    const load = async () => {
+      for (const sid of missing) {
+        const { data } = await supabase
+          .from('laps')
+          .select('*')
+          .eq('session_id', sid)
+          .order('sort_key', { ascending: true });
+
+        if (data && data.length > 0) {
+          const laps: LapRecord[] = data.map(row => ({
+            session_id: row.session_id,
+            date: '',
+            track: '',
+            car_model: '',
+            brand: '',
+            driver: row.driver || '',
+            stint: row.stint,
+            lap_number: row.lap_number,
+            lap_time_s: row.lap_time_s,
+            S1_s: row.s1_s,
+            S2_s: row.s2_s,
+            S3_s: row.s3_s,
+            pit_type: row.pit_type || '',
+            pit_time_s: row.pit_time_s,
+            timestamp: row.timestamp || '',
+            lane: row.lane,
+            driving_station: row.driving_station,
+            team_number: row.team_number,
+            stint_elapsed_s: row.stint_elapsed_s,
+            session_elapsed_s: row.session_elapsed_s,
+            lap_status: row.lap_status as LapRecord['lap_status'],
+            validation_flags: row.validation_flags || [],
+            _sort_key: row.sort_key,
+          }));
+
+          const benchmark = computeTrackBenchmark(laps);
+          setSessionCache(prev => ({ ...prev, [sid]: { laps, benchmark } }));
+        }
+      }
+    };
+    load();
+  }, [expandedSetup, setupSessionMap, sessionCache]);
+
+  // Get merged laps & benchmark for a setup
+  const getSetupData = (setupId: string) => {
+    const sessionIds = setupSessionMap[setupId] || [];
+    const allLaps: LapRecord[] = [];
+    let mergedBenchmark: TrackBenchmark = { trackBestLap: null, bestS1: null, bestS2: null, bestS3: null, theoreticalBest: null, hasSectorData: false };
+
+    for (const sid of sessionIds) {
+      const cached = sessionCache[sid];
+      if (cached) {
+        allLaps.push(...cached.laps);
+      }
+    }
+
+    if (allLaps.length > 0) {
+      mergedBenchmark = computeTrackBenchmark(allLaps);
+    }
+
+    return { laps: allLaps, benchmark: mergedBenchmark };
+  };
 
   const handleAddCar = async () => {
     if (!newBrand.trim() || !newModel.trim()) return;
@@ -117,28 +208,53 @@ const Garage = () => {
                     {carSetups.length === 0 ? (
                       <p className="text-xs text-muted-foreground py-2">{t('garage_no_setups')}</p>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">{t('garage_setup_label')}</TableHead>
-                            <TableHead className="text-xs">{t('garage_tags')}</TableHead>
-                            <TableHead className="w-8"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {carSetups.map(setup => (
-                            <TableRow key={setup.id}>
-                              <TableCell className="text-sm font-medium">{setup.label || '—'}</TableCell>
-                              <TableCell className="text-xs text-muted-foreground">{setup.tags.join(', ') || '—'}</TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeSetup(setup.id)}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </TableCell>
+                      <>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">{t('garage_setup_label')}</TableHead>
+                              <TableHead className="text-xs">{t('garage_tags')}</TableHead>
+                              <TableHead className="text-xs">{t('setup_perf_laps')}</TableHead>
+                              <TableHead className="w-16"></TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {carSetups.map(setup => {
+                              const linkedSessions = setupSessionMap[setup.id] || [];
+                              return (
+                                <TableRow key={setup.id} className="cursor-pointer" onClick={() => setExpandedSetup(expandedSetup === setup.id ? null : setup.id)}>
+                                  <TableCell className="text-sm font-medium">{setup.label || '—'}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{setup.tags.join(', ') || '—'}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">
+                                    {linkedSessions.length > 0 ? (
+                                      <span className="flex items-center gap-1">
+                                        <Gauge className="h-3 w-3 text-primary" />
+                                        {linkedSessions.length} session{linkedSessions.length > 1 ? 's' : ''}
+                                      </span>
+                                    ) : '—'}
+                                  </TableCell>
+                                  <TableCell className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSetup(setup.id); }}>
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+
+                        {/* Performance Impact panel for expanded setup */}
+                        {carSetups.map(setup => {
+                          if (expandedSetup !== setup.id) return null;
+                          const { laps, benchmark } = getSetupData(setup.id);
+                          return (
+                            <div key={`perf-${setup.id}`} className="mt-2">
+                              <SetupPerformanceImpact setup={setup} laps={laps} benchmark={benchmark} />
+                            </div>
+                          );
+                        })}
+                      </>
                     )}
                   </CardContent>
                 </Card>

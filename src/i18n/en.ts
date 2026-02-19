@@ -250,6 +250,26 @@ const en: Record<string, string> = {
   garage_param_type: 'Type',
   garage_param_unit: 'Unit',
 
+  // Setup Performance
+  setup_perf_title: 'Performance Impact',
+  setup_perf_index: 'Performance Index',
+  setup_perf_consistency: 'Consistency',
+  setup_perf_laps: 'Laps Analyzed',
+  setup_perf_sector_impact: 'Sector Impact (vs Track Best)',
+  setup_perf_no_laps: 'No laps linked to this setup yet.',
+  setup_perf_weak_sector: 'Biggest time loss in {sector} — focus improvement here.',
+  setup_perf_no_data: '',
+  setup_perf_excellent: 'Setup is performing at track potential — near-optimal configuration.',
+  setup_perf_good: 'Strong setup — minor fine-tuning could close the remaining gap.',
+  setup_perf_moderate: 'Solid baseline — sector analysis suggests targeted adjustments.',
+  setup_perf_developing: 'Setup needs work — significant lap time left on the table.',
+  setup_perf_significant_gap: 'Major setup gap — consider fundamental changes.',
+  setup_cons_no_data: '',
+  setup_cons_excellent: 'Extremely stable configuration — lap times are tightly grouped.',
+  setup_cons_good: 'Good consistency — the car behaves predictably.',
+  setup_cons_moderate: 'Some variation — check for balance issues mid-corner.',
+  setup_cons_poor: 'High variance — the setup may be unstable or difficult to drive.',
+
   // Settings
   settings_account: 'Account',
   settings_logged_in: 'Logged in',

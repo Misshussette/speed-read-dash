@@ -217,6 +217,26 @@ const fr: Record<string, string> = {
   garage_param_type: 'Type',
   garage_param_unit: 'Unité',
 
+  // Setup Performance
+  setup_perf_title: 'Impact Performance',
+  setup_perf_index: 'Indice de performance',
+  setup_perf_consistency: 'Régularité',
+  setup_perf_laps: 'Tours analysés',
+  setup_perf_sector_impact: 'Impact sectoriel (vs meilleur circuit)',
+  setup_perf_no_laps: 'Aucun tour lié à ce setup.',
+  setup_perf_weak_sector: 'Principale perte de temps en {sector} — concentrez les améliorations ici.',
+  setup_perf_no_data: '',
+  setup_perf_excellent: 'Le setup performe au potentiel du circuit — configuration quasi optimale.',
+  setup_perf_good: 'Setup solide — un réglage fin pourrait combler l\'écart restant.',
+  setup_perf_moderate: 'Bonne base — l\'analyse sectorielle suggère des ajustements ciblés.',
+  setup_perf_developing: 'Setup à travailler — du temps au tour reste à gagner.',
+  setup_perf_significant_gap: 'Écart majeur — envisagez des changements fondamentaux.',
+  setup_cons_no_data: '',
+  setup_cons_excellent: 'Configuration très stable — temps au tour très groupés.',
+  setup_cons_good: 'Bonne régularité — la voiture se comporte de façon prévisible.',
+  setup_cons_moderate: 'Quelques variations — vérifiez l\'équilibre en milieu de virage.',
+  setup_cons_poor: 'Forte variance — le setup est peut-être instable ou difficile à piloter.',
+
   // Settings
   settings_account: 'Compte',
   settings_logged_in: 'Connecté',
