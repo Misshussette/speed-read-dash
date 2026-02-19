@@ -1,6 +1,6 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MdbRaceSelector, { type RaceCatalogEntry } from '@/components/MdbRaceSelector';
+import MdbRaceSelector, { type RaceCatalogEntry, type MdbImportOptions } from '@/components/MdbRaceSelector';
 import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, BarChart3, GitCompareArrows, Search, Pencil, Check, X, ChevronDown, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +43,7 @@ const Events = () => {
   const [mdbFilePath, setMdbFilePath] = useState<string | null>(null);
   const [showMdbSelector, setShowMdbSelector] = useState(false);
   const [isMdbImporting, setIsMdbImporting] = useState(false);
+  const [mdbFile, setMdbFile] = useState<File | null>(null);
 
   const onFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,7 +59,8 @@ const Events = () => {
     }
 
     if (isMdb) {
-      // MDB: two-phase import
+      // MDB: two-phase import — keep File reference for client-side parsing
+      setMdbFile(file);
       const result = await uploadMdbFile(file);
       if (result) {
         setMdbCatalog(result.catalog);
@@ -74,17 +76,21 @@ const Events = () => {
     e.target.value = '';
   }, [uploadFile, uploadMdbFile, t]);
 
-  const handleMdbImport = useCallback(async (selectedRaceIds: string[]) => {
+  const handleMdbImport = useCallback(async (options: MdbImportOptions) => {
     if (!mdbImportId || !mdbFilePath) return;
     setIsMdbImporting(true);
-    await importMdbRaces(mdbImportId, mdbFilePath, selectedRaceIds, undefined, mdbCatalog);
+    await importMdbRaces(mdbImportId, mdbFilePath, options.raceIds, undefined, mdbCatalog, mdbFile ?? undefined, {
+      drivers: options.drivers,
+      bestLapsOnly: options.bestLapsOnly,
+    });
     setIsMdbImporting(false);
     setShowMdbSelector(false);
     setMdbCatalog([]);
     setMdbImportId(null);
     setMdbFilePath(null);
+    setMdbFile(null);
     toast.success(t('mdb_import_complete'));
-  }, [mdbImportId, mdbFilePath, importMdbRaces, t]);
+  }, [mdbImportId, mdbFilePath, mdbFile, importMdbRaces, mdbCatalog, t]);
 
   const handleCreateEvent = async () => {
     if (!newEventName.trim()) return;
