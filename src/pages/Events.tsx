@@ -1,6 +1,6 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Trash2, FolderOpen, Plus, Building2, FileText, Clock, CheckCircle2, AlertCircle, Loader2, BarChart3, GitCompareArrows, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,6 +18,7 @@ const Events = () => {
     sessions, uploadFile, removeSession, isLoading,
     clubs, activeClubId, setActiveClubId,
     events, activeEventId, setActiveEventId, createEvent,
+    comparisonSessions, toggleComparisonSession, clearComparisonSessions,
   } = useTelemetry();
 
   const [newEventName, setNewEventName] = useState('');
@@ -111,6 +112,33 @@ const Events = () => {
         </Card>
       )}
 
+      {/* Compare Bar */}
+      {comparisonSessions.length > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <GitCompareArrows className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {t('compare_selected').replace('{count}', String(comparisonSessions.length))}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                disabled={comparisonSessions.length < 2}
+                onClick={() => navigate('/comparison')}
+              >
+                {t('events_open_comparison')}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearComparisonSessions}>
+                {t('compare_clear')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload area */}
       <Card className="bg-card border-border border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer"
         onClick={() => document.getElementById('events-csv-input')?.click()}>
@@ -155,35 +183,54 @@ const Events = () => {
                   <TableHead className="text-xs">{t('filter_label_car')}</TableHead>
                   <TableHead className="text-xs">{t('session_col_date')}</TableHead>
                   <TableHead className="text-xs text-right">{t('kpi_total_laps')}</TableHead>
-                  <TableHead className="w-8"></TableHead>
+                  <TableHead className="text-xs text-right">{t('events_actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sessions.map(s => (
-                  <TableRow
-                    key={s.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => openSession(s.id)}
-                  >
-                    <TableCell className="text-sm font-medium text-foreground">
-                      {s.filename?.replace(/\.csv$/i, '') || '—'}
-                    </TableCell>
-                    <TableCell className="text-xs">{s.track || '—'}</TableCell>
-                    <TableCell className="text-xs">{s.car_model || '—'}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{s.date || '—'}</TableCell>
-                    <TableCell className="text-xs text-right font-mono">{s.laps}</TableCell>
-                    <TableCell className="px-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); removeSession(s.id); }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {sessions.map(s => {
+                  const isComparing = comparisonSessions.includes(s.id);
+                  return (
+                    <TableRow key={s.id} className="group">
+                      <TableCell className="text-sm font-medium text-foreground">
+                        {s.filename?.replace(/\.csv$/i, '') || '—'}
+                      </TableCell>
+                      <TableCell className="text-xs">{s.track || '—'}</TableCell>
+                      <TableCell className="text-xs">{s.car_model || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{s.date || '—'}</TableCell>
+                      <TableCell className="text-xs text-right font-mono">{s.laps}</TableCell>
+                      <TableCell className="px-2">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={() => openSession(s.id)}
+                          >
+                            <BarChart3 className="h-3 w-3 mr-1" />
+                            {t('events_open_analysis')}
+                          </Button>
+                          <Button
+                            variant={isComparing ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={(e) => { e.stopPropagation(); toggleComparisonSession(s.id); }}
+                          >
+                            <GitCompareArrows className="h-3 w-3 mr-1" />
+                            {isComparing ? t('compare_remove') : t('compare_add')}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); removeSession(s.id); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

@@ -291,7 +291,8 @@ const Garage = () => {
 
         {/* ═══════ VEHICLES ═══════ */}
         <TabsContent value="vehicles" className="space-y-4 mt-4">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{t('garage_hint_vehicle')}</p>
             <Button variant="outline" size="sm" onClick={() => { setShowNewCar(!showNewCar); setEditingCar(null); }}>
               <Plus className="h-3.5 w-3.5 mr-1" /> {t('garage_add_car')}
             </Button>
@@ -343,6 +344,7 @@ const Garage = () => {
 
         {/* ═══════ SETUPS ═══════ */}
         <TabsContent value="setups" className="space-y-4 mt-4">
+          <p className="text-xs text-muted-foreground">{t('garage_hint_setup')}</p>
           {cars.length === 0 ? (
             <Card className="bg-card border-border">
               <CardContent className="py-12 text-center">
@@ -498,7 +500,8 @@ const Garage = () => {
 
         {/* ═══════ CONTROLLERS ═══════ */}
         <TabsContent value="controllers" className="space-y-4 mt-4">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{t('garage_hint_controller')}</p>
             <Button variant="outline" size="sm" onClick={() => { setShowNewCtrl(!showNewCtrl); setEditingCtrl(null); }}>
               <Plus className="h-3.5 w-3.5 mr-1" /> {t('garage_add_ctrl')}
             </Button>
@@ -554,7 +557,8 @@ const Garage = () => {
 
         {/* ═══════ CONFIGURATIONS ═══════ */}
         <TabsContent value="configurations" className="space-y-4 mt-4">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{t('garage_hint_config')}</p>
             <Button variant="outline" size="sm" onClick={() => { setShowNewConfig(!showNewConfig); setEditingConfig(null); resetConfigForm(); }}>
               <Plus className="h-3.5 w-3.5 mr-1" /> {t('garage_add_config')}
             </Button>

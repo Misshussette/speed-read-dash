@@ -295,6 +295,19 @@ const fr: Record<string, string> = {
   garage_geo_rgc: 'Garde AR',
   garage_geo_pod: 'Haut. pod',
 
+  events_actions: 'Actions',
+  events_open_analysis: 'Analyser',
+  events_open_comparison: 'Ouvrir la comparaison',
+  compare_select_min2: 'Sélectionnez au moins 2 sessions pour comparer.',
+  analysis_select_config: 'Lier une configuration…',
+  analysis_link: 'Lier',
+  analysis_config_linked: 'Configuration liée !',
+  analysis_no_configs_hint: 'Créez d\'abord une configuration dans le Garage.',
+  garage_hint_vehicle: 'Commencez ici — ajoutez votre voiture.',
+  garage_hint_setup: 'Créez des setups pour chaque véhicule.',
+  garage_hint_controller: 'Ajoutez votre contrôleur.',
+  garage_hint_config: 'Combinez véhicule + setup + contrôleur.',
+
   // Settings
   settings_account: 'Compte',
   settings_logged_in: 'Connecté',
