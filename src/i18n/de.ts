@@ -26,6 +26,7 @@ const de: Record<string, string> = {
   nav_analysis: 'Analyse',
   nav_comparison: 'Vergleich',
   nav_garage: 'Garage',
+  nav_live: 'Live',
   nav_settings: 'Einstellungen',
   nav_track: 'Strecke',
   nav_insights: 'Einblicke',
@@ -356,6 +357,19 @@ const de: Record<string, string> = {
   issue_description_placeholder: 'Beschreibe das Problem oder den Vorschlag…',
   issue_submit: 'Absenden',
   issue_submitted: 'Problem gemeldet — danke!',
+
+  live_title: 'Live',
+  live_disconnected: 'Getrennt',
+  live_connected: 'Verbunden',
+  live_current_lap: 'Aktuelle Runde',
+  live_connection: 'Verbindung',
+  live_status: 'Status',
+  live_source: 'Quelle',
+  live_latency: 'Latenz',
+  live_hint: 'Verbinden Sie ein externes Zeitmesssystem für Echtzeitdaten. WebSocket-Integration kommt bald.',
+  live_standings: 'Rangliste',
+  live_lap_history: 'Rundenhistorie',
+  live_no_data: 'Warte auf Daten…',
 };
 
 export default de;
