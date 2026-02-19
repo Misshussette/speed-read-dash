@@ -1,110 +1,128 @@
 import { useNavigate } from 'react-router-dom';
-import { Gauge, Target, GitCompare, Wrench, Lightbulb, ArrowRight, LogIn } from 'lucide-react';
+import { Gauge, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useI18n } from '@/i18n/I18nContext';
 import LanguageSelector from '@/components/LanguageSelector';
+import heroImg from '@/assets/hero-racing.jpg';
+import telemetryImg from '@/assets/section-telemetry.jpg';
+import setupImg from '@/assets/section-setup.jpg';
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const steps = [
-    { num: '01', title: t('land_step_import'), desc: t('land_step_import_desc') },
-    { num: '02', title: t('land_step_analyze'), desc: t('land_step_analyze_desc') },
-    { num: '03', title: t('land_step_improve'), desc: t('land_step_improve_desc') },
-  ];
-
-  const features = [
-    { icon: Target, title: t('land_feat_benchmark'), desc: t('land_feat_benchmark_desc') },
-    { icon: GitCompare, title: t('land_feat_compare'), desc: t('land_feat_compare_desc') },
-    { icon: Wrench, title: t('land_feat_setup'), desc: t('land_feat_setup_desc') },
-    { icon: Lightbulb, title: t('land_feat_insights'), desc: t('land_feat_insights_desc') },
+  const sections = [
+    {
+      img: telemetryImg,
+      question: t('land_q1'),
+      detail: t('land_q1_detail'),
+      reverse: false,
+    },
+    {
+      img: setupImg,
+      question: t('land_q2'),
+      detail: t('land_q2_detail'),
+      reverse: true,
+    },
+    {
+      img: telemetryImg,
+      question: t('land_q3'),
+      detail: t('land_q3_detail'),
+      reverse: false,
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="absolute top-4 right-4 z-50">
         <LanguageSelector />
       </div>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'linear-gradient(hsl(185 70% 50%) 1px, transparent 1px), linear-gradient(90deg, hsl(185 70% 50%) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
+      {/* Full-width hero */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <img
+          src={heroImg}
+          alt="Slot car racing track"
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="relative max-w-5xl mx-auto px-6 pt-20 pb-24 text-center">
+        <div className="absolute inset-0 bg-black/60" />
+
+        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
             <Gauge className="h-10 w-10 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+            <span className="text-3xl md:text-4xl font-bold tracking-tight text-white">
               Stint<span className="text-primary">Lab</span>
-            </h1>
+            </span>
           </div>
 
-          <p className="text-xl md:text-2xl font-semibold text-foreground max-w-2xl mx-auto mb-4">
-            {t('land_headline')}
-          </p>
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10 font-light">
-            {t('land_subheadline')}
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight mb-6">
+            {t('land_hero_statement')}
+          </h1>
+
+          <p className="text-lg md:text-xl text-white/70 mb-10 max-w-xl mx-auto">
+            {t('land_hero_sub')}
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button size="lg" onClick={() => navigate('/auth?tab=signup')}>
-              {t('land_cta_signup')} <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="lg" className="text-foreground" onClick={() => navigate('/auth')}>
-              <LogIn className="mr-2 h-4 w-4" /> {t('land_cta_signin')}
-            </Button>
+          <Button size="lg" onClick={() => navigate('/auth?tab=signup')} className="text-base px-8 py-6">
+            {t('land_cta_signup')} <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+
+          <p className="mt-4 text-sm text-white/50">
+            <button onClick={() => navigate('/auth')} className="underline hover:text-white/80 transition-colors">
+              {t('land_cta_signin')}
+            </button>
+          </p>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+          <div className="w-5 h-8 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
+            <div className="w-1 h-2 rounded-full bg-white/50 animate-bounce" />
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="max-w-4xl mx-auto px-6 pb-20">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground text-center mb-10">
-          {t('land_how_title')}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {steps.map(({ num, title, desc }) => (
-            <div key={num} className="text-center space-y-2">
-              <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded">{num}</span>
-              <h3 className="font-semibold text-foreground text-lg">{title}</h3>
-              <p className="text-sm text-muted-foreground">{desc}</p>
+      {/* Problem statement sections — alternating image/text */}
+      {sections.map(({ img, question, detail, reverse }, i) => (
+        <section key={i} className="relative">
+          <div className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} min-h-[60vh]`}>
+            {/* Image half */}
+            <div className="md:w-1/2 relative overflow-hidden">
+              <img
+                src={img}
+                alt=""
+                className="w-full h-full object-cover min-h-[300px] md:min-h-full"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/20" />
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Features */}
-      <section className="max-w-4xl mx-auto px-6 pb-20">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground text-center mb-10">
-          {t('land_features_title')}
+            {/* Text half */}
+            <div className="md:w-1/2 flex items-center bg-background">
+              <div className="px-8 md:px-16 py-16 max-w-lg">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-snug mb-4">
+                  {question}
+                </h2>
+                <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
+                  {detail}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* Final CTA */}
+      <section className="py-24 px-6 text-center bg-background">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+          {t('land_final_cta')}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {features.map(({ icon: Icon, title, desc }) => (
-            <Card key={title} className="bg-card/50 border-border/50 backdrop-blur-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <Icon className="h-7 w-7 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-                    <p className="text-sm text-muted-foreground">{desc}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Private workspace */}
-      <section className="max-w-3xl mx-auto px-6 pb-20 text-center">
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           {t('land_workspace_note')}
         </p>
+        <Button size="lg" onClick={() => navigate('/auth?tab=signup')} className="px-8 py-6 text-base">
+          {t('land_cta_signup')} <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
       </section>
 
       <footer className="border-t border-border py-8 text-center">
