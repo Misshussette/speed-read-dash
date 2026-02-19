@@ -261,6 +261,22 @@ const de: Record<string, string> = {
   setup_cons_moderate: 'Etwas Variation — Balance in Kurvenmitte prüfen.',
   setup_cons_poor: 'Hohe Varianz — Setup möglicherweise instabil.',
 
+  // Setup sections
+  garage_section_chassis: 'Chassis',
+  garage_section_drivetrain: 'Antrieb',
+  garage_section_motor: 'Motor',
+  garage_section_running_gear: 'Fahrwerk',
+  garage_section_guide: 'Führung',
+  garage_section_electrical: 'Elektrik',
+  garage_section_body: 'Karosserie',
+  garage_section_track_conditions: 'Streckenbedingungen',
+  garage_apply_template: 'Slot Car Vorlage',
+  garage_add_field: 'Feld hinzufügen',
+  garage_custom_fields: 'Benutzerdefiniert',
+  garage_media: 'Fotos',
+  garage_add_image: 'Foto hinzufügen',
+  garage_media_uploaded: 'Foto(s) hochgeladen!',
+
   settings_account: 'Konto',
   settings_logged_in: 'Angemeldet',
   settings_logout: 'Abmelden',

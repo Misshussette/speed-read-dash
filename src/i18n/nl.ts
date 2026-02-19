@@ -261,6 +261,22 @@ const nl: Record<string, string> = {
   setup_cons_moderate: 'Enige variatie — controleer balans in het midden van de bocht.',
   setup_cons_poor: 'Hoge variatie — setup is mogelijk onstabiel of moeilijk te rijden.',
 
+  // Setup sections
+  garage_section_chassis: 'Chassis',
+  garage_section_drivetrain: 'Aandrijving',
+  garage_section_motor: 'Motor',
+  garage_section_running_gear: 'Rijwerk',
+  garage_section_guide: 'Geleider',
+  garage_section_electrical: 'Elektrisch',
+  garage_section_body: 'Carrosserie',
+  garage_section_track_conditions: 'Baanomstandigheden',
+  garage_apply_template: 'Slot Car Sjabloon',
+  garage_add_field: 'Veld toevoegen',
+  garage_custom_fields: 'Aangepast',
+  garage_media: 'Foto\'s',
+  garage_add_image: 'Foto toevoegen',
+  garage_media_uploaded: 'Foto(\'s) geüpload!',
+
   settings_account: 'Account',
   settings_logged_in: 'Ingelogd',
   settings_logout: 'Uitloggen',

@@ -300,6 +300,22 @@ const en: Record<string, string> = {
   setup_cons_moderate: 'Some variation — check for balance issues mid-corner.',
   setup_cons_poor: 'High variance — the setup may be unstable or difficult to drive.',
 
+  // Setup sections
+  garage_section_chassis: 'Chassis',
+  garage_section_drivetrain: 'Drivetrain',
+  garage_section_motor: 'Motor',
+  garage_section_running_gear: 'Running Gear',
+  garage_section_guide: 'Guide',
+  garage_section_electrical: 'Electrical',
+  garage_section_body: 'Body',
+  garage_section_track_conditions: 'Track Conditions',
+  garage_apply_template: 'Slot Car Template',
+  garage_add_field: 'Add field',
+  garage_custom_fields: 'Custom',
+  garage_media: 'Photos',
+  garage_add_image: 'Add Photo',
+  garage_media_uploaded: 'Photo(s) uploaded!',
+
   // Settings
   settings_account: 'Account',
   settings_logged_in: 'Logged in',

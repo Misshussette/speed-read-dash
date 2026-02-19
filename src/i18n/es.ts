@@ -261,6 +261,22 @@ const es: Record<string, string> = {
   setup_cons_moderate: 'Algo de variación — verifique el equilibrio en mitad de curva.',
   setup_cons_poor: 'Alta varianza — el setup puede ser inestable o difícil de conducir.',
 
+  // Setup sections
+  garage_section_chassis: 'Chasis',
+  garage_section_drivetrain: 'Transmisión',
+  garage_section_motor: 'Motor',
+  garage_section_running_gear: 'Tren de rodaje',
+  garage_section_guide: 'Guía',
+  garage_section_electrical: 'Eléctrico',
+  garage_section_body: 'Carrocería',
+  garage_section_track_conditions: 'Condiciones de pista',
+  garage_apply_template: 'Plantilla Slot Car',
+  garage_add_field: 'Añadir campo',
+  garage_custom_fields: 'Personalizado',
+  garage_media: 'Fotos',
+  garage_add_image: 'Añadir foto',
+  garage_media_uploaded: '¡Foto(s) subida(s)!',
+
   settings_account: 'Cuenta',
   settings_logged_in: 'Conectado',
   settings_logout: 'Cerrar sesión',

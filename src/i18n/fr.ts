@@ -267,6 +267,22 @@ const fr: Record<string, string> = {
   setup_cons_moderate: 'Quelques variations — vérifiez l\'équilibre en milieu de virage.',
   setup_cons_poor: 'Forte variance — le setup est peut-être instable ou difficile à piloter.',
 
+  // Setup sections
+  garage_section_chassis: 'Châssis',
+  garage_section_drivetrain: 'Transmission',
+  garage_section_motor: 'Moteur',
+  garage_section_running_gear: 'Trains roulants',
+  garage_section_guide: 'Guide',
+  garage_section_electrical: 'Électrique',
+  garage_section_body: 'Carrosserie',
+  garage_section_track_conditions: 'Conditions de piste',
+  garage_apply_template: 'Template Slot Car',
+  garage_add_field: 'Ajouter champ',
+  garage_custom_fields: 'Personnalisé',
+  garage_media: 'Photos',
+  garage_add_image: 'Ajouter photo',
+  garage_media_uploaded: 'Photo(s) téléchargée(s) !',
+
   // Settings
   settings_account: 'Compte',
   settings_logged_in: 'Connecté',
