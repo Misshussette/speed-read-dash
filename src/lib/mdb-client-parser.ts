@@ -1,5 +1,9 @@
-import MDBReader from 'mdb-reader';
 import { Buffer } from 'buffer';
+// Ensure Buffer is globally available for mdb-reader
+if (typeof globalThis.Buffer === 'undefined') {
+  (globalThis as any).Buffer = Buffer;
+}
+import MDBReader from 'mdb-reader';
 
 export interface MdbImportFilters {
   raceIds: string[];
