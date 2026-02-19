@@ -51,7 +51,7 @@ const Analysis = () => {
     if (sessionId) setActiveSessionId(sessionId);
   }, [sessionId, setActiveSessionId]);
 
-  // Auto-show driver scope dialog after first load if no scope exists and multiple drivers
+  // Always show driver scope dialog when opening a multi-driver run
   const [hasPrompted, setHasPrompted] = useState(false);
   const availableDrivers = useMemo(() => {
     const drivers = new Set<string>();
@@ -64,13 +64,12 @@ const Analysis = () => {
   useEffect(() => {
     if (
       !isLoading && !isLoadingScope && !hasPrompted &&
-      rawData.length > 0 && availableDrivers.length > 1 &&
-      runScope === null && sessionId
+      rawData.length > 0 && availableDrivers.length > 1 && sessionId
     ) {
       setShowDriverScope(true);
       setHasPrompted(true);
     }
-  }, [isLoading, isLoadingScope, rawData.length, availableDrivers.length, runScope, hasPrompted, sessionId]);
+  }, [isLoading, isLoadingScope, rawData.length, availableDrivers.length, hasPrompted, sessionId]);
 
   // Apply persistent scope to the AnalysisScope system
   const scopeDriverFilter = runScope?.drivers && runScope.drivers.length > 0 ? runScope.drivers : null;
