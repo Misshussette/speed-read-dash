@@ -9,6 +9,11 @@ const nl: Record<string, string> = {
   land_q2_detail: 'Koppel uw uitrustingsconfiguratie aan sessies en meet de werkelijke impact van elke aanpassing.',
   land_q3: 'Verbeter ik of rijd ik alleen maar?',
   land_q3_detail: 'Volg uw consistentie, degradatie en tempo-evolutie over sessies om echte vooruitgang te zien.',
+  land_splittime_title: 'Split-Time meting in ontwikkeling',
+  land_splittime_badge: 'In ontwikkeling',
+  land_splittime_body: 'StintLab bereidt een draagbaar meetsysteem voor om tussentijden direct op de baan vast te leggen.\n\nCompatibel met ChronO2 / Oxygen Slot.it voor split time analyse, bruikbaar op slot- of RC-banen zonder zware infrastructuurwijzigingen.\n\nHet systeem is ontworpen voor zowel vaste clubinstallaties als persoonlijk gebruik, eenvoudig inzetbaar.',
+  land_splittime_availability: 'Verwachte beschikbaarheid: Juli 2026',
+  land_splittime_link: 'Meer info (binnenkort)',
   land_final_cta: 'Klaar om uw voordeel te vinden?',
   land_workspace_note: 'Uw gegevens blijven privé. Beveiligde persoonlijke werkruimte — niets wordt gedeeld zonder uw toestemming.',
 
