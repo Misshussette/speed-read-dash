@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       beta_bug_reports: {
         Row: {
           actual_behavior: string
@@ -510,6 +540,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          source_hash: string | null
           status: string
           tags: string[] | null
           total_laps: number
@@ -530,6 +561,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          source_hash?: string | null
           status?: string
           tags?: string[] | null
           total_laps?: number
@@ -550,6 +582,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          source_hash?: string | null
           status?: string
           tags?: string[] | null
           total_laps?: number

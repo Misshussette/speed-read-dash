@@ -249,6 +249,35 @@ Deno.serve(async (req) => {
     }
 
     const content = await fileData.text();
+
+    // Compute source hash for duplicate detection
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(content));
+    const sourceHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    // Check for duplicate import
+    const { data: existingSession } = await supabaseAdmin
+      .from("sessions")
+      .select("id")
+      .eq("event_id", event_id)
+      .eq("source_hash", sourceHash)
+      .maybeSingle();
+
+    if (existingSession) {
+      await supabaseAdmin.from("sessions").delete().eq("id", session_id);
+      if (importId) {
+        await supabaseAdmin.from("imports").update({
+          status: "skipped_duplicate",
+          error_message: "Duplicate file detected — already imported",
+          completed_at: new Date().toISOString(),
+        }).eq("id", importId);
+      }
+      return new Response(JSON.stringify({ error: "Duplicate file — this data has already been imported", duplicate_session_id: existingSession.id }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { headers, rows } = parseCSVContent(content);
 
     if (rows.length === 0) {
@@ -283,7 +312,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update session metadata
+    // Update session metadata with source_hash
     await supabaseAdmin
       .from("sessions")
       .update({
@@ -295,6 +324,7 @@ Deno.serve(async (req) => {
         has_sector_data: meta.hasSectors,
         total_laps: laps.length,
         status: "ready",
+        source_hash: sourceHash,
       })
       .eq("id", session_id);
 
