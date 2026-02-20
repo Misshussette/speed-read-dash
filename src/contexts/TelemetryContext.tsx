@@ -526,7 +526,12 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   }, [user, activeEventId]);
 
   const removeSession = useCallback(async (id: string) => {
-    await supabase.from('sessions').delete().eq('id', id);
+    // First delete associated laps, then delete session
+    // RLS restricts deletion to event owners only
+    const { error: lapErr } = await supabase.from('laps').delete().eq('session_id', id);
+    if (lapErr) { toast.error('Permission denied: only event owners can delete runs.'); return; }
+    const { error } = await supabase.from('sessions').delete().eq('id', id);
+    if (error) { toast.error('Permission denied: only event owners can delete runs.'); return; }
     setSessions(prev => {
       const next = prev.filter(s => s.id !== id);
       if (activeSessionId === id) {

@@ -68,6 +68,28 @@ Deno.serve(async (req) => {
     }
 
     const meta = race_meta || { name: "Imported Race", date: "", track: "" };
+
+    // Compute source hash for duplicate detection (hash race name + lap count + first/last lap times)
+    const hashInput = `${meta.name}|${laps.length}|${JSON.stringify(laps.slice(0, 3).map((l: any) => l.lap_time_s))}|${JSON.stringify(laps.slice(-3).map((l: any) => l.lap_time_s))}`;
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(hashInput));
+    const sourceHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    // Check for existing duplicate
+    const { data: existingSession } = await supabaseAdmin
+      .from("sessions")
+      .select("id")
+      .eq("event_id", event_id)
+      .eq("source_hash", sourceHash)
+      .maybeSingle();
+
+    if (existingSession) {
+      return new Response(
+        JSON.stringify({ success: true, session_id: existingSession.id, skipped: true, name: meta.name, reason: "duplicate" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log(`Inserting ${laps.length} laps for "${meta.name}"`);
 
     // Create session
@@ -85,6 +107,7 @@ Deno.serve(async (req) => {
         status: "processing",
         created_by: userId,
         filename: meta.filename || `${meta.name || "race"}.mdb`,
+        source_hash: sourceHash,
       })
       .select("id")
       .single();
