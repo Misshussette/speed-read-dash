@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, FileUp, Shield, RefreshCw, Bug, MessageSquareHeart } from 'lucide-react';
+import { Users, Calendar, FileUp, Shield, RefreshCw, Bug, MessageSquareHeart, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import AdminIssues from '@/pages/AdminIssues';
+import { toast } from 'sonner';
 
 interface UserRow { id: string; user_id: string; display_name: string | null; created_at: string; }
 interface EventRow { id: string; name: string; created_by: string; club_id: string | null; created_at: string; }
@@ -135,6 +137,7 @@ const Admin = () => {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="imports">Imports</TabsTrigger>
+          <TabsTrigger value="beta" className="flex items-center gap-1"><FlaskConical className="h-3 w-3" /> Beta</TabsTrigger>
           <TabsTrigger value="issues" className="flex items-center gap-1"><Bug className="h-3 w-3" /> Issues</TabsTrigger>
         </TabsList>
 
@@ -238,6 +241,10 @@ const Admin = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="beta">
+          <BetaUsersTab users={users} />
+        </TabsContent>
+
         <TabsContent value="issues">
           <AdminIssues />
         </TabsContent>
@@ -245,5 +252,72 @@ const Admin = () => {
     </div>
   );
 };
+
+/* ── Beta Users Sub-Tab ── */
+function BetaUsersTab({ users }: { users: UserRow[] }) {
+  const [betaStatus, setBetaStatus] = useState<Record<string, boolean>>({});
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from('profiles').select('user_id, beta_opt_in').then(({ data }) => {
+      if (data) {
+        const map: Record<string, boolean> = {};
+        (data as any[]).forEach(p => { map[p.user_id] = !!p.beta_opt_in; });
+        setBetaStatus(map);
+      }
+    });
+  }, []);
+
+  const toggleBeta = async (userId: string, name: string) => {
+    const current = !!betaStatus[userId];
+    setLoadingId(userId);
+    const { error } = await supabase.from('profiles').update({ beta_opt_in: !current } as any).eq('user_id', userId);
+    setLoadingId(null);
+    if (error) { toast.error(error.message); return; }
+    setBetaStatus(prev => ({ ...prev, [userId]: !current }));
+    toast.success(!current ? `Beta enabled for ${name}` : `Beta disabled for ${name}`);
+  };
+
+  const betaUsers = users.filter(u => betaStatus[u.user_id]);
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          Beta Users
+          <Badge variant="outline" className="text-xs">{betaUsers.length} active</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs">Name</TableHead>
+              <TableHead className="text-xs">Joined</TableHead>
+              <TableHead className="text-xs text-right">Beta</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map(u => (
+              <TableRow key={u.id}>
+                <TableCell className="text-sm">{u.display_name || '—'}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(u.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Switch
+                    checked={!!betaStatus[u.user_id]}
+                    onCheckedChange={() => toggleBeta(u.user_id, u.display_name || u.user_id.slice(0, 8))}
+                    disabled={loadingId === u.user_id}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default Admin;

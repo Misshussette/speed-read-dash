@@ -6,11 +6,14 @@ import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import ReportIssueDialog from '@/components/ReportIssueDialog';
 import UpdateNotification from '@/components/UpdateNotification';
+import GuidedTour from '@/components/GuidedTour';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { APP_VERSION } from '@/lib/app-version';
 
 const AppLayout = () => {
   const isMobile = useIsMobile();
+  const { showTour, completeTour } = useOnboarding();
 
   return (
     <SidebarProvider>
@@ -34,6 +37,7 @@ const AppLayout = () => {
           </main>
         </div>
         <UpdateNotification />
+        {showTour && <GuidedTour onComplete={completeTour} />}
       </div>
     </SidebarProvider>
   );

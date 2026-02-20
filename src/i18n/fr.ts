@@ -519,6 +519,37 @@ const fr: Record<string, string> = {
   fb_opt_unsure: 'Pas sûr',
   fb_opt_yes_definitely: 'Oui, clairement',
   fb_opt_probably: 'Probablement',
+
+  // Tour
+  tour_step_import_title: 'Importez vos données',
+  tour_step_import_desc: 'Téléchargez vos fichiers de chronométrage pour démarrer. StintLab supporte plusieurs formats et organise vos tours automatiquement.',
+  tour_step_drivers_title: 'Sélectionnez vos pilotes',
+  tour_step_drivers_desc: 'Concentrez votre analyse sur des pilotes ou équipes spécifiques. Utilisez le panneau de scope pour filtrer ce qui compte.',
+  tour_step_analyze_title: 'Analysez vos tours et votre régularité',
+  tour_step_analyze_desc: 'Visualisez l\'évolution de vos performances, identifiez les secteurs faibles et suivez votre régularité dans le temps.',
+  tour_step_compare_title: 'Comparez sessions ou setups',
+  tour_step_compare_desc: 'Mettez deux sessions côte à côte pour mesurer vos progrès réels et l\'impact de vos changements de setup.',
+  tour_step_garage_title: 'Stockez vos configurations',
+  tour_step_garage_desc: 'Enregistrez vos véhicules, setups et contrôleurs dans le Garage. Liez-les aux sessions pour une traçabilité complète.',
+  tour_step_feedback_title: 'Partagez votre avis',
+  tour_step_feedback_desc: 'StintLab est en développement actif. Signalez des problèmes ou partagez votre expérience pour façonner la plateforme.',
+  tour_prev: 'Retour',
+  tour_next: 'Suivant',
+  tour_finish: 'C\'est parti !',
+  tour_skip: 'Passer',
+
+  // Settings: help
+  settings_help: 'Aide',
+  settings_restart_tour: 'Visite guidée',
+  settings_restart_tour_desc: 'Relancer la présentation introductive.',
+  settings_restart_tour_btn: 'Relancer',
+
+  // Admin: beta users
+  admin_beta_users: 'Utilisateurs Beta',
+  admin_beta_count: '{count} utilisateur(s) beta',
+  admin_beta_toggle: 'Basculer Beta',
+  admin_beta_enabled: 'Beta activé pour {name}',
+  admin_beta_disabled: 'Beta désactivé pour {name}',
 };
 
 export default fr;
