@@ -561,6 +561,37 @@ const en: Record<string, string> = {
   fb_opt_unsure: 'Unsure',
   fb_opt_yes_definitely: 'Yes, definitely',
   fb_opt_probably: 'Probably',
+
+  // Tour
+  tour_step_import_title: 'Import your data',
+  tour_step_import_desc: 'Upload your timing files to get started. StintLab supports multiple formats and will organize your laps automatically.',
+  tour_step_drivers_title: 'Select your drivers',
+  tour_step_drivers_desc: 'Focus your analysis on specific drivers or teams. Use the scope panel to filter exactly what matters to you.',
+  tour_step_analyze_title: 'Analyze laps & consistency',
+  tour_step_analyze_desc: 'Visualize your performance evolution, identify weak sectors, and track your consistency over time.',
+  tour_step_compare_title: 'Compare sessions or setups',
+  tour_step_compare_desc: 'Put two or more sessions side by side to measure real progress and the impact of setup changes.',
+  tour_step_garage_title: 'Store your configurations',
+  tour_step_garage_desc: 'Save your vehicles, setups, and controllers in the Garage. Link them to sessions for full traceability.',
+  tour_step_feedback_title: 'Share your feedback',
+  tour_step_feedback_desc: 'StintLab is in active development. Report issues or share your experience to help shape the platform.',
+  tour_prev: 'Back',
+  tour_next: 'Next',
+  tour_finish: 'Get started!',
+  tour_skip: 'Skip',
+
+  // Settings: help
+  settings_help: 'Help',
+  settings_restart_tour: 'Guided Tour',
+  settings_restart_tour_desc: 'Replay the introductory walkthrough.',
+  settings_restart_tour_btn: 'Restart',
+
+  // Admin: beta users
+  admin_beta_users: 'Beta Users',
+  admin_beta_count: '{count} beta user(s)',
+  admin_beta_toggle: 'Toggle Beta',
+  admin_beta_enabled: 'Beta enabled for {name}',
+  admin_beta_disabled: 'Beta disabled for {name}',
 };
 
 export default en;
