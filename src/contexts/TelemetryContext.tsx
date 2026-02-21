@@ -13,6 +13,13 @@ export interface MdbScanResult {
   catalog: any[];
 }
 
+interface RunOverride {
+  run_id: string;
+  custom_name: string | null;
+  hidden: boolean;
+  notes: string | null;
+}
+
 interface TelemetryState {
   // Multi-session
   sessions: SessionMeta[];
@@ -23,6 +30,8 @@ interface TelemetryState {
   importMdbRaces: (importId: string, filePath: string, selectedRaceIds: string[], eventIdOverride?: string, raceCatalog?: any[], file?: File, importFilters?: { drivers?: string[]; bestLapsOnly?: boolean }) => Promise<void>;
   removeSession: (id: string) => void;
   updateSessionMeta: (id: string, updates: Partial<Pick<SessionMeta, 'display_name' | 'tags' | 'notes' | 'event_type' | 'track'>>) => Promise<void>;
+  updateRunOverride: (runId: string, updates: Partial<Pick<RunOverride, 'custom_name' | 'hidden' | 'notes'>>) => Promise<void>;
+  hideSession: (id: string) => Promise<void>;
   moveSessionsToEvent: (sessionIds: string[], targetEventId: string) => Promise<void>;
 
   // Clubs
@@ -101,6 +110,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const [comparisonSessions, setComparisonSessions] = useState<string[]>([]);
   const [comparisonData, setComparisonData] = useState<LapRecord[]>([]);
   const [isLoadingComparison, setIsLoadingComparison] = useState(false);
+  const [runOverrides, setRunOverrides] = useState<Map<string, RunOverride>>(new Map());
 
   // Load clubs when user is authenticated
   useEffect(() => {
@@ -142,18 +152,37 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     loadEvents();
   }, [user, activeClubId]);
 
-  // Load sessions when event changes
+  // Load sessions when event changes, with user overrides applied
   useEffect(() => {
-    if (!activeEventId) { setSessions([]); return; }
+    if (!activeEventId || !user) { setSessions([]); return; }
     setIsLoading(true);
-    supabase
-      .from('sessions')
-      .select('*')
-      .eq('event_id', activeEventId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (data) {
-          const metas: SessionMeta[] = data.map((s: any) => ({
+
+    const loadSessionsWithOverrides = async () => {
+      const { data } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('event_id', activeEventId)
+        .order('created_at', { ascending: false });
+
+      if (!data) { setIsLoading(false); return; }
+
+      // Load user overrides for these sessions
+      const sessionIds = data.map((s: any) => s.id);
+      const { data: overrides } = await supabase
+        .from('run_user_overrides')
+        .select('run_id, custom_name, hidden, notes')
+        .eq('user_id', user.id)
+        .in('run_id', sessionIds);
+
+      const overrideMap = new Map<string, RunOverride>();
+      overrides?.forEach((o: any) => overrideMap.set(o.run_id, o));
+      setRunOverrides(overrideMap);
+
+      const metas: SessionMeta[] = data
+        .filter((s: any) => !overrideMap.get(s.id)?.hidden)
+        .map((s: any) => {
+          const ov = overrideMap.get(s.id);
+          return {
             id: s.id,
             session_id: s.id,
             date: s.date || '',
@@ -163,18 +192,20 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
             filename: s.filename || '',
             laps: s.total_laps,
             importedAt: new Date(s.created_at).getTime(),
-            display_name: s.display_name || null,
+            display_name: ov?.custom_name || s.display_name || null,
             tags: s.tags || [],
-            notes: s.notes || null,
+            notes: ov?.notes || s.notes || null,
             event_type: s.event_type || null,
-          }));
-          setSessions(metas);
-          if (metas.length > 0) setActiveSessionIdInternal(metas[0].id);
-          else setActiveSessionIdInternal(null);
-        }
-        setIsLoading(false);
-      });
-  }, [activeEventId]);
+          };
+        });
+      setSessions(metas);
+      if (metas.length > 0) setActiveSessionIdInternal(metas[0].id);
+      else setActiveSessionIdInternal(null);
+      setIsLoading(false);
+    };
+
+    loadSessionsWithOverrides();
+  }, [activeEventId, user]);
 
   // Load laps when session changes
   useEffect(() => {
@@ -587,6 +618,38 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } as SessionMeta : s));
   }, []);
 
+  // Write personal overrides (custom_name, hidden, notes) without mutating shared session data
+  const updateRunOverride = useCallback(async (runId: string, updates: Partial<Pick<RunOverride, 'custom_name' | 'hidden' | 'notes'>>) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('run_user_overrides')
+      .upsert({ run_id: runId, user_id: user.id, ...updates }, { onConflict: 'run_id,user_id' });
+    if (error) { toast.error(error.message); return; }
+
+    // Apply locally
+    setRunOverrides(prev => {
+      const next = new Map(prev);
+      const existing = next.get(runId) || { run_id: runId, custom_name: null, hidden: false, notes: null };
+      next.set(runId, { ...existing, ...updates });
+      return next;
+    });
+
+    // Update sessions display
+    if (updates.custom_name !== undefined) {
+      setSessions(prev => prev.map(s => s.id === runId ? { ...s, display_name: updates.custom_name || s.display_name } as SessionMeta : s));
+    }
+    if (updates.notes !== undefined) {
+      setSessions(prev => prev.map(s => s.id === runId ? { ...s, notes: updates.notes || s.notes } as SessionMeta : s));
+    }
+    if (updates.hidden) {
+      setSessions(prev => prev.filter(s => s.id !== runId));
+    }
+  }, [user]);
+
+  const hideSession = useCallback(async (id: string) => {
+    await updateRunOverride(id, { hidden: true });
+  }, [updateRunOverride]);
+
   const moveSessionsToEvent = useCallback(async (sessionIds: string[], targetEventId: string) => {
     const { error } = await supabase.from('sessions').update({ event_id: targetEventId }).in('id', sessionIds);
     if (error) { toast.error(error.message); return; }
@@ -690,7 +753,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   return (
     <TelemetryContext.Provider value={{
       sessions, activeSessionId, setActiveSessionId,
-      uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta, moveSessionsToEvent,
+      uploadFile, uploadMdbFile, importMdbRaces, removeSession, updateSessionMeta, updateRunOverride, hideSession, moveSessionsToEvent,
       clubs, activeClubId, setActiveClubId, createClub,
       events, activeEventId, setActiveEventId, createEvent, updateEvent,
       comparisonSessions, toggleComparisonSession, clearComparisonSessions,
