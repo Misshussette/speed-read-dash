@@ -524,6 +524,44 @@ export type Database = {
         }
         Relationships: []
       }
+      run_user_overrides: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          hidden: boolean
+          id: string
+          notes: string | null
+          run_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          hidden?: boolean
+          id?: string
+          notes?: string | null
+          run_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          hidden?: boolean
+          id?: string
+          notes?: string | null
+          run_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_user_overrides_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           brand: string | null
