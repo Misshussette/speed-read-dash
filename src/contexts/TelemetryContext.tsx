@@ -327,33 +327,29 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
     setErrors([]);
 
     try {
+      // Determine data_origin based on event context
+      const event = events.find(e => e.id === targetEventId);
+      const dataOrigin = event?.club_id ? 'club_event' : 'personal_upload';
+
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('race-files')
         .upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          event_id: targetEventId,
-          name: file.name.replace(/\.csv$/i, ''),
-          filename: file.name,
-          status: 'processing',
-          created_by: user.id,
-        })
-        .select('id')
-        .single();
-      if (sessionError) throw sessionError;
-
-      const { error: fnError } = await supabase.functions.invoke('ingest-race-file', {
+      // Call staged ingestion (handles staging → validation → auto-promotion)
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('ingest-race-file', {
         body: {
-          session_id: sessionData.id,
           file_path: filePath,
           event_id: targetEventId,
+          data_origin: dataOrigin,
         },
       });
       if (fnError) throw fnError;
+
+      if (fnData?.validation_warnings?.length > 0) {
+        toast.warning(`Import completed with ${fnData.validation_warnings.length} warning(s).`);
+      }
 
       // Refresh sessions list
       const { data: refreshed } = await supabase
@@ -379,19 +375,26 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
           event_type: s.event_type || null,
         }));
         setSessions(metas);
-        setActiveSessionIdInternal(sessionData.id);
+        if (fnData?.session_id) {
+          setActiveSessionIdInternal(fnData.session_id);
+        }
       }
 
       setFilters(defaultFilters);
       setScope(DEFAULT_SCOPE);
       toast.success('File processed successfully!');
     } catch (err: any) {
-      setErrors([err.message || 'Upload failed']);
-      toast.error(err.message || 'Upload failed');
+      const msg = err.message || 'Upload failed';
+      if (msg.includes('Duplicate')) {
+        toast.error('This file has already been imported.');
+      } else {
+        setErrors([msg]);
+        toast.error(msg);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [user, activeEventId]);
+  }, [user, activeEventId, events]);
 
   const uploadMdbFile = useCallback(async (file: File, eventIdOverride?: string): Promise<MdbScanResult | null> => {
     const targetEventId = eventIdOverride || activeEventId;
