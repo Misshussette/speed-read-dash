@@ -110,3 +110,40 @@
 .header-gradient {
   background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
 }
+
+/* Paddock / Garage tokens */
+:root {
+  --garage-surface: 220 18% 94%;
+  --garage-card-glow: 185 70% 45% / 0.08;
+  --garage-stat: 185 70% 45%;
+}
+.dark {
+  --garage-surface: 222 28% 10%;
+  --garage-card-glow: 185 70% 50% / 0.12;
+  --garage-stat: 185 70% 50%;
+}
+
+.garage-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.garage-card:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 20px hsl(var(--garage-card-glow)), 0 4px 12px hsl(0 0% 0% / 0.08);
+}
+
+.garage-stat {
+  font-family: 'JetBrains Mono', monospace;
+  color: hsl(var(--garage-stat));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.garage-bg {
+  background:
+    radial-gradient(ellipse at 20% 0%, hsl(var(--primary) / 0.04) 0%, transparent 50%),
+    hsl(var(--background));
+}
