@@ -210,6 +210,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          is_beta_tester: boolean
           name: string
         }
         Insert: {
@@ -217,6 +218,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          is_beta_tester?: boolean
           name: string
         }
         Update: {
@@ -224,6 +226,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          is_beta_tester?: boolean
           name?: string
         }
         Relationships: []
@@ -569,6 +572,7 @@ export type Database = {
           created_at: string
           created_by: string
           data_mode: string
+          data_origin: string
           date: string | null
           display_name: string | null
           event_id: string
@@ -590,6 +594,7 @@ export type Database = {
           created_at?: string
           created_by: string
           data_mode?: string
+          data_origin?: string
           date?: string | null
           display_name?: string | null
           event_id: string
@@ -611,6 +616,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           data_mode?: string
+          data_origin?: string
           date?: string | null
           display_name?: string | null
           event_id?: string
@@ -690,6 +696,149 @@ export type Database = {
           {
             foreignKeyName: "setups_session_id_fkey"
             columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staged_laps: {
+        Row: {
+          driver: string | null
+          driving_station: number | null
+          id: string
+          lane: number | null
+          lap_number: number
+          lap_status: string
+          lap_time_s: number
+          pit_time_s: number | null
+          pit_type: string | null
+          s1_s: number | null
+          s2_s: number | null
+          s3_s: number | null
+          session_elapsed_s: number | null
+          sort_key: number
+          staged_session_id: string
+          stint: number
+          stint_elapsed_s: number | null
+          team_number: string | null
+          timestamp: string | null
+          validation_flags: string[] | null
+        }
+        Insert: {
+          driver?: string | null
+          driving_station?: number | null
+          id?: string
+          lane?: number | null
+          lap_number: number
+          lap_status?: string
+          lap_time_s?: number
+          pit_time_s?: number | null
+          pit_type?: string | null
+          s1_s?: number | null
+          s2_s?: number | null
+          s3_s?: number | null
+          session_elapsed_s?: number | null
+          sort_key?: number
+          staged_session_id: string
+          stint?: number
+          stint_elapsed_s?: number | null
+          team_number?: string | null
+          timestamp?: string | null
+          validation_flags?: string[] | null
+        }
+        Update: {
+          driver?: string | null
+          driving_station?: number | null
+          id?: string
+          lane?: number | null
+          lap_number?: number
+          lap_status?: string
+          lap_time_s?: number
+          pit_time_s?: number | null
+          pit_type?: string | null
+          s1_s?: number | null
+          s2_s?: number | null
+          s3_s?: number | null
+          session_elapsed_s?: number | null
+          sort_key?: number
+          staged_session_id?: string
+          stint?: number
+          stint_elapsed_s?: number | null
+          team_number?: string | null
+          timestamp?: string | null
+          validation_flags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_laps_staged_session_id_fkey"
+            columns: ["staged_session_id"]
+            isOneToOne: false
+            referencedRelation: "staged_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staged_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          data_mode: string
+          data_origin: string
+          event_id: string
+          file_path: string | null
+          filename: string | null
+          id: string
+          promoted_session_id: string | null
+          raw_meta: Json | null
+          source_hash: string | null
+          status: string
+          validation_errors: Json | null
+          validation_warnings: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data_mode?: string
+          data_origin?: string
+          event_id: string
+          file_path?: string | null
+          filename?: string | null
+          id?: string
+          promoted_session_id?: string | null
+          raw_meta?: Json | null
+          source_hash?: string | null
+          status?: string
+          validation_errors?: Json | null
+          validation_warnings?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data_mode?: string
+          data_origin?: string
+          event_id?: string
+          file_path?: string | null
+          filename?: string | null
+          id?: string
+          promoted_session_id?: string | null
+          raw_meta?: Json | null
+          source_hash?: string | null
+          status?: string
+          validation_errors?: Json | null
+          validation_warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staged_sessions_promoted_session_id_fkey"
+            columns: ["promoted_session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
@@ -847,6 +996,7 @@ export type Database = {
       is_event_owner: { Args: { _event_id: string }; Returns: boolean }
       is_lap_accessible: { Args: { _session_id: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      promote_staged_session: { Args: { _staged_id: string }; Returns: string }
     }
     Enums: {
       platform_role: "platform_admin" | "club_admin" | "user"

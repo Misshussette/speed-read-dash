@@ -20,12 +20,12 @@ export interface SupabaseSession {
   created_at: string;
 }
 
-/** Upload a CSV file to storage and trigger server-side ingestion */
+/** Upload a CSV file to storage and trigger staged ingestion */
 export function useFileUpload() {
   const { user, session } = useAuth();
   const [uploading, setUploading] = useState(false);
 
-  const uploadFile = useCallback(async (file: File, eventId: string) => {
+  const uploadFile = useCallback(async (file: File, eventId: string, dataOrigin: string = 'personal_upload') => {
     if (!user || !session) {
       toast.error('You must be logged in to upload files.');
       return null;
@@ -41,36 +41,31 @@ export function useFileUpload() {
 
       if (uploadError) throw uploadError;
 
-      // 2. Create session record
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          event_id: eventId,
-          name: file.name.replace(/\.csv$/i, ''),
-          filename: file.name,
-          status: 'processing',
-          created_by: user.id,
-        })
-        .select('id')
-        .single();
-
-      if (sessionError) throw sessionError;
-
-      // 3. Trigger ingestion edge function
-      const { error: fnError } = await supabase.functions.invoke('ingest-race-file', {
+      // 2. Trigger staged ingestion (no pre-created session needed)
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('ingest-race-file', {
         body: {
-          session_id: sessionData.id,
           file_path: filePath,
           event_id: eventId,
+          data_origin: dataOrigin,
         },
       });
 
       if (fnError) throw fnError;
 
-      toast.success('File uploaded — processing in progress.');
-      return sessionData.id;
+      if (fnData?.validation_warnings?.length > 0) {
+        toast.warning(`Import completed with ${fnData.validation_warnings.length} warning(s).`);
+      } else {
+        toast.success('File uploaded and validated successfully.');
+      }
+
+      return fnData?.session_id || null;
     } catch (err: any) {
-      toast.error(err.message || 'Upload failed');
+      const msg = err.message || 'Upload failed';
+      if (msg.includes('Duplicate')) {
+        toast.error('This file has already been imported.');
+      } else {
+        toast.error(msg);
+      }
       return null;
     } finally {
       setUploading(false);
