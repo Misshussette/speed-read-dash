@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, Gauge, Ruler } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Plus, Trash2, Wrench, Pencil, Copy, ChevronDown, ChevronRight, Gauge, Ruler, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,26 @@ import SetupPerformanceImpact from '@/components/garage/SetupPerformanceImpact';
 import SectionedParameterEditor from '@/components/garage/SectionedParameterEditor';
 import SetupMediaUpload from '@/components/garage/SetupMediaUpload';
 import TechnicalSheet from '@/components/garage/TechnicalSheet';
+
+function TagInput({ onAdd }: { onAdd: (tag: string) => void }) {
+  const [value, setValue] = useState('');
+  return (
+    <Input
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onKeyDown={e => {
+        if ((e.key === 'Enter' || e.key === ',') && value.trim()) {
+          e.preventDefault();
+          onAdd(value.trim());
+          setValue('');
+        }
+      }}
+      onBlur={() => { if (value.trim()) { onAdd(value.trim()); setValue(''); } }}
+      placeholder="+ tag"
+      className="h-6 w-24 text-xs px-2"
+    />
+  );
+}
 
 const GarageSetups = () => {
   const { t } = useI18n();
@@ -196,6 +216,23 @@ const GarageSetups = () => {
                           placeholder={t('garage_setup_label')} className="text-sm h-8" />
                         <Textarea value={setup.notes || ''} onChange={e => updateSetup({ ...setup, notes: e.target.value })}
                           placeholder={t('garage_notes')} className="text-sm min-h-[60px]" />
+                        {/* Tag editor */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">{t('garage_tags')}</p>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {setup.tags.map((tag, i) => (
+                              <span key={i} className="inline-flex items-center gap-0.5 bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full">
+                                {tag}
+                                <button type="button" className="hover:text-destructive" onClick={() => updateSetup({ ...setup, tags: setup.tags.filter((_, j) => j !== i) })}>
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                            <TagInput onAdd={(tag) => {
+                              if (tag && !setup.tags.includes(tag)) updateSetup({ ...setup, tags: [...setup.tags, tag] });
+                            }} />
+                          </div>
+                        </div>
                         <p className="text-xs font-medium text-muted-foreground">{t('garage_parameters')}</p>
                         <SectionedParameterEditor
                           parameters={setup.parameters}
