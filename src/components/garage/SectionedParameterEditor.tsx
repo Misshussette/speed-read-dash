@@ -108,10 +108,10 @@ export default function SectionedParameterEditor({ parameters, customFields, onC
       <div key={def.key} className="flex items-center gap-2 text-sm">
         <span className="font-medium text-muted-foreground min-w-[130px] text-xs">{def.label}</span>
         {def.type === 'select' ? (
-          <Select value={String(value)} onValueChange={v => handleParamChange(def.key, v)}>
+          <Select value={String(value) || '__none__'} onValueChange={v => handleParamChange(def.key, v === '__none__' ? '' : v)}>
             <SelectTrigger className="h-7 text-xs flex-1"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">—</SelectItem>
+              <SelectItem value="__none__">—</SelectItem>
               {def.options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
           </Select>

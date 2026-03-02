@@ -203,7 +203,7 @@ const Garage = () => {
       setEditingCar(null);
       toast.success(t('garage_car_updated'));
     } else {
-      await addCar({ brand: data.brand, model: data.model, scale: null, motor: null, weight: null, notes: data.notes || null });
+      await addCar({ brand: data.brand, model: data.model, scale: null, motor: null, weight: null, notes: data.notes || null, image: null });
       setShowNewCar(false);
       toast.success(t('garage_car_added'));
     }

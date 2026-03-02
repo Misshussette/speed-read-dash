@@ -8,6 +8,7 @@ export interface Car {
   motor: string | null;
   weight: number | null;
   notes: string | null;
+  image: string | null;
   createdAt: number;
 }
 
