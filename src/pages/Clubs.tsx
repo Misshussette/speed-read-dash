@@ -35,7 +35,7 @@ interface ClubInvite {
 }
 
 const roleIcon = (role: string) => {
-  if (role === 'owner') return <Crown className="h-4 w-4 text-primary" />;
+  if (role === 'organizer') return <Crown className="h-4 w-4 text-primary" />;
   if (role === 'organizer') return <UserCog className="h-4 w-4 text-accent-foreground" />;
   return <User className="h-4 w-4 text-muted-foreground" />;
 };
@@ -203,9 +203,9 @@ const Clubs = () => {
     if (selectedClub) fetchMembers(selectedClub.id);
   };
 
-  const isOwnerOfSelected = selectedClub?.created_by === user?.id;
   const myRoleInSelected = members.find(m => m.user_id === user?.id)?.role;
-  const canManage = myRoleInSelected === 'owner' || myRoleInSelected === 'organizer';
+  const isOrganizer = myRoleInSelected === 'organizer';
+  const canManage = isOrganizer;
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -327,8 +327,13 @@ const Clubs = () => {
                       <span className="text-sm">{member.display_name}</span>
                       <Badge variant="secondary" className="text-xs">{member.role}</Badge>
                     </div>
-                    {isOwnerOfSelected && member.user_id !== user?.id && (
+                    {isOrganizer && member.user_id !== user?.id && (
                       <div className="flex gap-1">
+                        {member.role === 'viewer' && (
+                          <Button variant="ghost" size="sm" onClick={() => handleUpdateRole(member.id, 'member')}>
+                            → {t('club_role_member')}
+                          </Button>
+                        )}
                         {member.role === 'member' && (
                           <Button variant="ghost" size="sm" onClick={() => handleUpdateRole(member.id, 'organizer')}>
                             → {t('club_role_organizer')}
@@ -349,8 +354,8 @@ const Clubs = () => {
               </CardContent>
             </Card>
 
-            {/* Invites — only for owner */}
-            {isOwnerOfSelected && (
+            {/* Invites — only for organizer */}
+            {isOrganizer && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">{t('club_invites')}</CardTitle>

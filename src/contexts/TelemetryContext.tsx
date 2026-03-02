@@ -284,7 +284,7 @@ export function TelemetryProvider({ children }: { children: React.ReactNode }) {
       .single();
     if (error) { toast.error(error.message); return null; }
     if (data) {
-      setClubs(prev => [...prev, { id: data.id, name: data.name, role: 'owner' }]);
+      setClubs(prev => [...prev, { id: data.id, name: data.name, role: 'organizer' }]);
       setActiveClubId(data.id);
       return data.id;
     }

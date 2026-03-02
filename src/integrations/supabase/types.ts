@@ -838,8 +838,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_club_contributor: { Args: { _club_id: string }; Returns: boolean }
       is_club_member: { Args: { _club_id: string }; Returns: boolean }
+      is_club_organizer: { Args: { _club_id: string }; Returns: boolean }
       is_club_owner: { Args: { _club_id: string }; Returns: boolean }
+      is_club_viewer: { Args: { _club_id: string }; Returns: boolean }
       is_event_member: { Args: { _event_id: string }; Returns: boolean }
       is_event_owner: { Args: { _event_id: string }; Returns: boolean }
       is_lap_accessible: { Args: { _session_id: string }; Returns: boolean }
