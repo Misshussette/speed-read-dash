@@ -10,6 +10,7 @@ import { useTelemetry } from '@/contexts/TelemetryContext';
 import { useDisplayMode } from '@/contexts/DisplayModeContext';
 import { useGarage } from '@/contexts/GarageContext';
 import { useRunScope } from '@/hooks/useRunScope';
+import { useLapFilter } from '@/hooks/useLapFilter';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
 import { useI18n } from '@/i18n/I18nContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,6 +28,7 @@ import ScopeKPICards from '@/components/dashboard/ScopeKPICards';
 import TrackBenchmark from '@/components/dashboard/TrackBenchmark';
 import MobileFieldView from '@/components/dashboard/MobileFieldView';
 import DriverScopeDialog from '@/components/dashboard/DriverScopeDialog';
+import LapFilterPanel from '@/components/dashboard/LapFilterPanel';
 
 const Analysis = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -146,7 +148,21 @@ const Analysis = () => {
     return opts;
   }, [analysisBase, availableDrivers]);
   const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
-  const kpis = useMemo(() => computeKPIs(filteredData, filters.includePitLaps), [filteredData, filters.includePitLaps]);
+
+  // Intelligent lap filter
+  const {
+    enrichedLaps,
+    cleanLaps: cleanFilteredLaps,
+    excludedCount,
+    cleanedMode,
+    setCleanedMode,
+    filterConfig,
+    updateFilterConfig,
+  } = useLapFilter(sessionId || null, filteredData);
+
+  // Use clean or raw data based on toggle
+  const effectiveData = cleanedMode ? cleanFilteredLaps : filteredData;
+  const kpis = useMemo(() => computeKPIs(effectiveData, filters.includePitLaps), [effectiveData, filters.includePitLaps]);
 
   if (isLoading) {
     const pct = loadingProgress?.total && loadingProgress.total > 0
@@ -248,12 +264,20 @@ const Analysis = () => {
 
       {/* Mobile field mode */}
       {isMobile && rawData.length > 0 ? (
-        <MobileFieldView data={filteredData} kpis={kpis} />
+        <MobileFieldView data={effectiveData} kpis={kpis} />
       ) : (
         <>
-          {/* Filter bar */}
-          <div className="border-b border-border pb-3">
+          {/* Filter bar + Lap filter toggle */}
+          <div className="border-b border-border pb-3 space-y-2">
             <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopeOptions={scopeOptions} hasScope={scope.enabled} scopedDrivers={scopeDriverFilter} />
+            <LapFilterPanel
+              cleanedMode={cleanedMode}
+              onCleanedModeChange={setCleanedMode}
+              excludedCount={excludedCount}
+              totalLaps={filteredData.length}
+              filterConfig={filterConfig}
+              onConfigChange={updateFilterConfig}
+            />
           </div>
 
           {rawData.length > 0 && (
@@ -273,40 +297,40 @@ const Analysis = () => {
                 <TabsContent value="overview" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
                   <ScopeKPICards />
-                  <TrackBenchmark allData={rawData} userData={filteredData} />
-                  <LapTimeChart data={filteredData} />
+                  <TrackBenchmark allData={rawData} userData={effectiveData} />
+                  <LapTimeChart data={effectiveData} />
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <DriverComparisonChart data={filteredData} includePitLaps={filters.includePitLaps} />
-                    {hasSectorData && <SectorChart data={filteredData} />}
+                    <DriverComparisonChart data={effectiveData} includePitLaps={filters.includePitLaps} />
+                    {hasSectorData && <SectorChart data={effectiveData} />}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="stints" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
-                  <LapTimeChart data={filteredData} />
-                  <StintTimeline data={filteredData} includePitLaps={filters.includePitLaps} />
-                  <PitAnalysis data={filteredData} />
+                  <LapTimeChart data={effectiveData} />
+                  <StintTimeline data={effectiveData} includePitLaps={filters.includePitLaps} />
+                  <PitAnalysis data={effectiveData} />
                 </TabsContent>
 
                 <TabsContent value="drivers" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
-                  <AnalysisInsights data={filteredData} includePitLaps={filters.includePitLaps} />
+                  <AnalysisInsights data={effectiveData} includePitLaps={filters.includePitLaps} />
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <DriverComparisonChart data={filteredData} includePitLaps={filters.includePitLaps} />
-                    {hasSectorData && <SectorChart data={filteredData} />}
+                    <DriverComparisonChart data={effectiveData} includePitLaps={filters.includePitLaps} />
+                    {hasSectorData && <SectorChart data={effectiveData} />}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="track" className="space-y-6 mt-4">
-                  <TrackBenchmark allData={rawData} userData={filteredData} />
-                  {hasSectorData && <SectorChart data={filteredData} />}
-                  <LapTimeChart data={filteredData} />
+                  <TrackBenchmark allData={rawData} userData={effectiveData} />
+                  {hasSectorData && <SectorChart data={effectiveData} />}
+                  <LapTimeChart data={effectiveData} />
                 </TabsContent>
 
                 <TabsContent value="insights" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
-                  <AnalysisInsights data={filteredData} includePitLaps={filters.includePitLaps} />
-                  <TrackBenchmark allData={rawData} userData={filteredData} />
+                  <AnalysisInsights data={effectiveData} includePitLaps={filters.includePitLaps} />
+                  <TrackBenchmark allData={rawData} userData={effectiveData} />
                 </TabsContent>
               </Tabs>
             </>

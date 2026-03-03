@@ -592,6 +592,17 @@ const en: Record<string, string> = {
   admin_beta_toggle: 'Toggle Beta',
   admin_beta_enabled: 'Beta enabled for {name}',
   admin_beta_disabled: 'Beta disabled for {name}',
+
+  // Lap filter
+  filter_cleaned_analysis: 'Cleaned Analysis',
+  filter_raw_analysis: 'Raw Analysis',
+  filter_laps_excluded: '{count} laps excluded',
+  filter_settings_title: 'Filter Settings',
+  filter_upper_coeff: 'Upper coefficient (× median)',
+  filter_lower_coeff: 'Lower coefficient (× median)',
+  filter_min_laptime: 'Min lap time (s)',
+  filter_max_laptime: 'Max lap time (s)',
+  filter_threshold_help: 'Fixed thresholds override median-based filtering. Leave empty to use automatic detection.',
 };
 
 export default en;

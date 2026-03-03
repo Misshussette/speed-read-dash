@@ -420,6 +420,54 @@ export type Database = {
           },
         ]
       }
+      lap_analysis_overrides: {
+        Row: {
+          created_at: string
+          created_by: string
+          custom_note: string | null
+          exclusion_reason: Database["public"]["Enums"]["exclusion_reason"]
+          id: string
+          is_excluded: boolean
+          lap_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          custom_note?: string | null
+          exclusion_reason?: Database["public"]["Enums"]["exclusion_reason"]
+          id?: string
+          is_excluded?: boolean
+          lap_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          custom_note?: string | null
+          exclusion_reason?: Database["public"]["Enums"]["exclusion_reason"]
+          id?: string
+          is_excluded?: boolean
+          lap_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lap_analysis_overrides_lap_id_fkey"
+            columns: ["lap_id"]
+            isOneToOne: false
+            referencedRelation: "laps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lap_analysis_overrides_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       laps: {
         Row: {
           driver: string | null
@@ -559,6 +607,50 @@ export type Database = {
           {
             foreignKeyName: "run_user_overrides_run_id_fkey"
             columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_filter_config: {
+        Row: {
+          created_at: string
+          id: string
+          lower_coefficient: number
+          max_lap_time_s: number | null
+          min_lap_time_s: number | null
+          session_id: string
+          updated_at: string
+          upper_coefficient: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lower_coefficient?: number
+          max_lap_time_s?: number | null
+          min_lap_time_s?: number | null
+          session_id: string
+          updated_at?: string
+          upper_coefficient?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lower_coefficient?: number
+          max_lap_time_s?: number | null
+          min_lap_time_s?: number | null
+          session_id?: string
+          updated_at?: string
+          upper_coefficient?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_filter_config_session_id_fkey"
+            columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
@@ -999,6 +1091,13 @@ export type Database = {
       promote_staged_session: { Args: { _staged_id: string }; Returns: string }
     }
     Enums: {
+      exclusion_reason:
+        | "statistical_outlier"
+        | "pit_stop"
+        | "incident"
+        | "mechanical"
+        | "track_call"
+        | "custom_note"
       platform_role: "platform_admin" | "club_admin" | "user"
     }
     CompositeTypes: {
@@ -1127,6 +1226,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      exclusion_reason: [
+        "statistical_outlier",
+        "pit_stop",
+        "incident",
+        "mechanical",
+        "track_call",
+        "custom_note",
+      ],
       platform_role: ["platform_admin", "club_admin", "user"],
     },
   },
