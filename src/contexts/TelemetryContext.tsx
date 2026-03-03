@@ -79,6 +79,7 @@ const defaultFilters: Filters = {
   car: null,
   drivers: [],
   stints: [],
+  lanes: [],
   includePitLaps: true,
 };
 

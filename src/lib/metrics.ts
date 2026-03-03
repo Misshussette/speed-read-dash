@@ -7,8 +7,7 @@ export function applyFilters(data: LapRecord[], filters: Filters): LapRecord[] {
     if (filters.car && r.car_model !== filters.car) return false;
     if (filters.drivers.length > 0 && !filters.drivers.includes(r.driver)) return false;
     if (filters.stints.length > 0 && !filters.stints.includes(r.stint)) return false;
-    // Never remove pit laps from the dataset — they are classified, not filtered.
-    // The includePitLaps flag is used downstream by statistics only.
+    if (filters.lanes && filters.lanes.length > 0 && r.lane !== null && !filters.lanes.includes(r.lane)) return false;
     return true;
   });
 }
@@ -148,12 +147,17 @@ export function extractPitEvents(data: LapRecord[]): PitEvent[] {
 }
 
 export function getFilterOptions(data: LapRecord[]) {
+  const lanesSet = new Set<number>();
+  for (const r of data) {
+    if (r.lane !== null && r.lane !== undefined) lanesSet.add(r.lane);
+  }
   return {
     tracks: [...new Set(data.map(r => r.track))].filter(Boolean).sort(),
     sessions: [...new Set(data.map(r => r.session_id))].filter(Boolean).sort(),
     cars: [...new Set(data.map(r => r.car_model))].filter(Boolean).sort(),
     drivers: [...new Set(data.map(r => r.driver))].filter(Boolean).sort(),
     stints: [...new Set(data.map(r => r.stint))].sort((a, b) => a - b),
+    lanes: [...lanesSet].sort((a, b) => a - b),
   };
 }
 
