@@ -95,6 +95,9 @@ const en: Record<string, string> = {
   insight_most_consistent: 'Most Consistent Driver',
   insight_highest_variance: 'Highest Variance Sector',
   insight_pace_drop: 'Pace dropped {delta}s over the run — mainly in {sector}.',
+  insight_consistency_tooltip: 'Regularity is calculated as the standard deviation of valid lap times (n-1 formula). A lower value indicates a more consistent pace.',
+  insight_runner_up: 'Next',
+  insight_among_selected: 'Among selected drivers',
 
   // About
   about_subtitle: 'A modern race telemetry analysis tool. Upload your CSV, get insights in seconds.',

@@ -69,22 +69,30 @@ export function computeKPIs(data: LapRecord[], includePitLaps = false): KPIData 
   };
 }
 
-export function computeInsights(data: LapRecord[], includePitLaps = false): { mostConsistentDriver: string | null; highestVarianceSector: string | null } {
+export interface InsightsData {
+  mostConsistentDriver: string | null;
+  mostConsistentStdDev: number | null;
+  runnerUpDriver: string | null;
+  runnerUpStdDev: number | null;
+  highestVarianceSector: string | null;
+}
+
+export function computeInsights(data: LapRecord[], includePitLaps = false): InsightsData {
   const drivers = [...new Set(data.map(r => r.driver))];
-  let mostConsistentDriver: string | null = null;
-  let bestConsistency = Infinity;
+  const ranked: { driver: string; sd: number }[] = [];
   
   for (const driver of drivers) {
     const laps = cleanLaps(data.filter(r => r.driver === driver), includePitLaps);
     const times = laps.map(r => r.lap_time_s);
     if (times.length >= 3) {
-      const sd = stdDev(times);
-      if (sd < bestConsistency) {
-        bestConsistency = sd;
-        mostConsistentDriver = driver;
-      }
+      ranked.push({ driver, sd: stdDev(times) });
     }
   }
+
+  ranked.sort((a, b) => a.sd - b.sd);
+
+  const best = ranked[0] ?? null;
+  const second = ranked[1] ?? null;
 
   // Highest variance sector
   let highestVarianceSector: string | null = null;
@@ -102,7 +110,13 @@ export function computeInsights(data: LapRecord[], includePitLaps = false): { mo
     }
   }
 
-  return { mostConsistentDriver, highestVarianceSector };
+  return {
+    mostConsistentDriver: best?.driver ?? null,
+    mostConsistentStdDev: best?.sd ?? null,
+    runnerUpDriver: second?.driver ?? null,
+    runnerUpStdDev: second?.sd ?? null,
+    highestVarianceSector,
+  };
 }
 
 export function computeDriverStats(data: LapRecord[], includePitLaps = false): DriverStats[] {
