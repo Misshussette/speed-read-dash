@@ -550,6 +550,17 @@ const fr: Record<string, string> = {
   admin_beta_toggle: 'Basculer Beta',
   admin_beta_enabled: 'Beta activé pour {name}',
   admin_beta_disabled: 'Beta désactivé pour {name}',
+
+  // Lap filter
+  filter_cleaned_analysis: 'Analyse nettoyée',
+  filter_raw_analysis: 'Analyse brute',
+  filter_laps_excluded: '{count} tours exclus',
+  filter_settings_title: 'Paramètres de filtrage',
+  filter_upper_coeff: 'Coefficient supérieur (× médiane)',
+  filter_lower_coeff: 'Coefficient inférieur (× médiane)',
+  filter_min_laptime: 'Temps min (s)',
+  filter_max_laptime: 'Temps max (s)',
+  filter_threshold_help: 'Les seuils fixes remplacent le filtrage par médiane. Laisser vide pour la détection automatique.',
 };
 
 export default fr;

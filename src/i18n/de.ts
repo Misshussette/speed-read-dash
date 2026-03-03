@@ -468,6 +468,17 @@ const de: Record<string, string> = {
   admin_beta_toggle: 'Beta umschalten',
   admin_beta_enabled: 'Beta aktiviert für {name}',
   admin_beta_disabled: 'Beta deaktiviert für {name}',
+
+  // Lap filter
+  filter_cleaned_analysis: 'Bereinigte Analyse',
+  filter_raw_analysis: 'Rohdaten-Analyse',
+  filter_laps_excluded: '{count} Runden ausgeschlossen',
+  filter_settings_title: 'Filtereinstellungen',
+  filter_upper_coeff: 'Oberer Koeffizient (× Median)',
+  filter_lower_coeff: 'Unterer Koeffizient (× Median)',
+  filter_min_laptime: 'Min. Rundenzeit (s)',
+  filter_max_laptime: 'Max. Rundenzeit (s)',
+  filter_threshold_help: 'Feste Schwellenwerte ersetzen die Median-Filterung. Leer lassen für automatische Erkennung.',
 };
 
 export default de;

@@ -468,6 +468,17 @@ const es: Record<string, string> = {
   admin_beta_toggle: 'Alternar Beta',
   admin_beta_enabled: 'Beta activado para {name}',
   admin_beta_disabled: 'Beta desactivado para {name}',
+
+  // Lap filter
+  filter_cleaned_analysis: 'Análisis limpio',
+  filter_raw_analysis: 'Análisis bruto',
+  filter_laps_excluded: '{count} vueltas excluidas',
+  filter_settings_title: 'Configuración del filtro',
+  filter_upper_coeff: 'Coeficiente superior (× mediana)',
+  filter_lower_coeff: 'Coeficiente inferior (× mediana)',
+  filter_min_laptime: 'Tiempo mín. (s)',
+  filter_max_laptime: 'Tiempo máx. (s)',
+  filter_threshold_help: 'Los umbrales fijos reemplazan el filtrado por mediana. Dejar vacío para detección automática.',
 };
 
 export default es;

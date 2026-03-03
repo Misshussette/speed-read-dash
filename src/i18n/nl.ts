@@ -468,6 +468,17 @@ const nl: Record<string, string> = {
   admin_beta_toggle: 'Beta schakelen',
   admin_beta_enabled: 'Beta ingeschakeld voor {name}',
   admin_beta_disabled: 'Beta uitgeschakeld voor {name}',
+
+  // Lap filter
+  filter_cleaned_analysis: 'Opgeschoonde analyse',
+  filter_raw_analysis: 'Ruwe analyse',
+  filter_laps_excluded: '{count} rondes uitgesloten',
+  filter_settings_title: 'Filterinstellingen',
+  filter_upper_coeff: 'Bovencoëfficiënt (× mediaan)',
+  filter_lower_coeff: 'Ondercoëfficiënt (× mediaan)',
+  filter_min_laptime: 'Min. rondetijd (s)',
+  filter_max_laptime: 'Max. rondetijd (s)',
+  filter_threshold_help: 'Vaste drempels vervangen mediaanfiltering. Leeg laten voor automatische detectie.',
 };
 
 export default nl;
