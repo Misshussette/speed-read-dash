@@ -7,7 +7,7 @@ export type SessionType = 'race' | 'qualifying' | 'practice';
 export type DataMode = 'analog' | 'digital';
 export type LiveDisplayMode = 'split_live' | 'relay_average';
 export type Sensitivity = 'stable' | 'standard' | 'sensitive' | 'very_sensitive';
-export type ConnectionStatus = 'connected' | 'receiving' | 'paused' | 'disconnected';
+export type ConnectionStatus = 'connected' | 'receiving' | 'paused' | 'disconnected' | 'demo_active' | 'demo_running' | 'demo_ended';
 
 export interface SectorTimes {
   s1: number | null;
@@ -15,15 +15,13 @@ export interface SectorTimes {
   s3: number | null;
 }
 
-/** Technical data stream identity — what comes from the race system */
 export interface FluxEntry {
-  fluxId: string;           // CarNumber (digital), DriverName/TeamName/fallback (analog)
-  lane?: number;            // Mandatory in analog mode, contextual only
+  fluxId: string;
+  lane?: number;
   teamName?: string;
-  driverName?: string;      // Raw name from race system (unreliable)
+  driverName?: string;
 }
 
-/** Stint segment — who drove what laps */
 export interface LiveStint {
   id: string;
   liveSessionId: string;
@@ -36,11 +34,10 @@ export interface LiveStint {
   endLap: number | null;
 }
 
-/** Per-pilot live data (resolved from FluxID + stints) */
 export interface PilotLiveData {
-  id: string;               // fluxId
+  id: string;
   fluxId: string;
-  displayName: string;      // Resolved: stint pilot name > driverName > teamName > fluxId
+  displayName: string;
   lane?: number;
   laps: number;
   lastLap: number | null;
@@ -72,6 +69,7 @@ export interface LiveState {
   pilots: PilotLiveData[];
   stints: LiveStint[];
   hasSectorData: boolean;
+  isDemoMode: boolean;
 }
 
 interface LiveContextValue extends LiveState {
@@ -82,6 +80,13 @@ interface LiveContextValue extends LiveState {
   lockConfig: () => void;
   unlockConfig: () => void;
   claimDriving: (fluxId: string) => Promise<void>;
+  // Simulation setters
+  setPilots: React.Dispatch<React.SetStateAction<PilotLiveData[]>>;
+  setStints: React.Dispatch<React.SetStateAction<LiveStint[]>>;
+  setHasSectorData: (v: boolean) => void;
+  setConnectionStatus: (s: ConnectionStatus) => void;
+  setSource: (s: string | null) => void;
+  setDemoMode: (v: boolean) => void;
   isSinglePilot: boolean;
   isAnalog: boolean;
   sensitivityCoefficient: number;
@@ -99,7 +104,6 @@ const LiveContext = createContext<LiveContextValue | null>(null);
 export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
 
-  // Session config
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionType, setSessionTypeState] = useState<SessionType>('race');
   const [dataMode, setDataModeState] = useState<DataMode>('analog');
@@ -107,17 +111,15 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
   const [displayMode, setDisplayMode] = useState<LiveDisplayMode>('split_live');
   const [sensitivity, setSensitivity] = useState<Sensitivity>('standard');
 
-  // Connection
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [source, setSource] = useState<string | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
+  const [isDemoMode, setDemoMode] = useState(false);
 
-  // Data
   const [pilots, setPilots] = useState<PilotLiveData[]>([]);
   const [stints, setStints] = useState<LiveStint[]>([]);
   const [hasSectorData, setHasSectorData] = useState(false);
 
-  // Setters that respect config lock
   const setSessionType = useCallback((t: SessionType) => {
     if (!configLocked) setSessionTypeState(t);
   }, [configLocked]);
@@ -129,25 +131,47 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
   const lockConfig = useCallback(() => setConfigLocked(true), []);
   const unlockConfig = useCallback(() => setConfigLocked(false), []);
 
-  // Driver Claim
   const claimDriving = useCallback(async (fluxId: string) => {
-    if (!user || !sessionId) return;
+    if (!user) return;
 
-    // Close previous stint for this fluxId
+    const now = new Date().toISOString();
+    const currentPilot = pilots.find(p => p.fluxId === fluxId);
+    const currentLap = currentPilot?.laps ?? 0;
+
+    if (isDemoMode) {
+      // In demo mode, handle stints locally
+      setStints(prev => {
+        const updated = prev.map(s =>
+          s.fluxId === fluxId && !s.endTimestamp
+            ? { ...s, endTimestamp: now, endLap: currentLap }
+            : s
+        );
+        const newStint: LiveStint = {
+          id: crypto.randomUUID(),
+          liveSessionId: 'demo',
+          fluxId,
+          stintLabPilotId: user.id,
+          pilotDisplayName: user.user_metadata?.display_name || user.email || 'Unknown',
+          startTimestamp: now,
+          endTimestamp: null,
+          startLap: currentLap + 1,
+          endLap: null,
+        };
+        return [...updated, newStint];
+      });
+      return;
+    }
+
+    if (!sessionId) return;
+
     const activeStint = stints.find(s => s.fluxId === fluxId && !s.endTimestamp);
     if (activeStint) {
-      const currentPilot = pilots.find(p => p.fluxId === fluxId);
       await supabase
         .from('live_stints')
-        .update({
-          end_timestamp: new Date().toISOString(),
-          end_lap: currentPilot?.laps ?? null,
-        })
+        .update({ end_timestamp: now, end_lap: currentLap })
         .eq('id', activeStint.id);
     }
 
-    // Create new stint
-    const currentPilot = pilots.find(p => p.fluxId === fluxId);
     const { data } = await supabase
       .from('live_stints')
       .insert({
@@ -155,7 +179,7 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
         flux_id: fluxId,
         stintlab_pilot_id: user.id,
         pilot_display_name: user.user_metadata?.display_name || user.email || 'Unknown',
-        start_lap: (currentPilot?.laps ?? 0) + 1,
+        start_lap: currentLap + 1,
       })
       .select()
       .single();
@@ -164,7 +188,7 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
       setStints(prev => [
         ...prev.map(s =>
           s.fluxId === fluxId && !s.endTimestamp
-            ? { ...s, endTimestamp: new Date().toISOString(), endLap: currentPilot?.laps ?? null }
+            ? { ...s, endTimestamp: now, endLap: currentLap }
             : s
         ),
         {
@@ -180,11 +204,10 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
         },
       ]);
     }
-  }, [user, sessionId, stints, pilots]);
+  }, [user, sessionId, stints, pilots, isDemoMode]);
 
-  // Subscribe to realtime stint changes
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || isDemoMode) return;
 
     const channel = supabase
       .channel(`live_stints_${sessionId}`)
@@ -195,24 +218,16 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
           if (payload.eventType === 'INSERT') {
             const d = payload.new as any;
             setStints(prev => [...prev, {
-              id: d.id,
-              liveSessionId: d.live_session_id,
-              fluxId: d.flux_id,
-              stintLabPilotId: d.stintlab_pilot_id,
-              pilotDisplayName: d.pilot_display_name,
-              startTimestamp: d.start_timestamp,
-              endTimestamp: d.end_timestamp,
-              startLap: d.start_lap,
-              endLap: d.end_lap,
+              id: d.id, liveSessionId: d.live_session_id, fluxId: d.flux_id,
+              stintLabPilotId: d.stintlab_pilot_id, pilotDisplayName: d.pilot_display_name,
+              startTimestamp: d.start_timestamp, endTimestamp: d.end_timestamp,
+              startLap: d.start_lap, endLap: d.end_lap,
             }]);
           } else if (payload.eventType === 'UPDATE') {
             const d = payload.new as any;
             setStints(prev => prev.map(s => s.id === d.id ? {
-              ...s,
-              endTimestamp: d.end_timestamp,
-              endLap: d.end_lap,
-              stintLabPilotId: d.stintlab_pilot_id,
-              pilotDisplayName: d.pilot_display_name,
+              ...s, endTimestamp: d.end_timestamp, endLap: d.end_lap,
+              stintLabPilotId: d.stintlab_pilot_id, pilotDisplayName: d.pilot_display_name,
             } : s));
           }
         }
@@ -220,7 +235,7 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [sessionId]);
+  }, [sessionId, isDemoMode]);
 
   const value = useMemo<LiveContextValue>(() => ({
     session: { id: sessionId, sessionType, dataMode, configLocked },
@@ -232,6 +247,7 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
     pilots,
     stints,
     hasSectorData,
+    isDemoMode,
     setSessionType,
     setDataMode,
     setDisplayMode,
@@ -239,11 +255,17 @@ export const LiveProvider = ({ children }: { children: React.ReactNode }) => {
     lockConfig,
     unlockConfig,
     claimDriving,
+    setPilots,
+    setStints,
+    setHasSectorData,
+    setConnectionStatus,
+    setSource,
+    setDemoMode,
     isSinglePilot: pilots.length <= 1,
     isAnalog: dataMode === 'analog',
     sensitivityCoefficient: sensitivityMap[sensitivity],
   }), [sessionId, sessionType, dataMode, configLocked, displayMode, sensitivity,
-    connectionStatus, source, latency, pilots, stints, hasSectorData,
+    connectionStatus, source, latency, pilots, stints, hasSectorData, isDemoMode,
     setSessionType, setDataMode, lockConfig, unlockConfig, claimDriving]);
 
   return <LiveContext.Provider value={value}>{children}</LiveContext.Provider>;

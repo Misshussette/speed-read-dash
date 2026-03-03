@@ -5,35 +5,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLive, SessionType, DataMode, Sensitivity } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
 import ConfigLockDialog from './ConfigLockDialog';
+import DemoControls from './DemoControls';
 import { useState } from 'react';
 
 const LiveHeader = () => {
-  const { session, setSessionType, setDataMode, sensitivity, setSensitivity, connectionStatus } = useLive();
+  const { session, setSessionType, setDataMode, sensitivity, setSensitivity, connectionStatus, isDemoMode } = useLive();
   const { t } = useI18n();
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
 
-  const isConnected = connectionStatus === 'connected' || connectionStatus === 'receiving';
+  const isConnected = connectionStatus === 'connected' || connectionStatus === 'receiving'
+    || connectionStatus === 'demo_active' || connectionStatus === 'demo_running';
 
-  const statusColor = {
+  const statusColor: Record<string, string> = {
     connected: 'text-emerald-400',
     receiving: 'text-emerald-400 animate-pulse',
     paused: 'text-amber-400',
     disconnected: 'text-destructive',
-  }[connectionStatus];
+    demo_active: 'text-emerald-400',
+    demo_running: 'text-emerald-400 animate-pulse',
+    demo_ended: 'text-destructive',
+  };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <Radio className={`h-5 w-5 ${statusColor}`} />
+        <Radio className={`h-5 w-5 ${statusColor[connectionStatus] ?? 'text-muted-foreground'}`} />
         <h1 className="text-xl font-bold text-foreground">{t('live_title')}</h1>
         {isConnected && (
           <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">
-            {t('live_connected')}
+            {isDemoMode ? t('demo_mode_label') : t('live_connected')}
           </Badge>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
+        {/* Demo controls */}
+        <DemoControls />
+
         {/* Session Type */}
         <Select
           value={session.sessionType}
@@ -93,7 +101,6 @@ const LiveHeader = () => {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {}}
             title={t('live_lock_config')}
             disabled
           >
