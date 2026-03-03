@@ -186,6 +186,15 @@ const Analysis = () => {
 
   const isMultiDriver = availableDrivers.length > 1;
 
+  // Auto-sync filter to active driver on first resolution (so chips reflect the focus)
+  const [hasAutoSynced, setHasAutoSynced] = useState(false);
+  useEffect(() => {
+    if (!hasAutoSynced && resolvedActiveDriver && isMultiDriver && filters.drivers.length === 0) {
+      setFilters({ ...filters, drivers: [resolvedActiveDriver] });
+      setHasAutoSynced(true);
+    }
+  }, [hasAutoSynced, resolvedActiveDriver, isMultiDriver, filters, setFilters]);
+
   // KPI data: ONLY the active driver's laps (never affected by comparison drivers)
   const activeDriverData = useMemo(() => {
     if (!resolvedActiveDriver || !isMultiDriver) return effectiveData;
