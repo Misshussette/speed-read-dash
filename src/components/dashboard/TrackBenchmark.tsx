@@ -1,65 +1,76 @@
 import { useMemo } from 'react';
 import type { LapRecord } from '@/types/telemetry';
-import { computeTrackBenchmark, computeUserGapMetrics, interpretPerformanceIndex } from '@/lib/track-benchmark';
 import { formatLapTime } from '@/lib/metrics';
 import { useI18n } from '@/i18n/I18nContext';
-import { useDisplayMode } from '@/contexts/DisplayModeContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, TrendingDown, Zap, BarChart3, Crosshair } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Target, Trophy } from 'lucide-react';
 
 interface Props {
-  allData: LapRecord[];     // unfiltered session data — for benchmark
-  userData: LapRecord[];    // scoped/filtered data — for user gap
+  /** ALL laps in the run (cleaned or raw depending on mode) — never filtered by driver */
+  runData: LapRecord[];
+  /** Laps for currently selected/filtered drivers only */
+  selectedDriverData: LapRecord[];
 }
 
-const statusColors = {
-  ok: 'text-green-400',
-  warning: 'text-yellow-400',
-  critical: 'text-destructive',
-};
+/** Minimum credible lap time */
+const MIN_LAP_S = 5;
 
-const TrackBenchmark = ({ allData, userData }: Props) => {
+function validLaps(data: LapRecord[]) {
+  return data.filter(r => r.lap_status === 'valid' && r.pit_type === '' && r.lap_time_s >= MIN_LAP_S);
+}
+
+interface DriverRow {
+  driver: string;
+  bestLap: number;
+  gap: number;
+  pi: number;
+}
+
+const TrackBenchmark = ({ runData, selectedDriverData }: Props) => {
   const { t } = useI18n();
-  const { isGuided } = useDisplayMode();
 
-  const benchmark = useMemo(() => computeTrackBenchmark(allData), [allData]);
-  const userGap = useMemo(() => computeUserGapMetrics(userData, benchmark), [userData, benchmark]);
-  const piInterp = useMemo(() => interpretPerformanceIndex(userGap.performanceIndex), [userGap.performanceIndex]);
+  // ── Run-level benchmark (stable, never changes with driver filter) ──
+  const runBenchmark = useMemo(() => {
+    const valid = validLaps(runData);
+    if (valid.length === 0) return null;
 
-  if (benchmark.trackBestLap === null) return null;
+    let bestTime = Infinity;
+    let bestDriver = '';
+    for (const r of valid) {
+      if (r.lap_time_s < bestTime) {
+        bestTime = r.lap_time_s;
+        bestDriver = r.driver;
+      }
+    }
+    return { bestTime, bestDriver };
+  }, [runData]);
 
-  const metrics = [
-    {
-      label: t('bench_track_best'),
-      value: formatLapTime(benchmark.trackBestLap),
-      icon: Target,
-      accent: true,
-    },
-    {
-      label: t('bench_user_best'),
-      value: formatLapTime(userGap.userBestLap),
-      icon: Crosshair,
-    },
-    {
-      label: t('bench_gap_to_track'),
-      value: userGap.gapToTrack !== null ? `+${userGap.gapToTrack.toFixed(3)}s` : '—',
-      icon: TrendingDown,
-      warn: userGap.gapToTrack !== null && userGap.gapToTrack > 1,
-    },
-    ...(benchmark.hasSectorData ? [{
-      label: t('bench_theoretical_best'),
-      value: formatLapTime(benchmark.theoreticalBest),
-      icon: Zap,
-      accent: true,
-    }] : []),
-    {
-      label: t('bench_performance_index'),
-      value: userGap.performanceIndex !== null ? `${userGap.performanceIndex.toFixed(1)}%` : '—',
-      icon: BarChart3,
-      accent: userGap.performanceIndex !== null && userGap.performanceIndex >= 95,
-      warn: userGap.performanceIndex !== null && userGap.performanceIndex < 90,
-    },
-  ];
+  // ── Per-driver rows (only selected drivers) ──
+  const driverRows = useMemo((): DriverRow[] => {
+    if (!runBenchmark) return [];
+    const valid = validLaps(selectedDriverData);
+    const byDriver = new Map<string, number>();
+    for (const r of valid) {
+      const prev = byDriver.get(r.driver);
+      if (prev === undefined || r.lap_time_s < prev) {
+        byDriver.set(r.driver, r.lap_time_s);
+      }
+    }
+    const rows: DriverRow[] = [];
+    for (const [driver, bestLap] of byDriver) {
+      rows.push({
+        driver,
+        bestLap,
+        gap: bestLap - runBenchmark.bestTime,
+        pi: (runBenchmark.bestTime / bestLap) * 100,
+      });
+    }
+    rows.sort((a, b) => a.bestLap - b.bestLap);
+    return rows;
+  }, [selectedDriverData, runBenchmark]);
+
+  if (!runBenchmark) return null;
 
   return (
     <Card className="bg-card border-border border-primary/20">
@@ -69,32 +80,46 @@ const TrackBenchmark = ({ allData, userData }: Props) => {
           {t('bench_title')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {metrics.map(({ label, value, icon: Icon, accent, warn }) => (
-            <div key={label} className="space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Icon className={`h-3.5 w-3.5 ${accent ? 'text-primary' : warn ? 'text-destructive' : 'text-muted-foreground'}`} />
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
-              </div>
-              <p className={`text-lg font-mono font-semibold ${accent ? 'text-primary' : warn ? 'text-destructive' : 'text-foreground'}`}>
-                {value}
-              </p>
-            </div>
-          ))}
+      <CardContent className="space-y-4">
+        {/* Run absolute best */}
+        <div className="flex items-center gap-3">
+          <Trophy className="h-5 w-5 text-primary" />
+          <div>
+            <p className="text-lg font-mono font-semibold text-primary">
+              {formatLapTime(runBenchmark.bestTime)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {runBenchmark.bestDriver} — {t('bench_track_best')}
+            </p>
+          </div>
         </div>
 
-        {isGuided && (
-          <div className="mt-4 pt-3 border-t border-border space-y-1.5">
-            <p className={`text-xs ${statusColors[piInterp.status]}`}>
-              {t(piInterp.key)}
-            </p>
-            {userGap.weakestSector && (
-              <p className="text-xs text-muted-foreground">
-                {t('bench_interp_weak_sector').replace('{sector}', userGap.weakestSector)}
-              </p>
-            )}
-          </div>
+        {/* Per-driver table */}
+        {driverRows.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-xs">{t('filter_label_driver')}</TableHead>
+                <TableHead className="h-8 text-xs text-right">{t('bench_user_best')}</TableHead>
+                <TableHead className="h-8 text-xs text-right">{t('bench_gap_to_track')}</TableHead>
+                <TableHead className="h-8 text-xs text-right">{t('bench_performance_index')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {driverRows.map(row => (
+                <TableRow key={row.driver}>
+                  <TableCell className="py-1.5 text-sm font-medium">{row.driver}</TableCell>
+                  <TableCell className="py-1.5 text-sm font-mono text-right">{formatLapTime(row.bestLap)}</TableCell>
+                  <TableCell className={`py-1.5 text-sm font-mono text-right ${row.gap > 1 ? 'text-destructive' : row.gap === 0 ? 'text-primary' : 'text-foreground'}`}>
+                    {row.gap === 0 ? '—' : `+${row.gap.toFixed(3)}s`}
+                  </TableCell>
+                  <TableCell className={`py-1.5 text-sm font-mono text-right ${row.pi >= 98 ? 'text-primary' : row.pi < 90 ? 'text-destructive' : 'text-foreground'}`}>
+                    {row.pi.toFixed(1)}%
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>

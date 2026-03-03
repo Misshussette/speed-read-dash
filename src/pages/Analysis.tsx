@@ -11,6 +11,7 @@ import { useDisplayMode } from '@/contexts/DisplayModeContext';
 import { useGarage } from '@/contexts/GarageContext';
 import { useRunScope } from '@/hooks/useRunScope';
 import { useLapFilter } from '@/hooks/useLapFilter';
+import { applyIntelligentFilter, getCleanLaps } from '@/lib/lap-filter';
 import { applyFilters, computeKPIs, getFilterOptions } from '@/lib/metrics';
 import { useI18n } from '@/i18n/I18nContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -161,11 +162,20 @@ const Analysis = () => {
     setCleanedMode,
     filterConfig,
     updateFilterConfig,
+    manualOverrides,
   } = useLapFilter(sessionId || null, filteredData);
 
   // Use clean or raw data based on toggle
   const effectiveData = cleanedMode ? cleanFilteredLaps : filteredData;
   const kpis = useMemo(() => computeKPIs(effectiveData, filters.includePitLaps), [effectiveData, filters.includePitLaps]);
+
+  // Benchmark: ALL drivers in the run, respecting cleaned mode but NOT driver filters
+  // Reuse the same filterConfig + manualOverrides from the main lap filter
+  const benchmarkRunData = useMemo(() => {
+    if (!cleanedMode) return rawData;
+    const enriched = applyIntelligentFilter(rawData, manualOverrides, filterConfig);
+    return getCleanLaps(enriched);
+  }, [cleanedMode, rawData, manualOverrides, filterConfig]);
 
   if (isLoading) {
     const pct = loadingProgress?.total && loadingProgress.total > 0
@@ -298,7 +308,7 @@ const Analysis = () => {
                 <TabsContent value="overview" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
                   <ScopeKPICards />
-                  <TrackBenchmark allData={rawData} userData={effectiveData} />
+                  <TrackBenchmark runData={benchmarkRunData} selectedDriverData={effectiveData} />
                   <LapTimeChart data={effectiveData} />
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <DriverComparisonChart data={effectiveData} includePitLaps={filters.includePitLaps} />
@@ -323,7 +333,7 @@ const Analysis = () => {
                 </TabsContent>
 
                 <TabsContent value="track" className="space-y-6 mt-4">
-                  <TrackBenchmark allData={rawData} userData={effectiveData} />
+                  <TrackBenchmark runData={benchmarkRunData} selectedDriverData={effectiveData} />
                   {hasSectorData && <SectorChart data={effectiveData} />}
                   <LapTimeChart data={effectiveData} />
                 </TabsContent>
@@ -331,7 +341,7 @@ const Analysis = () => {
                 <TabsContent value="insights" className="space-y-6 mt-4">
                   <KPICards kpis={kpis} />
                   <AnalysisInsights data={effectiveData} includePitLaps={filters.includePitLaps} />
-                  <TrackBenchmark allData={rawData} userData={effectiveData} />
+                  <TrackBenchmark runData={benchmarkRunData} selectedDriverData={effectiveData} />
                 </TabsContent>
               </Tabs>
             </>
