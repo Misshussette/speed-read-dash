@@ -13,9 +13,14 @@ const formatTime = (iso: string) => {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 };
 
+/**
+ * Team & Stints panel — always rendered.
+ * Shows contextual empty state based on session type.
+ */
 const StintPanel = () => {
-  const { pilots, stints } = useLive();
+  const { pilots, stints, session } = useLive();
   const { t } = useI18n();
+  const isPractice = session.sessionType === 'practice';
 
   // Group stints by fluxId
   const stintsByFlux = stints.reduce<Record<string, LiveStint[]>>((acc, s) => {
@@ -32,6 +37,20 @@ const StintPanel = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Practice mode message */}
+        {isPractice && pilots.length === 0 && stints.length === 0 && (
+          <p className="text-muted-foreground text-xs text-center py-4">
+            {t('live_stints_practice_disabled')}
+          </p>
+        )}
+
+        {/* Idle / no data state (non-practice) */}
+        {!isPractice && pilots.length === 0 && stints.length === 0 && (
+          <p className="text-muted-foreground text-xs text-center py-4">
+            {t('live_stints_no_data')}
+          </p>
+        )}
+
         {/* Quick claim buttons for each active flux */}
         {pilots.map(p => (
           <div key={p.fluxId} className="flex items-center justify-between gap-2">
@@ -68,7 +87,7 @@ const StintPanel = () => {
                         {pilots.find(p => p.fluxId === fluxId)?.displayName ?? fluxId}
                       </h3>
                       <div className="space-y-2">
-                        {fluxStints.map((stint, idx) => (
+                        {fluxStints.map((stint) => (
                           <div
                             key={stint.id}
                             className="flex items-center gap-3 px-3 py-2 rounded-md bg-muted/50 text-sm"
@@ -97,10 +116,6 @@ const StintPanel = () => {
               </ScrollArea>
             </SheetContent>
           </Sheet>
-        )}
-
-        {pilots.length === 0 && stints.length === 0 && (
-          <p className="text-muted-foreground text-xs text-center py-4">{t('live_no_data')}</p>
         )}
       </CardContent>
     </Card>
