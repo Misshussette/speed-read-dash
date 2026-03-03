@@ -35,6 +35,9 @@ const en: Record<string, string> = {
   nav_track: 'Track',
   nav_insights: 'Insights',
 
+  // Common
+  cancel: 'Cancel',
+
   // Header
   export_csv: 'Export CSV',
   new_upload: 'New Upload',
@@ -459,6 +462,22 @@ const en: Record<string, string> = {
   live_col_delta_personal: 'Δ Personal',
   live_col_variation: 'Var.',
   live_col_pit: 'Pit',
+  live_status_connected: 'Connected',
+  live_status_receiving: 'Receiving data',
+  live_status_paused: 'Data paused',
+  live_status_disconnected: 'Disconnected',
+  live_lock_config: 'Lock configuration',
+  live_unlock_title: 'Unlock Configuration?',
+  live_unlock_desc: 'Changing session type or data mode mid-session will reset the live data. Are you sure?',
+  live_unlock_confirm: 'Unlock & Reset',
+  live_claim_driving: "I'm driving now",
+  live_claim_active: 'Driving',
+  live_stints_title: 'Team & Stints',
+  live_stint_since: 'Since',
+  live_stint_history: 'Stint History',
+  live_stint_unclaimed: 'Unclaimed',
+  live_stint_active: 'Active',
+  live_stint_driver: 'Current Driver',
   // MDB Import
   mdb_select_races: 'Select races to import',
   mdb_select_races_desc: '{count} races found in PCLapCounter database.',
