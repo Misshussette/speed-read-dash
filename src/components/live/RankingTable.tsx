@@ -4,6 +4,7 @@ import { useLive, PilotLiveData } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
 import SectorCell from './SectorCell';
 import VariationIndicator from './VariationIndicator';
+import DriverClaimButton from './DriverClaimButton';
 
 const formatLapTime = (v: number | null): string => {
   if (v == null) return '';
@@ -14,19 +15,18 @@ const formatLapTime = (v: number | null): string => {
 };
 
 const RankingTable = () => {
-  const { pilots, sessionType, isAnalog, hasSectorData } = useLive();
+  const { pilots, session, isAnalog, hasSectorData } = useLive();
   const { t } = useI18n();
+  const { sessionType } = session;
 
   const ranked = useMemo(() => {
     const sorted = [...pilots];
     if (sessionType === 'race') {
-      // Race: most laps first, then best lap as tiebreak
       sorted.sort((a, b) => {
         if (b.laps !== a.laps) return b.laps - a.laps;
         return (a.bestLap ?? Infinity) - (b.bestLap ?? Infinity);
       });
     } else {
-      // Qualifying & Practice: best lap asc
       sorted.sort((a, b) => (a.bestLap ?? Infinity) - (b.bestLap ?? Infinity));
     }
     return sorted;
@@ -49,8 +49,8 @@ const RankingTable = () => {
         <TableHeader>
           <TableRow className="border-border">
             <TableHead className="w-10 text-center">P</TableHead>
-            {isAnalog && !isPractice && <TableHead className="w-14 text-center">{t('live_col_lane')}</TableHead>}
             <TableHead>{t('live_col_driver')}</TableHead>
+            {isAnalog && <TableHead className="w-14 text-center">{t('live_col_lane')}</TableHead>}
 
             {isPractice ? (
               <>
@@ -80,6 +80,8 @@ const RankingTable = () => {
                 <TableHead className="text-center w-12">{t('live_col_pit')}</TableHead>
               </>
             )}
+
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,12 +91,12 @@ const RankingTable = () => {
             const gap = idx === 0 ? null : computeGap(ranked[0], p, sessionType);
 
             return (
-              <TableRow key={p.id} className="border-border">
+              <TableRow key={p.fluxId} className="border-border">
                 <TableCell className="text-center font-mono text-xs font-bold">{idx + 1}</TableCell>
-                {isAnalog && !isPractice && (
+                <TableCell className="font-medium text-sm">{p.displayName}</TableCell>
+                {isAnalog && (
                   <TableCell className="text-center font-mono text-xs">{p.lane ?? ''}</TableCell>
                 )}
-                <TableCell className="font-medium text-sm">{p.driver}</TableCell>
 
                 {isPractice ? (
                   <>
@@ -130,6 +132,10 @@ const RankingTable = () => {
                     <TableCell className="text-center font-mono text-xs">{p.pitCount > 0 ? p.pitCount : ''}</TableCell>
                   </>
                 )}
+
+                <TableCell>
+                  <DriverClaimButton fluxId={p.fluxId} compact />
+                </TableCell>
               </TableRow>
             );
           })}
@@ -142,14 +148,13 @@ const RankingTable = () => {
 function computeGap(leader: PilotLiveData, pilot: PilotLiveData, sessionType: string): number | null {
   if (sessionType === 'race') {
     if (leader.laps !== pilot.laps) {
-      return leader.laps - pilot.laps; // lap difference
+      return leader.laps - pilot.laps;
     }
     if (leader.bestLap != null && pilot.bestLap != null) {
       return pilot.bestLap - leader.bestLap;
     }
     return null;
   }
-  // Quali
   if (leader.bestLap != null && pilot.bestLap != null) {
     return pilot.bestLap - leader.bestLap;
   }

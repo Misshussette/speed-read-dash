@@ -23,6 +23,9 @@ const fr: Record<string, string> = {
   land_final_cta: 'Prêt à trouver votre avantage ?',
   land_workspace_note: 'Vos données restent privées. Espace de travail personnel sécurisé — rien n\'est partagé sans votre consentement.',
 
+  // Common
+  cancel: 'Annuler',
+
   // Nav
   nav_runs: 'Mes Runs',
   nav_events: 'Mes Runs',
@@ -417,6 +420,22 @@ const fr: Record<string, string> = {
   live_col_delta_personal: 'Δ Personnel',
   live_col_variation: 'Var.',
   live_col_pit: 'Pit',
+  live_status_connected: 'Connecté',
+  live_status_receiving: 'Réception en cours',
+  live_status_paused: 'Données en pause',
+  live_status_disconnected: 'Déconnecté',
+  live_lock_config: 'Verrouiller la configuration',
+  live_unlock_title: 'Déverrouiller la configuration ?',
+  live_unlock_desc: 'Changer le type de session ou le mode de données en cours de session réinitialisera les données live. Êtes-vous sûr ?',
+  live_unlock_confirm: 'Déverrouiller et réinitialiser',
+  live_claim_driving: 'Je pilote maintenant',
+  live_claim_active: 'En piste',
+  live_stints_title: 'Équipe & Relais',
+  live_stint_since: 'Depuis',
+  live_stint_history: 'Historique des relais',
+  live_stint_unclaimed: 'Non attribué',
+  live_stint_active: 'Actif',
+  live_stint_driver: 'Pilote actuel',
 
   // MDB Import
   mdb_select_races: 'Sélectionner les courses à importer',

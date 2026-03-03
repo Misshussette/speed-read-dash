@@ -5,12 +5,12 @@ import { useI18n } from '@/i18n/I18nContext';
 import RankingTable from './RankingTable';
 
 const LiveMultiPilot = () => {
-  const { sessionType } = useLive();
+  const { session } = useLive();
   const { t } = useI18n();
 
-  const titleKey = sessionType === 'race'
+  const titleKey = session.sessionType === 'race'
     ? 'live_standings'
-    : sessionType === 'qualifying'
+    : session.sessionType === 'qualifying'
       ? 'live_qualifying_standings'
       : 'live_practice_standings';
 

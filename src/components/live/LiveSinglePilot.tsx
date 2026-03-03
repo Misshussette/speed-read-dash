@@ -4,6 +4,7 @@ import { useLive } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
 import SectorCell from './SectorCell';
 import VariationIndicator from './VariationIndicator';
+import DriverClaimButton from './DriverClaimButton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const formatLapTime = (v: number | null): string => {
@@ -15,7 +16,7 @@ const formatLapTime = (v: number | null): string => {
 };
 
 const LiveSinglePilot = () => {
-  const { pilots, displayMode, setDisplayMode, hasSectorData } = useLive();
+  const { pilots, displayMode, setDisplayMode, hasSectorData, isAnalog } = useLive();
   const { t } = useI18n();
 
   const pilot = pilots[0] ?? null;
@@ -71,26 +72,38 @@ const LiveSinglePilot = () => {
                 </div>
               )}
 
-              {/* Last Lap */}
-              <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('live_last_lap')}</span>
-                <span className="font-mono text-sm text-foreground">
-                  {formatLapTime(pilot.lastLap)}
-                </span>
+              <div className="mt-4 pt-3 border-t border-border space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{t('live_last_lap')}</span>
+                  <span className="font-mono text-sm text-foreground">{formatLapTime(pilot.lastLap)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{t('live_best_lap')}</span>
+                  <span className="font-mono text-sm text-purple-400">{formatLapTime(pilot.bestLap)}</span>
+                </div>
+                {isAnalog && pilot.lane != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{t('live_col_lane')}</span>
+                    <span className="font-mono text-sm text-foreground">{pilot.lane}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{t('live_variation')}</span>
+                  <VariationIndicator variation={pilot.variation} />
+                </div>
+                {pilot.currentStint && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{t('live_stint_driver')}</span>
+                    <span className="text-sm text-foreground font-medium">
+                      {pilot.currentStint.pilotDisplayName ?? pilot.displayName}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Best Lap */}
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground">{t('live_best_lap')}</span>
-                <span className="font-mono text-sm text-purple-400">
-                  {formatLapTime(pilot.bestLap)}
-                </span>
-              </div>
-
-              {/* Variation */}
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground">{t('live_variation')}</span>
-                <VariationIndicator variation={pilot.variation} />
+              {/* Driver Claim inline */}
+              <div className="mt-3 pt-3 border-t border-border">
+                <DriverClaimButton fluxId={pilot.fluxId} />
               </div>
             </>
           ) : (
@@ -99,7 +112,7 @@ const LiveSinglePilot = () => {
         </CardContent>
       </Card>
 
-      {/* Lap history placeholder */}
+      {/* Lap history */}
       <Card className="bg-card border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -112,7 +125,9 @@ const LiveSinglePilot = () => {
             <div className="space-y-1">
               {pilot.recentLaps.map((lap, i) => (
                 <div key={i} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-mono text-xs">L{pilot.laps - pilot.recentLaps.length + i + 1}</span>
+                  <span className="text-muted-foreground font-mono text-xs">
+                    L{pilot.laps - pilot.recentLaps.length + i + 1}
+                  </span>
                   <span className="font-mono text-xs text-foreground">{formatLapTime(lap)}</span>
                 </div>
               ))}

@@ -545,6 +545,100 @@ export type Database = {
           },
         ]
       }
+      live_sessions: {
+        Row: {
+          config_locked: boolean
+          created_at: string
+          created_by: string
+          data_mode: string
+          ended_at: string | null
+          event_id: string | null
+          id: string
+          session_type: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          config_locked?: boolean
+          created_at?: string
+          created_by: string
+          data_mode?: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          session_type?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          config_locked?: boolean
+          created_at?: string
+          created_by?: string
+          data_mode?: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          session_type?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stints: {
+        Row: {
+          created_at: string
+          end_lap: number | null
+          end_timestamp: string | null
+          flux_id: string
+          id: string
+          live_session_id: string
+          pilot_display_name: string | null
+          start_lap: number
+          start_timestamp: string
+          stintlab_pilot_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_lap?: number | null
+          end_timestamp?: string | null
+          flux_id: string
+          id?: string
+          live_session_id: string
+          pilot_display_name?: string | null
+          start_lap?: number
+          start_timestamp?: string
+          stintlab_pilot_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_lap?: number | null
+          end_timestamp?: string | null
+          flux_id?: string
+          id?: string
+          live_session_id?: string
+          pilot_display_name?: string | null
+          start_lap?: number
+          start_timestamp?: string
+          stintlab_pilot_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stints_live_session_id_fkey"
+            columns: ["live_session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1087,6 +1181,10 @@ export type Database = {
       is_event_member: { Args: { _event_id: string }; Returns: boolean }
       is_event_owner: { Args: { _event_id: string }; Returns: boolean }
       is_lap_accessible: { Args: { _session_id: string }; Returns: boolean }
+      is_live_session_owner: {
+        Args: { _live_session_id: string }
+        Returns: boolean
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       promote_staged_session: { Args: { _staged_id: string }; Returns: string }
     }
