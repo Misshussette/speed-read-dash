@@ -50,6 +50,12 @@ const Analysis = () => {
   const [showDriverScope, setShowDriverScope] = useState(false);
   const [activeDriver, setActiveDriver] = useState<string | null>(null);
 
+  // When the user picks an active driver, auto-set the filter to that driver only
+  const handleActiveDriverChange = (driver: string) => {
+    setActiveDriver(driver);
+    setFilters({ ...filters, drivers: [driver] });
+  };
+
   // Set active session from URL
   useEffect(() => {
     if (sessionId) setActiveSessionId(sessionId);
@@ -257,7 +263,7 @@ const Analysis = () => {
             {/* Active Driver selector */}
             <div className="flex items-center gap-1.5">
               <Focus className="h-3.5 w-3.5 text-primary" />
-              <Select value={resolvedActiveDriver || ''} onValueChange={setActiveDriver}>
+              <Select value={resolvedActiveDriver || ''} onValueChange={handleActiveDriverChange}>
                 <SelectTrigger className="h-8 text-xs w-[160px] border-primary/30">
                   <SelectValue placeholder={t('active_driver_select')} />
                 </SelectTrigger>
