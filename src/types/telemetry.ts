@@ -59,6 +59,7 @@ export interface Filters {
   car: string | null;
   drivers: string[];
   stints: number[];
+  lanes: number[];
   includePitLaps: boolean;
 }
 

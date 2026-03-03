@@ -23,7 +23,6 @@ import DriverComparisonChart from '@/components/dashboard/DriverComparisonChart'
 import StintTimeline from '@/components/dashboard/StintTimeline';
 import PitAnalysis from '@/components/dashboard/PitAnalysis';
 import AnalysisInsights from '@/components/dashboard/AnalysisInsights';
-import ScopePanel from '@/components/dashboard/ScopePanel';
 import ScopeKPICards from '@/components/dashboard/ScopeKPICards';
 import TrackBenchmark from '@/components/dashboard/TrackBenchmark';
 import MobileFieldView from '@/components/dashboard/MobileFieldView';
@@ -140,13 +139,17 @@ const Analysis = () => {
   };
 
   // Analysis uses user-scoped data (with potential temporary expansion) as base
-  const analysisBase = scope.enabled ? scopedData : expandedAnalysisData;
+  const analysisBase = expandedAnalysisData;
   const filterOptions = useMemo(() => {
     const opts = getFilterOptions(analysisBase);
-    // Always show ALL available drivers so users can temporarily expand
-    opts.drivers = availableDrivers;
+    // Only show drivers that have actual data in this run
+    const driversWithData = new Set<string>();
+    for (const r of rawData) {
+      if (r.driver && r.driver !== 'Unknown') driversWithData.add(r.driver);
+    }
+    opts.drivers = [...driversWithData].sort();
     return opts;
-  }, [analysisBase, availableDrivers]);
+  }, [analysisBase, rawData]);
   const filteredData = useMemo(() => applyFilters(analysisBase, filters), [analysisBase, filters]);
 
   // Intelligent lap filter
@@ -269,7 +272,7 @@ const Analysis = () => {
         <>
           {/* Filter bar + Lap filter toggle */}
           <div className="border-b border-border pb-3 space-y-2">
-            <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopeOptions={scopeOptions} hasScope={scope.enabled} scopedDrivers={scopeDriverFilter} />
+            <FilterBar options={filterOptions} filters={filters} onChange={setFilters} onReset={resetFilters} scopedDrivers={scopeDriverFilter} />
             <LapFilterPanel
               cleanedMode={cleanedMode}
               onCleanedModeChange={setCleanedMode}
@@ -282,8 +285,6 @@ const Analysis = () => {
 
           {rawData.length > 0 && (
             <>
-              <ScopePanel />
-
               {/* Analysis tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="bg-card border border-border">

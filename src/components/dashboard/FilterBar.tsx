@@ -3,17 +3,17 @@ import { useI18n } from '@/i18n/I18nContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Focus } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 interface FilterBarProps {
-  options: { tracks: string[]; sessions: string[]; cars: string[]; drivers: string[]; stints: number[] };
+  options: { tracks: string[]; sessions: string[]; cars: string[]; drivers: string[]; stints: number[]; lanes?: number[] };
   filters: Filters;
   onChange: (f: Filters) => void;
   onReset: () => void;
   scopeOptions?: { entities: string[]; drivers: string[]; lanes: number[] };
   hasScope?: boolean;
-  /** Drivers in the user's persistent scope (null = no scope / all drivers) */
   scopedDrivers?: string[] | null;
+  lanes?: number[];
 }
 
 interface LabeledSelectProps {
@@ -39,9 +39,10 @@ const LabeledSelect = ({ label, value, allLabel, options, onValueChange }: Label
   </div>
 );
 
-const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope, scopedDrivers }: FilterBarProps) => {
+const FilterBar = ({ options, filters, onChange, onReset, scopedDrivers, lanes }: FilterBarProps) => {
   const { t } = useI18n();
   const isOutOfScope = (driver: string) => scopedDrivers && scopedDrivers.length > 0 && !scopedDrivers.includes(driver);
+  const effectiveLanes = lanes && lanes.length > 0 ? lanes : (options.lanes && options.lanes.length > 0 ? options.lanes : []);
 
   return (
     <div className="flex flex-wrap items-end gap-3">
@@ -155,6 +156,51 @@ const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope
         </div>
       </div>
 
+      {/* Lane filter — only shown when lane data exists */}
+      {effectiveLanes.length > 0 && (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-1">{t('scope_lane')}</span>
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => onChange({ ...filters, lanes: [] })}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors font-medium ${
+                (!filters.lanes || filters.lanes.length === 0)
+                  ? 'bg-primary/20 text-primary border border-primary/30'
+                  : 'bg-secondary/30 text-muted-foreground border border-transparent hover:border-border'
+              }`}
+            >
+              {t('all')}
+            </button>
+            {effectiveLanes.map(l => {
+              const active = !filters.lanes || filters.lanes.length === 0 || filters.lanes.includes(l);
+              return (
+                <button
+                  key={l}
+                  onClick={() => {
+                    const current = filters.lanes || [];
+                    if (current.length === 0) {
+                      onChange({ ...filters, lanes: [l] });
+                    } else if (current.includes(l)) {
+                      const next = current.filter(x => x !== l);
+                      onChange({ ...filters, lanes: next });
+                    } else {
+                      onChange({ ...filters, lanes: [...current, l] });
+                    }
+                  }}
+                  className={`px-2.5 py-1 text-xs rounded-md transition-colors font-medium ${
+                    active
+                      ? 'bg-primary/20 text-primary border border-primary/30'
+                      : 'bg-secondary/30 text-muted-foreground border border-transparent hover:border-border'
+                  }`}
+                >
+                  L{l}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-0.5 ml-auto">
         <span className="text-[10px] font-medium uppercase tracking-wider text-foreground px-1">{t('pit_laps')}</span>
         <div className="flex items-center gap-1.5 h-8">
@@ -166,13 +212,6 @@ const FilterBar = ({ options, filters, onChange, onReset, scopeOptions, hasScope
       <Button variant="ghost" size="sm" onClick={onReset} className="h-8 text-xs text-muted-foreground">
         <RotateCcw className="h-3 w-3 mr-1" /> {t('reset')}
       </Button>
-
-      {hasScope && (
-        <div className="flex items-center gap-1.5 ml-1">
-          <Focus className="h-3.5 w-3.5 text-primary" />
-          <span className="text-[10px] font-medium uppercase tracking-wider text-primary">{t('scope_active')}</span>
-        </div>
-      )}
     </div>
   );
 };
