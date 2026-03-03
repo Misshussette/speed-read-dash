@@ -264,7 +264,6 @@ export default function BetaFeedback() {
         <h1 className="text-xl font-bold text-foreground">{t('fb_page_title')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('fb_page_subtitle')}</p>
       </div>
-      <BugReportForm />
       <QuestionnaireForm />
     </div>
   );
