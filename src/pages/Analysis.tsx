@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Link2, Users } from 'lucide-react';
+import { ArrowLeft, Link2, Users, Focus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,6 +48,7 @@ const Analysis = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedConfigId, setSelectedConfigId] = useState<string>('');
   const [showDriverScope, setShowDriverScope] = useState(false);
+  const [activeDriver, setActiveDriver] = useState<string | null>(null);
 
   // Set active session from URL
   useEffect(() => {
@@ -167,7 +168,25 @@ const Analysis = () => {
 
   // Use clean or raw data based on toggle
   const effectiveData = cleanedMode ? cleanFilteredLaps : filteredData;
-  const kpis = useMemo(() => computeKPIs(effectiveData, filters.includePitLaps), [effectiveData, filters.includePitLaps]);
+
+  // ── Active Driver: KPIs are always computed for this driver only ──
+  // Auto-select: first scoped driver, or first driver in data
+  const resolvedActiveDriver = useMemo(() => {
+    if (activeDriver && effectiveData.some(r => r.driver === activeDriver)) return activeDriver;
+    if (scopeDriverFilter && scopeDriverFilter.length > 0) return scopeDriverFilter[0];
+    if (availableDrivers.length > 0) return availableDrivers[0];
+    return null;
+  }, [activeDriver, scopeDriverFilter, availableDrivers, effectiveData]);
+
+  const isMultiDriver = availableDrivers.length > 1;
+
+  // KPI data: ONLY the active driver's laps (never affected by comparison drivers)
+  const activeDriverData = useMemo(() => {
+    if (!resolvedActiveDriver || !isMultiDriver) return effectiveData;
+    return effectiveData.filter(r => r.driver === resolvedActiveDriver);
+  }, [effectiveData, resolvedActiveDriver, isMultiDriver]);
+
+  const kpis = useMemo(() => computeKPIs(activeDriverData, filters.includePitLaps), [activeDriverData, filters.includePitLaps]);
 
   // Benchmark: ALL drivers in the run, respecting cleaned mode but NOT driver filters
   // Reuse the same filterConfig + manualOverrides from the main lap filter
@@ -232,9 +251,24 @@ const Analysis = () => {
             {linkedCtrl && <span>• 🎮 {linkedCtrl.name}</span>}
           </div>
         </div>
-        {/* Persistent driver scope indicator */}
-        {availableDrivers.length > 1 && (
-          <div className="flex items-center gap-1.5">
+        {/* Persistent driver scope + Active Driver selector */}
+        {isMultiDriver && (
+          <div className="flex items-center gap-2">
+            {/* Active Driver selector */}
+            <div className="flex items-center gap-1.5">
+              <Focus className="h-3.5 w-3.5 text-primary" />
+              <Select value={resolvedActiveDriver || ''} onValueChange={setActiveDriver}>
+                <SelectTrigger className="h-8 text-xs w-[160px] border-primary/30">
+                  <SelectValue placeholder={t('active_driver_select')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDrivers.map(d => (
+                    <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Scope button */}
             <Button
               variant={scopeDriverFilter ? 'default' : 'outline'}
               size="sm"
@@ -306,6 +340,12 @@ const Analysis = () => {
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-4">
+                  {isMultiDriver && resolvedActiveDriver && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Focus className="h-3 w-3 text-primary" />
+                      {t('active_driver_kpi_label').replace('{driver}', resolvedActiveDriver)}
+                    </p>
+                  )}
                   <KPICards kpis={kpis} />
                   <ScopeKPICards />
                   <TrackBenchmark runData={benchmarkRunData} selectedDriverData={effectiveData} />

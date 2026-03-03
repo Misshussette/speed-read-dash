@@ -462,6 +462,8 @@ const en: Record<string, string> = {
   scope_saved: 'Analysis scope saved!',
   scope_cleared: 'Scope cleared — analyzing all drivers.',
   scope_temp_expanded: 'Temp. expanded',
+  active_driver_select: 'Active Driver',
+  active_driver_kpi_label: 'KPIs for {driver}',
 
   // Clubs
   club_title: 'Clubs',
