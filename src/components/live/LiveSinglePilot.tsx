@@ -2,7 +2,7 @@ import { Timer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLive } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
-import SectorCell from './SectorCell';
+import SectorCell, { resolveSectorColor } from './SectorCell';
 import VariationIndicator from './VariationIndicator';
 import DriverClaimButton from './DriverClaimButton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,19 +55,19 @@ const LiveSinglePilot = () => {
                 </span>
               </div>
 
-              {hasSectorData && (
+              {hasSectorData && pilot && (
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">S1</p>
-                    <SectorCell value={pilot.currentSectors.s1} className="text-lg" />
+                    <SectorCell value={pilot.currentSectors.s1} color={resolveSectorColor(pilot.currentSectors.s1, 's1', pilot.bestSectors, pilots)} className="text-lg" />
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">S2</p>
-                    <SectorCell value={pilot.currentSectors.s2} className="text-lg" />
+                    <SectorCell value={pilot.currentSectors.s2} color={resolveSectorColor(pilot.currentSectors.s2, 's2', pilot.bestSectors, pilots)} className="text-lg" />
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">S3</p>
-                    <SectorCell value={pilot.currentSectors.s3} className="text-lg" />
+                    <SectorCell value={pilot.currentSectors.s3} color={resolveSectorColor(pilot.currentSectors.s3, 's3', pilot.bestSectors, pilots)} className="text-lg" />
                   </div>
                 </div>
               )}

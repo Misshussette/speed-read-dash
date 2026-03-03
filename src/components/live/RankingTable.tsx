@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLive, PilotLiveData } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
-import SectorCell from './SectorCell';
+import SectorCell, { resolveSectorColor } from './SectorCell';
 import VariationIndicator from './VariationIndicator';
 import DriverClaimButton from './DriverClaimButton';
 
@@ -120,9 +120,15 @@ const RankingTable = () => {
 
                 {hasSectorData && (
                   <>
-                    <TableCell className="text-right"><SectorCell value={p.currentSectors.s1} /></TableCell>
-                    <TableCell className="text-right"><SectorCell value={p.currentSectors.s2} /></TableCell>
-                    <TableCell className="text-right"><SectorCell value={p.currentSectors.s3} /></TableCell>
+                    <TableCell className="text-right">
+                      <SectorCell value={p.currentSectors.s1} color={resolveSectorColor(p.currentSectors.s1, 's1', p.bestSectors, pilots)} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <SectorCell value={p.currentSectors.s2} color={resolveSectorColor(p.currentSectors.s2, 's2', p.bestSectors, pilots)} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <SectorCell value={p.currentSectors.s3} color={resolveSectorColor(p.currentSectors.s3, 's3', p.bestSectors, pilots)} />
+                    </TableCell>
                   </>
                 )}
 
