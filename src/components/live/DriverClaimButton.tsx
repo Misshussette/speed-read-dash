@@ -16,11 +16,18 @@ const DriverClaimButton = ({ fluxId, compact = false }: Props) => {
 
   if (!user) return null;
 
-  const activeStint = stints.find(
+  // Check if THIS flux is currently claimed by this user
+  const activeStintHere = stints.find(
     s => s.fluxId === fluxId && !s.endTimestamp && s.stintLabPilotId === user.id
   );
+  const isCurrentlyClaimed = !!activeStintHere;
 
-  const isCurrentlyClaimed = !!activeStint;
+  // Check if user already has an active stint on ANY flux
+  const hasActiveStintElsewhere = stints.some(
+    s => !s.endTimestamp && s.stintLabPilotId === user.id && s.fluxId !== fluxId
+  );
+
+  const isDisabled = isCurrentlyClaimed || hasActiveStintElsewhere;
 
   if (compact) {
     return (
@@ -29,7 +36,7 @@ const DriverClaimButton = ({ fluxId, compact = false }: Props) => {
         size="sm"
         className={`h-7 text-xs gap-1.5 ${isCurrentlyClaimed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
         onClick={() => claimDriving(fluxId)}
-        disabled={isCurrentlyClaimed}
+        disabled={isDisabled}
       >
         <UserCheck className="h-3.5 w-3.5" />
         {isCurrentlyClaimed ? t('live_claim_active') : t('live_claim_driving')}
@@ -42,7 +49,7 @@ const DriverClaimButton = ({ fluxId, compact = false }: Props) => {
       variant={isCurrentlyClaimed ? 'default' : 'outline'}
       className={`gap-2 ${isCurrentlyClaimed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
       onClick={() => claimDriving(fluxId)}
-      disabled={isCurrentlyClaimed}
+      disabled={isDisabled}
     >
       <UserCheck className="h-4 w-4" />
       {isCurrentlyClaimed ? t('live_claim_active') : t('live_claim_driving')}
