@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Target, ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,19 +51,7 @@ const PracticeChallengeCard = () => {
   };
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Target className="h-4 w-4 text-primary" />
-          {t('practice_challenge_title')}
-          {challengeActive && (
-            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 text-xs ml-auto">
-              {t('practice_challenge_active')}
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="space-y-3">
         {/* Active challenge display */}
         {challengeActive && challengeProjection && (
           <div className={`rounded-md border p-3 space-y-2 ${statusBg[challengeProjection.status]}`}>
@@ -194,8 +181,7 @@ const PracticeChallengeCard = () => {
             </CollapsibleContent>
           </Collapsible>
         )}
-      </CardContent>
-    </Card>
+      </div>
   );
 };
 
