@@ -421,6 +421,8 @@ const fr: Record<string, string> = {
   scope_saved: 'Scope d\'analyse sauvegardé !',
   scope_cleared: 'Scope effacé — analyse de tous les pilotes.',
   scope_temp_expanded: 'Vue étendue temp.',
+  active_driver_select: 'Pilote actif',
+  active_driver_kpi_label: 'KPIs de {driver}',
 
   // Clubs
   club_title: 'Clubs',
