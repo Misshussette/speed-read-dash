@@ -1,12 +1,15 @@
 import { LiveProvider, useLive } from '@/contexts/LiveContext';
+import { PracticeProvider } from '@/contexts/PracticeContext';
 import LiveHeader from '@/components/live/LiveHeader';
 import LiveSinglePilot from '@/components/live/LiveSinglePilot';
 import LiveMultiPilot from '@/components/live/LiveMultiPilot';
 import ConnectionPanel from '@/components/live/ConnectionPanel';
 import StintPanel from '@/components/live/StintPanel';
+import PracticePanel from '@/components/practice/PracticePanel';
 
 const LiveContent = () => {
-  const { isSinglePilot } = useLive();
+  const { isSinglePilot, session } = useLive();
+  const isPractice = session.sessionType === 'practice';
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-4 space-y-4">
@@ -18,6 +21,7 @@ const LiveContent = () => {
         </div>
         <div className="space-y-4">
           <ConnectionPanel />
+          {isPractice && <PracticePanel />}
           <StintPanel />
         </div>
       </div>
@@ -27,7 +31,9 @@ const LiveContent = () => {
 
 const Live = () => (
   <LiveProvider>
-    <LiveContent />
+    <PracticeProvider>
+      <LiveContent />
+    </PracticeProvider>
   </LiveProvider>
 );
 
