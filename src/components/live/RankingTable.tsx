@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Timer } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLive, PilotLiveData } from '@/contexts/LiveContext';
 import { useI18n } from '@/i18n/I18nContext';
@@ -34,6 +35,19 @@ const RankingTable = () => {
 
   const isPractice = sessionType === 'practice';
   const leaderBest = ranked[0]?.bestLap ?? null;
+
+  const sessionBestLap = useMemo(() => {
+    let best: number | null = null;
+    for (const p of pilots) {
+      if (p.bestLap != null && (best == null || p.bestLap < best)) best = p.bestLap;
+    }
+    return best;
+  }, [pilots]);
+
+  const sessionBestHolder = useMemo(() => {
+    if (sessionBestLap == null) return null;
+    return pilots.find(p => p.bestLap != null && Math.abs(p.bestLap - sessionBestLap) < 0.001)?.fluxId ?? null;
+  }, [pilots, sessionBestLap]);
 
   if (ranked.length === 0) {
     return (
@@ -100,7 +114,12 @@ const RankingTable = () => {
 
                 {isPractice ? (
                   <>
-                    <TableCell className="text-right font-mono text-xs">{formatLapTime(p.bestLap)}</TableCell>
+                    <TableCell className={`text-right font-mono text-xs ${p.fluxId === sessionBestHolder ? 'text-purple-400' : ''}`}>
+                      <span className="inline-flex items-center gap-1">
+                        {p.fluxId === sessionBestHolder && <Timer className="h-3 w-3 text-purple-400" />}
+                        {formatLapTime(p.bestLap)}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right font-mono text-xs text-muted-foreground">
                       {gapLeader != null && gapLeader > 0 ? `+${gapLeader.toFixed(3)}` : ''}
                     </TableCell>
@@ -114,7 +133,12 @@ const RankingTable = () => {
                     <TableCell className="text-right font-mono text-xs text-muted-foreground">
                       {gap != null ? `+${gap.toFixed(3)}` : ''}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs">{formatLapTime(p.lastLap)}</TableCell>
+                    <TableCell className={`text-right font-mono text-xs ${p.fluxId === sessionBestHolder && p.bestLap === p.lastLap ? 'text-purple-400' : ''}`}>
+                      <span className="inline-flex items-center gap-1">
+                        {p.fluxId === sessionBestHolder && <Timer className="h-3 w-3 text-purple-400" />}
+                        {formatLapTime(p.lastLap)}
+                      </span>
+                    </TableCell>
                   </>
                 )}
 

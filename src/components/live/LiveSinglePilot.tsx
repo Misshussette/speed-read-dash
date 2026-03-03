@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Timer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLive } from '@/contexts/LiveContext';
@@ -20,6 +21,16 @@ const LiveSinglePilot = () => {
   const { t } = useI18n();
 
   const pilot = pilots[0] ?? null;
+
+  const sessionBestLap = useMemo(() => {
+    let best: number | null = null;
+    for (const p of pilots) {
+      if (p.bestLap != null && (best == null || p.bestLap < best)) best = p.bestLap;
+    }
+    return best;
+  }, [pilots]);
+
+  const isRecordHolder = pilot != null && sessionBestLap != null && pilot.bestLap != null && Math.abs(pilot.bestLap - sessionBestLap) < 0.001;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -79,7 +90,10 @@ const LiveSinglePilot = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{t('live_best_lap')}</span>
-                  <span className="font-mono text-sm text-purple-400">{formatLapTime(pilot.bestLap)}</span>
+                  <span className={`font-mono text-sm inline-flex items-center gap-1 ${isRecordHolder ? 'text-purple-400' : 'text-foreground'}`}>
+                    {isRecordHolder && <Timer className="h-3 w-3" />}
+                    {formatLapTime(pilot.bestLap)}
+                  </span>
                 </div>
                 {isAnalog && pilot.lane != null && (
                   <div className="flex items-center justify-between">
