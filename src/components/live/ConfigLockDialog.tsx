@@ -17,7 +17,7 @@ interface Props {
 }
 
 const ConfigLockDialog = ({ open, onOpenChange }: Props) => {
-  const { unlockConfig } = useLive();
+  const { unlockConfig, setStints } = useLive();
   const { t } = useI18n();
 
   return (
@@ -32,6 +32,7 @@ const ConfigLockDialog = ({ open, onOpenChange }: Props) => {
           <AlertDialogAction
             onClick={() => {
               unlockConfig();
+              setStints([]);
               onOpenChange(false);
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
