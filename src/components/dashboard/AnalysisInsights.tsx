@@ -33,7 +33,7 @@ const AnalysisInsights = ({ data, includePitLaps = false }: { data: LapRecord[];
               <p className="text-sm font-semibold text-foreground">{insights.mostConsistentDriver}</p>
               {insights.mostConsistentStdDev !== null && (
                 <p className="text-xs font-mono text-primary">
-                  σ = {insights.mostConsistentStdDev.toFixed(3)}s
+                  Écart moyen entre ses tours : {insights.mostConsistentStdDev.toFixed(3)}s
                 </p>
               )}
               {insights.runnerUpDriver && insights.runnerUpStdDev !== null && (
