@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/i18n/I18nContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Users, Copy, Trash2, LogIn, Crown, UserCog, User } from 'lucide-react';
+import { Plus, Users, Copy, Trash2, LogIn, Crown, UserCog, User, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
 
 interface Club {
   id: string;
@@ -43,6 +45,7 @@ const roleIcon = (role: string) => {
 const Clubs = () => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { isPlatformAdmin, isClubAdmin } = useUserRole();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [members, setMembers] = useState<ClubMember[]>([]);
@@ -56,7 +59,19 @@ const Clubs = () => {
 
   const fetchClubs = async () => {
     if (!user) return;
-    // Get clubs where user is a member
+
+    if (isPlatformAdmin) {
+      // Platform admin sees ALL clubs
+      const { data } = await supabase
+        .from('clubs')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setClubs(data || []);
+      setLoading(false);
+      return;
+    }
+
+    // Other users: only clubs where they are a member
     const { data: memberRows } = await supabase
       .from('club_members')
       .select('club_id')
@@ -104,7 +119,7 @@ const Clubs = () => {
     setInvites(data || []);
   };
 
-  useEffect(() => { fetchClubs(); }, [user]);
+  useEffect(() => { fetchClubs(); }, [user, isPlatformAdmin]);
 
   useEffect(() => {
     if (selectedClub) {
@@ -204,8 +219,11 @@ const Clubs = () => {
   };
 
   const myRoleInSelected = members.find(m => m.user_id === user?.id)?.role;
-  const isOrganizer = myRoleInSelected === 'organizer';
+  const isOrganizer = myRoleInSelected === 'organizer' || isPlatformAdmin;
   const canManage = isOrganizer;
+
+  // Build callerClubs for CreateUserDialog
+  const callerClubs = clubs.map(c => ({ id: c.id, name: c.name }));
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -225,6 +243,16 @@ const Clubs = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('club_title')}</h1>
         <div className="flex gap-2">
+          {(isPlatformAdmin || isClubAdmin) && (
+            <CreateUserDialog
+              isPlatformAdmin={isPlatformAdmin}
+              isClubAdmin={isClubAdmin}
+              callerClubs={callerClubs}
+              onUserCreated={() => {
+                if (selectedClub) fetchMembers(selectedClub.id);
+              }}
+            />
+          )}
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
