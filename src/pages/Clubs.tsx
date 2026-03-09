@@ -243,6 +243,16 @@ const Clubs = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('club_title')}</h1>
         <div className="flex gap-2">
+          {(isPlatformAdmin || isClubAdmin) && (
+            <CreateUserDialog
+              isPlatformAdmin={isPlatformAdmin}
+              isClubAdmin={isClubAdmin}
+              callerClubs={callerClubs}
+              onUserCreated={() => {
+                if (selectedClub) fetchMembers(selectedClub.id);
+              }}
+            />
+          )}
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
