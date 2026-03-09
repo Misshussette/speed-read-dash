@@ -9,7 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/hooks/useAuth';
 import AdminIssues from '@/pages/AdminIssues';
+import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
 import { toast } from 'sonner';
 
 interface UserRow { id: string; user_id: string; display_name: string | null; created_at: string; }
@@ -28,12 +30,14 @@ const statusColor = (s: string) => {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isPlatformAdmin, loading: roleLoading } = useUserRole();
+  const { user } = useAuth();
+  const { isPlatformAdmin, isClubAdmin, loading: roleLoading } = useUserRole();
 
   const [users, setUsers] = useState<UserRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [imports, setImports] = useState<ImportRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [callerClubs, setCallerClubs] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
@@ -51,9 +55,28 @@ const Admin = () => {
     setLoading(false);
   };
 
+  // Fetch caller's clubs for club_admin context
   useEffect(() => {
-    if (isPlatformAdmin) fetchAll();
-  }, [isPlatformAdmin]);
+    if (isClubAdmin && user) {
+      supabase
+        .from('club_members')
+        .select('club_id, clubs(id, name)')
+        .eq('user_id', user.id)
+        .eq('role', 'organizer')
+        .then(({ data }) => {
+          if (data) {
+            const clubs = data
+              .map((m: any) => m.clubs)
+              .filter(Boolean);
+            setCallerClubs(clubs);
+          }
+        });
+    }
+  }, [isClubAdmin, user]);
+
+  useEffect(() => {
+    if (isPlatformAdmin || isClubAdmin) fetchAll();
+  }, [isPlatformAdmin, isClubAdmin]);
 
   const getUserRole = (userId: string) => {
     const r = roles.find(r => r.user_id === userId);
@@ -73,12 +96,12 @@ const Admin = () => {
     );
   }
 
-  if (!isPlatformAdmin) {
+  if (!isPlatformAdmin && !isClubAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Shield className="h-12 w-12 text-destructive" />
         <p className="text-foreground font-semibold text-lg">Access Denied</p>
-        <p className="text-muted-foreground text-sm">This page is restricted to platform administrators.</p>
+        <p className="text-muted-foreground text-sm">This page is restricted to administrators.</p>
         <Button variant="outline" onClick={() => navigate('/events')}>Back to Events</Button>
       </div>
     );
@@ -89,12 +112,22 @@ const Admin = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-foreground">Admin</h1>
-          <Badge variant="outline" className="text-xs border-primary/30 text-primary">Platform</Badge>
+          <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+            {isPlatformAdmin ? 'Platform' : 'Club'}
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/feedback')}>
-            <MessageSquareHeart className="h-4 w-4 mr-1" /> Beta Feedback
-          </Button>
+          <CreateUserDialog
+            isPlatformAdmin={isPlatformAdmin}
+            isClubAdmin={isClubAdmin}
+            callerClubs={callerClubs}
+            onUserCreated={fetchAll}
+          />
+          {isPlatformAdmin && (
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/feedback')}>
+              <MessageSquareHeart className="h-4 w-4 mr-1" /> Beta Feedback
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>

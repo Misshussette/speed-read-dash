@@ -17,7 +17,7 @@ const AppSidebar = () => {
   const { t } = useI18n();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { isPlatformAdmin } = useUserRole();
+  const { isPlatformAdmin, isClubAdmin } = useUserRole();
 
   const items = [
     { title: t('nav_runs'), url: '/events', icon: Flag },
@@ -29,7 +29,7 @@ const AppSidebar = () => {
     { title: t('nav_feedback'), url: '/feedback', icon: MessageSquareHeart },
   ];
 
-  if (isPlatformAdmin) {
+  if (isPlatformAdmin || isClubAdmin) {
     items.push({ title: 'Admin', url: '/admin', icon: Shield });
   }
 
