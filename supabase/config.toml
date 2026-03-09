@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.insert-mdb-laps]
 verify_jwt = false
+
+[functions.create-user]
+verify_jwt = false
