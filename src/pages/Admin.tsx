@@ -112,12 +112,22 @@ const Admin = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-foreground">Admin</h1>
-          <Badge variant="outline" className="text-xs border-primary/30 text-primary">Platform</Badge>
+          <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+            {isPlatformAdmin ? 'Platform' : 'Club'}
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/feedback')}>
-            <MessageSquareHeart className="h-4 w-4 mr-1" /> Beta Feedback
-          </Button>
+          <CreateUserDialog
+            isPlatformAdmin={isPlatformAdmin}
+            isClubAdmin={isClubAdmin}
+            callerClubs={callerClubs}
+            onUserCreated={fetchAll}
+          />
+          {isPlatformAdmin && (
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/feedback')}>
+              <MessageSquareHeart className="h-4 w-4 mr-1" /> Beta Feedback
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={fetchAll} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
