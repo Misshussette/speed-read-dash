@@ -96,12 +96,12 @@ const Admin = () => {
     );
   }
 
-  if (!isPlatformAdmin) {
+  if (!isPlatformAdmin && !isClubAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Shield className="h-12 w-12 text-destructive" />
         <p className="text-foreground font-semibold text-lg">Access Denied</p>
-        <p className="text-muted-foreground text-sm">This page is restricted to platform administrators.</p>
+        <p className="text-muted-foreground text-sm">This page is restricted to administrators.</p>
         <Button variant="outline" onClick={() => navigate('/events')}>Back to Events</Button>
       </div>
     );
