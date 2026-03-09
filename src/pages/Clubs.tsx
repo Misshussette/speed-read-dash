@@ -119,7 +119,7 @@ const Clubs = () => {
     setInvites(data || []);
   };
 
-  useEffect(() => { fetchClubs(); }, [user]);
+  useEffect(() => { fetchClubs(); }, [user, isPlatformAdmin]);
 
   useEffect(() => {
     if (selectedClub) {
