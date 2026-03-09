@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/i18n/I18nContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Users, Copy, Trash2, LogIn, Crown, UserCog, User } from 'lucide-react';
+import { Plus, Users, Copy, Trash2, LogIn, Crown, UserCog, User, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
 
 interface Club {
   id: string;
