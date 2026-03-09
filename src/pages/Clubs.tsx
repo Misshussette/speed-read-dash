@@ -45,6 +45,7 @@ const roleIcon = (role: string) => {
 const Clubs = () => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { isPlatformAdmin, isClubAdmin } = useUserRole();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [members, setMembers] = useState<ClubMember[]>([]);
@@ -58,7 +59,19 @@ const Clubs = () => {
 
   const fetchClubs = async () => {
     if (!user) return;
-    // Get clubs where user is a member
+
+    if (isPlatformAdmin) {
+      // Platform admin sees ALL clubs
+      const { data } = await supabase
+        .from('clubs')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setClubs(data || []);
+      setLoading(false);
+      return;
+    }
+
+    // Other users: only clubs where they are a member
     const { data: memberRows } = await supabase
       .from('club_members')
       .select('club_id')
