@@ -219,8 +219,11 @@ const Clubs = () => {
   };
 
   const myRoleInSelected = members.find(m => m.user_id === user?.id)?.role;
-  const isOrganizer = myRoleInSelected === 'organizer';
+  const isOrganizer = myRoleInSelected === 'organizer' || isPlatformAdmin;
   const canManage = isOrganizer;
+
+  // Build callerClubs for CreateUserDialog
+  const callerClubs = clubs.map(c => ({ id: c.id, name: c.name }));
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
