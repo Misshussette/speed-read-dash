@@ -30,12 +30,14 @@ const statusColor = (s: string) => {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isPlatformAdmin, loading: roleLoading } = useUserRole();
+  const { user } = useAuth();
+  const { isPlatformAdmin, isClubAdmin, loading: roleLoading } = useUserRole();
 
   const [users, setUsers] = useState<UserRow[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [imports, setImports] = useState<ImportRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [callerClubs, setCallerClubs] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
@@ -53,9 +55,28 @@ const Admin = () => {
     setLoading(false);
   };
 
+  // Fetch caller's clubs for club_admin context
   useEffect(() => {
-    if (isPlatformAdmin) fetchAll();
-  }, [isPlatformAdmin]);
+    if (isClubAdmin && user) {
+      supabase
+        .from('club_members')
+        .select('club_id, clubs(id, name)')
+        .eq('user_id', user.id)
+        .eq('role', 'organizer')
+        .then(({ data }) => {
+          if (data) {
+            const clubs = data
+              .map((m: any) => m.clubs)
+              .filter(Boolean);
+            setCallerClubs(clubs);
+          }
+        });
+    }
+  }, [isClubAdmin, user]);
+
+  useEffect(() => {
+    if (isPlatformAdmin || isClubAdmin) fetchAll();
+  }, [isPlatformAdmin, isClubAdmin]);
 
   const getUserRole = (userId: string) => {
     const r = roles.find(r => r.user_id === userId);
