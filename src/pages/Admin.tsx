@@ -9,7 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/hooks/useAuth';
 import AdminIssues from '@/pages/AdminIssues';
+import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
 import { toast } from 'sonner';
 
 interface UserRow { id: string; user_id: string; display_name: string | null; created_at: string; }
